@@ -1,6 +1,5 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,6 +8,10 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ==========================================
+// 1. AUTHENTICATION MODELS (Your Existing)
+// ==========================================
 
 model User {
   id            String    @id
@@ -22,8 +25,12 @@ model User {
   banned        Boolean?  @default(false)
   banReason     String?
   banExpires    DateTime?
+  
   sessions      Session[]
   accounts      Account[]
+  
+  // --- NEW: Relation to Engineering Projects ---
+  projects      Project[]
 
   @@unique([email])
   @@map("user")
@@ -73,4 +80,166 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+}
+
+// ==========================================
+// 2. ENGINEERING MODELS (Project -> Floor -> Calc)
+// ==========================================
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  address     String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relation to User
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  floors      Floor[]
+
+  @@map("project")
+}
+
+model Floor {
+  id          String   @id @default(uuid())
+  name        String   // e.g., "2nd Floor", "Basement"
+  level       Float    // Corresponds to input 'E' (e.g., 0, 1, 1.5)
+  description String?
+  
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // One-to-One relation with the calculation data
+  assessment  Assessment?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("floor")
+}
+
+model Assessment {
+  id        String   @id @default(uuid())
+  floorId   String   @unique
+  floor     Floor    @relation(fields: [floorId], references: [id], onDelete: Cascade)
+
+  // --- SECTION 1: INPUTS (Mapped from script.js) ---
+  
+  // Potential Risk Inputs
+  qi                Float?   // Fire Load Fixed (MJ/m2)
+  qm                Float?   // Fire Load Mobile (MJ/m2)
+  tempDestruction   Float?   // T (Degrees C)
+  avgDimension      Float?   // m (Meters)
+  materialClass     Float?   // M (0 to 5)
+  
+  // Geometry
+  length            Float?   // l
+  width             Float?   // b
+  area              Float?   // A (Can be calc or input)
+  height            Float?   // h
+  accessType        String?  // "wide" or "narrow"
+  
+  // Venting
+  windowArea        Float?   // Aw
+  staticVentArea    Float?   // As
+  mechVentFlow      Float?   // Nm3/h
+  ventingRatio_k    Float?   // k
+  
+  // Access Factors
+  accessSides       Int?     // Z (1-4)
+  heightAbove       Float?   // H+
+  depthBelow        Float?   // H-
+
+  // Acceptable Risk Inputs
+  mainActivity      String?  // Code for Activity Type
+  occupantCount     Int?     // X
+  occupantFactor    Float?   // Factor used to calc X
+  exitWidthTotal    Float?   // K
+  mobilityFactor    Float?   // p
+  
+  // Economic / C-Factor Inputs
+  valueTotal        Float?   // In Rials
+  valueYear         Int?
+  replaceability    Float?   // c1
+  dependencyType    String?  // Category code
+  dependencyManual  Float?   // d (manual override)
+  
+  // Protection Inputs (W, N, S, F, U, Y)
+  waterStorageType  String?  // w1 logic
+  waterCapacity     Float?   // w2 logic
+  hydrantCount25    Int?
+  hydrantCount3     Int?
+  hydrantCount4     Int?
+  
+  detectionType     Float?   // s1
+  sprinklerType     Float?   // s3
+  fireStationType   Float?   // s4
+  
+  structureResist   Float?   // fs (minutes)
+  facadeResist      Float?   // ff
+  roofResist        Float?   // fd
+  wallResist        Float?   // fw
+  
+  // --- SECTION 2: CALCULATED FACTORS ---
+  
+  // Risk Factors
+  factor_q          Float?
+  factor_i          Float?
+  factor_g          Float?
+  factor_e          Float?
+  factor_v          Float?
+  factor_z          Float?
+
+  // Acceptance Factors
+  factor_a          Float?
+  factor_t          Float?
+  factor_c          Float?
+  factor_r          Float?
+  factor_d          Float?
+
+  // Protection Factors
+  factor_W          Float?
+  factor_N          Float?
+  factor_S          Float?
+  factor_F          Float?
+  factor_U          Float?
+  factor_Y          Float?
+
+  // --- SECTION 3: FINAL SCORES ---
+
+  // Potential Risks
+  risk_P            Float?   // Building
+  risk_P1           Float?   // People
+  risk_P2           Float?   // Activities
+
+  // Acceptable Levels
+  level_A           Float?
+  level_A1          Float?
+  level_A2          Float?
+
+  // Protection Levels
+  level_D           Float?
+  level_D1          Float?
+  level_D2          Float?
+
+  // Initial Risk (Ro)
+  factor_Fo         Float?
+  risk_Ro           Float?
+
+  // Final Risks (R = P / (A * D))
+  final_R           Float?   // Building Risk
+  final_R1          Float?   // People Risk
+  final_R2          Float?   // Activities Risk
+
+  // Status Strings (e.g., "Acceptable", "Critical")
+  status_R          String?
+  status_R1         String?
+  status_R2         String?
+
+  updatedAt         DateTime @updatedAt
+
+  @@map("assessment")
 }
