@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import "katex/dist/katex.min.css";
 import { CalculationResults } from "@/types";
 import { initialCalculationResults } from "@/utils/calculations";

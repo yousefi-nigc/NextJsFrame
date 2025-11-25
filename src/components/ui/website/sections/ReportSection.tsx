@@ -51,7 +51,7 @@ export default function ReportSection({ results }: ReportSectionProps) {
                 grid 
                 gap-4 
                 mb-5
-                [grid-template-columns:repeat(auto-fit,minmax(250px,1fr))]
+                grid-cols-repeat(auto-fit,minmax(250px,1fr))]
               "
           >
             {/* نام پروژه */}
