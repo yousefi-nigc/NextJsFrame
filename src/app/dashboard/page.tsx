@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/src/lib/auth-server";
-import { isAdmin } from "@/src/lib/admin";
-import LogoutButton from "@/src/components/auth/LogoutButton";
+import { getSession } from "@/lib/auth-server";
+import { isAdmin } from "@/lib/admin";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 export default async function DashboardPage() {
   const session = await getSession();

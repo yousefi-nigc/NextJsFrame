@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalculationResults } from "@/src/types";
+import { CalculationResults } from "@/types";
 import { BlockMath } from "react-katex";
 
 interface ProtectionLevelSectionProps {

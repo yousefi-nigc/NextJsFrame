@@ -1,6 +1,6 @@
 "use client";
 
-import { CalculationResults } from "@/src/types";
+import { CalculationResults } from "@/types";
 
 interface ReportSectionProps {
   results: CalculationResults;

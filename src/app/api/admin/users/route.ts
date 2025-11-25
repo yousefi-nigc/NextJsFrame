@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/src/lib/auth-server";
-import { createUser, isAdmin } from "@/src/lib/admin";
+import { getSession } from "@/lib/auth-server";
+import { createUser, isAdmin } from "@/lib/admin";
 
 export async function POST(request: NextRequest) {
   try {

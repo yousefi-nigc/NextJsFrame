@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/src/lib/auth-server";
-import { isAdmin } from "@/src/lib/admin";
-import AddUserForm from "@/src/components/admin/AddUserForm";
+import { getSession } from "@/lib/auth-server";
+import { isAdmin } from "@/lib/admin";
+import AddUserForm from "@/components/admin/AddUserForm";
 
 export default async function AdminPage() {
   const session = await getSession();

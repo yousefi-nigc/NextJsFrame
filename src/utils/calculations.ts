@@ -1,4 +1,4 @@
-import { CalculationResults } from "@/src/types";
+import { CalculationResults } from "@/types";
 
 // Initialize calculation results
 export const initialCalculationResults: CalculationResults = {

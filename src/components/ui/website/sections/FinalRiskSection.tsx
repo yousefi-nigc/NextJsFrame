@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/src/types";
-import { calculateFinalR } from "@/src/utils/calculations";
+import { CalculationResults } from "@/types";
+import { calculateFinalR } from "@/utils/calculations";
 
 interface FinalRiskSectionProps {
   results: CalculationResults;

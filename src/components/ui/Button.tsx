@@ -1,5 +1,5 @@
 import { ButtonHTMLAttributes, forwardRef } from "react";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "outline" | "ghost";

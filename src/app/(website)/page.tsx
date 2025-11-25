@@ -2,16 +2,16 @@
 
 import { useEffect, useState } from "react";
 import "katex/dist/katex.min.css";
-import { CalculationResults } from "@/src/types";
-import { initialCalculationResults } from "@/src/utils/calculations";
-import Header from "@/src/components/ui/website/Header";
-import Sidebar from "@/src/components/ui/website/Sidebar";
-import PotentialRiskSection from "@/src/components/ui/website/sections/PotentialRiskSection";
-import AcceptableRiskSection from "@/src/components/ui/website/sections/AcceptableRiskSection";
-import ProtectionLevelSection from "@/src/components/ui/website/sections/ProtectionLevelSection";
-import InitialRiskSection from "@/src/components/ui/website/sections/InitialRiskSection";
-import FinalRiskSection from "@/src/components/ui/website/sections/FinalRiskSection";
-import ReportSection from "@/src/components/ui/website/sections/ReportSection";
+import { CalculationResults } from "@/types";
+import { initialCalculationResults } from "@/utils/calculations";
+import Header from "@/components/ui/website/Header";
+import Sidebar from "@/components/ui/website/Sidebar";
+import PotentialRiskSection from "@/components/ui/website/sections/PotentialRiskSection";
+import AcceptableRiskSection from "@/components/ui/website/sections/AcceptableRiskSection";
+import ProtectionLevelSection from "@/components/ui/website/sections/ProtectionLevelSection";
+import InitialRiskSection from "@/components/ui/website/sections/InitialRiskSection";
+import FinalRiskSection from "@/components/ui/website/sections/FinalRiskSection";
+import ReportSection from "@/components/ui/website/sections/ReportSection";
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState("potential-risk");

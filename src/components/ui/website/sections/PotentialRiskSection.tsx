@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalculationResults } from "@/src/types";
+import { CalculationResults } from "@/types";
 import {
   calculateQ,
   // calculateI,
@@ -11,7 +11,7 @@ import {
   // calculateZ,
   calculateTotalP,
   // calculateHRR,
-} from "@/src/utils/calculations";
+} from "@/utils/calculations";
 import { BlockMath } from "react-katex";
 
 interface PotentialRiskSectionProps {
