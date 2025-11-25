@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/src/lib/auth-client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -37,7 +37,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black px-4">
+    <div
+      dir="ltr"
+      className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black px-4"
+    >
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white dark:bg-zinc-900 p-8 shadow-lg">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-black dark:text-zinc-50">
@@ -111,4 +114,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

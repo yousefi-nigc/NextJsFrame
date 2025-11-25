@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/src/lib/auth-client";
 import { useState } from "react";
-import Button from "@/components/ui/Button";
+import Button from "../../components/ui/Button";
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -33,4 +33,3 @@ export default function LogoutButton() {
     </Button>
   );
 }
-

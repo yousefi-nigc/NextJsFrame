@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-server";
-import { isAdmin } from "@/lib/admin";
-import LogoutButton from "@/components/auth/LogoutButton";
+import { getSession } from "@/src/lib/auth-server";
+import { isAdmin } from "@/src/lib/admin";
+import LogoutButton from "@/src/components/auth/LogoutButton";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -13,7 +13,7 @@ export default async function DashboardPage() {
   const admin = await isAdmin(session.user.id);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div dir="ltr" className="min-h-screen bg-zinc-50 dark:bg-black">
       <nav className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
               Welcome back, {session.user.name || session.user.email}!
             </h2>
             <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-              You're successfully signed in to your account.
+              You&apos;re successfully signed in to your account.
             </p>
           </div>
 
@@ -111,4 +111,3 @@ export default async function DashboardPage() {
     </div>
   );
 }
-

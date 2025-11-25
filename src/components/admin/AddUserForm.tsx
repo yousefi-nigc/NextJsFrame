@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Button from "@/components/ui/Button";
+import Button from "../../components/ui/Button";
 
 export default function AddUserForm() {
   const [name, setName] = useState("");
@@ -136,4 +136,3 @@ export default function AddUserForm() {
     </div>
   );
 }
-
