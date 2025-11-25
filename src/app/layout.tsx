@@ -13,9 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GasTop",
-  description: "GasTop - Admin and User Management System",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"),
+  title: "سامانه ارزیابی ریسک حریق FRAME 2025",
+  description: "Fire Risk Assessment Method for Engineering",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"
+  ),
 };
 
 export default function RootLayout({

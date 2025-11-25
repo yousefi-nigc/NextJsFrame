@@ -1,5 +1,5 @@
 import { ButtonHTMLAttributes, forwardRef } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/src/lib/utils";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "outline" | "ghost";
@@ -8,12 +8,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "md", ...props }, ref) => {
-    const baseStyles = "rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
-    
+    const baseStyles =
+      "rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+
     const variants = {
-      default: "bg-black dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200",
-      outline: "border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-700",
-      ghost: "text-black dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800",
+      default:
+        "bg-black dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200",
+      outline:
+        "border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-700",
+      ghost:
+        "text-black dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800",
     };
 
     const sizes = {
@@ -35,4 +39,3 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = "Button";
 
 export default Button;
-

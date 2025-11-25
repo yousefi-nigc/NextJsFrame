@@ -1,7 +1,7 @@
 import "dotenv/config";
-import { db } from "../lib/db";
+import { db } from "../src/lib/db";
 import { randomBytes } from "crypto";
-import { hashPassword } from "../lib/password";
+import { hashPassword } from "../src/lib/password";
 
 async function main() {
   console.log("🌱 Seeding database...");
@@ -17,20 +17,20 @@ async function main() {
     const credentialAccount = existingAdmin.accounts.find(
       (acc: { providerId: string }) => acc.providerId === "credential"
     );
-    
+
     if (!credentialAccount) {
       // Check if there's an account with wrong providerId
       const wrongAccount = existingAdmin.accounts.find(
         (acc: { providerId: string }) => acc.providerId === "email"
       );
-      
+
       if (wrongAccount) {
         // Update the account to use correct providerId and password hash
         console.log("🔧 Fixing account providerId and password hash...");
         const passwordHash = await hashPassword("admin123");
         await db.account.update({
           where: { id: wrongAccount.id },
-          data: { 
+          data: {
             providerId: "credential",
             password: passwordHash,
           },
@@ -55,9 +55,12 @@ async function main() {
         return;
       }
     }
-    
+
     // Check if password hash is in correct format (starts with $scrypt$)
-    if (credentialAccount.password && !credentialAccount.password.startsWith("$scrypt$")) {
+    if (
+      credentialAccount.password &&
+      !credentialAccount.password.startsWith("$scrypt$")
+    ) {
       console.log("🔧 Fixing password hash format...");
       const passwordHash = await hashPassword("admin123");
       await db.account.update({
@@ -67,7 +70,7 @@ async function main() {
       console.log("✅ Password hash fixed!");
       return;
     }
-    
+
     console.log("✅ Admin user already exists with correct account");
     return;
   }
@@ -76,10 +79,10 @@ async function main() {
   try {
     // Generate a unique ID for the user
     const userId = randomBytes(16).toString("hex");
-    
+
     // Hash the password using scrypt (Better Auth format)
     const passwordHash = await hashPassword("admin123");
-    
+
     // Create user in database
     const user = await db.user.create({
       data: {
@@ -93,7 +96,7 @@ async function main() {
 
     // Create account with password
     const accountId = randomBytes(16).toString("hex");
-    
+
     await db.account.create({
       data: {
         id: accountId,
@@ -122,4 +125,3 @@ main()
   .finally(async () => {
     await db.$disconnect();
   });
-
