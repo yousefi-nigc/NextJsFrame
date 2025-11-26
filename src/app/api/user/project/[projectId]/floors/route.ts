@@ -1,0 +1,16 @@
+import { getAllFloorsController } from "@/lib/floor/controller/GetFloorController";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(
+    request: NextRequest,
+    { params }: { params: { projectId: string } }
+) {
+    try {
+        return await getAllFloorsController(request, params.projectId);
+    } catch (error: any) {
+        return NextResponse.json(
+            { error: error.message || "Internal server error" },
+            { status: 500 }
+        );
+    }
+}
