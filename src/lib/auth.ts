@@ -17,7 +17,14 @@ export const auth = betterAuth({
       verify: verifyHash,
     }
   },
-
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        input: false
+      }
+    }
+  },
   plugins: [admin(), adminClient(), nextCookies()],
 });
 
