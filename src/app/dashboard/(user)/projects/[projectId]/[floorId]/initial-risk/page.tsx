@@ -8,10 +8,7 @@ interface InitialRiskSectionProps {
   updateResults: (updates: Partial<CalculationResults>) => void;
 }
 
-export default function InitialRiskSection({
-  results,
-  updateResults,
-}: InitialRiskSectionProps) {
+export default function InitialRisk() {
   return (
     <section id="initial-risk" className="section">
       <div className="card">

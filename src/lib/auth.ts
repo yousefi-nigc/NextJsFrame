@@ -15,16 +15,15 @@ export const auth = betterAuth({
     password: {
       hash: hashPassword,
       verify: verifyHash,
-    }
+    },
   },
   user: {
     additionalFields: {
       role: {
         type: "string",
-        input: false
-      }
-    }
+        input: false,
+      },
+    },
   },
   plugins: [admin(), adminClient(), nextCookies()],
 });
-

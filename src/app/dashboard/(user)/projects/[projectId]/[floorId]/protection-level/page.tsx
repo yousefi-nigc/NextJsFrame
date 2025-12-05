@@ -1,18 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CalculationResults } from "@/types";
 import { BlockMath } from "react-katex";
 
-interface ProtectionLevelSectionProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function ProtectionLevelSection({
-  results,
-  updateResults,
-}: ProtectionLevelSectionProps) {
+export default function ProtectionLevel() {
   const [activeTab, setActiveTab] = useState("w-water");
   const [showFTable, setShowFTable] = useState(false);
 
@@ -47,28 +38,6 @@ export default function ProtectionLevelSection({
   const [result, setResult] = useState<string>("");
   const [details, setDetails] = useState<string>("");
 
-  function calculateF() {
-    const fsVal = Math.min(fs, 120);
-    const ffVal = hasManyWindows ? 0 : Math.min(ff, 120);
-    const fdVal = combustibleInsulation ? 0 : Math.min(fd, 120);
-    const fwVal = noInternalSeparation ? 0 : Math.min(fw, 120);
-
-    const f = 0.5 * fsVal + 0.25 * ffVal + 0.125 * fdVal + 0.125 * fwVal;
-
-    const F =
-      (1 + f / 100 - Math.pow(f, 2.5) / 1_000_000) * (1 - (sValue - 1) / 40);
-
-    setResult(`ضریب F = ${F.toFixed(4)}`);
-
-    setDetails(`
-f = (1/2)(${fsVal}) + (1/4)(${ffVal}) + (1/8)(${fdVal}) + (1/8)(${fwVal}) = ${f.toFixed(
-      2
-    )}
-F = [1 + f/100 - f^2.5 / 1,000,000] × [1 - (S - 1)/40]
-F = ${F.toFixed(4)}
-    `);
-  }
-
   const tabs = [
     { id: "w-water", label: "سیستم‌های آب (W)" },
     { id: "n-normal", label: "تجهیزات عادی (N)" },
@@ -83,7 +52,7 @@ F = ${F.toFixed(4)}
       <div className="card">
         <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
           <h2 className="card-title">
-            <div className="w-10 h-10 bg-linear-to-br from-warning to-danger rounded-lg flex items-center justify-center text-white text-xl">
+            <div className="w-10 h-10 bg-linear-to-br from-warning to-danger dark:from-primary dark:to-secondary rounded-lg flex items-center justify-center text-white text-xl">
               🛡️
             </div>
             محاسبه سطح حفاظت (D)
@@ -106,13 +75,15 @@ F = ${F.toFixed(4)}
         </div>
 
         {/* DYNAMIC TABS */}
-        <div className="tabs flex gap-0 mb-8 border-b-2 border-gray-200 justify-between overflow-x-auto">
+        <div className="tabs flex gap-0 mb-8 border-b-2 border-gray-200 dark:border-gray-800 justify-between overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`tab text-sm px-2 ${
-                activeTab === tab.id ? "active" : ""
+              className={`tab text-sm px-2 dark:text-gray-400 ${
+                activeTab === tab.id
+                  ? "active text-primary dark:text-primary"
+                  : ""
               }`}
             >
               {tab.label}
@@ -986,7 +957,7 @@ F = ${F.toFixed(4)}
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="p-3 border-b border-gray-300 dark:border-gray-700">
                   <tr>
                     <td className="p-3">تقسیم‌بندی EI30</td>
                     <td className="p-3">2</td>

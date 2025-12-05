@@ -22,12 +22,20 @@ export default function LoginPage() {
         password,
       });
 
+      const { data: session } = await authClient.getSession();
+      const role = session?.user.role;
+
       if (result.error) {
         setError(result.error.message || "Failed to sign in");
       } else {
         // Redirect to dashboard on success
-        router.push("/dashboard");
-        router.refresh();
+        if (role === "admin") {
+          router.push("/dashboard/admin");
+          router.refresh();
+        } else {
+          router.push("/dashboard");
+          router.refresh();
+        }
       }
     } catch (err) {
       setError("An unexpected error occurred");

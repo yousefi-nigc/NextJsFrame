@@ -2,23 +2,15 @@
 
 import Link from "next/link";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
-import { calculateFinalR } from "@/utils/calculations";
+// import { CalculationResults } from "@/types";
+// import { calculateFinalR } from "@/utils/calculations";
 
-interface FinalRiskSectionProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
+export default function FinalRisk() {
+  // const finalR = calculateFinalR(results);
 
-export default function FinalRiskSection({
-  results,
-  updateResults,
-}: FinalRiskSectionProps) {
-  const finalR = calculateFinalR(results);
-
-  if (finalR.R !== null) {
-    updateResults(finalR);
-  }
+  // if (finalR.R !== null) {
+  //   updateResults(finalR);
+  // }
 
   const getRiskStatus = (r: number | null) => {
     if (r === null) return { label: "نامشخص", color: "gray" };
@@ -33,7 +25,7 @@ export default function FinalRiskSection({
       <div className="card">
         <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
           <h2 className="card-title">
-            <div className="w-10 h-10 bg-linear-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white text-xl">
+            <div className="w-10 h-10 bg-linear-to-br from-purple-500 to-pink-500 dark:from-primary dark:to-secondary rounded-lg flex items-center justify-center text-white text-xl">
               📊
             </div>
             محاسبه نهایی ریسک
@@ -67,7 +59,7 @@ export default function FinalRiskSection({
           </div>
         </div>
 
-        {(finalR.R !== null || finalR.R1 !== null || finalR.R2 !== null) && (
+        {/* {(finalR.R !== null || finalR.R1 !== null || finalR.R2 !== null) && (
           <div className="mt-8 space-y-4">
             {finalR.R !== null && (
               <div className="p-6 bg-linear-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-primary">
@@ -153,7 +145,7 @@ export default function FinalRiskSection({
               </div>
             )}
           </div>
-        )}
+        )} */}
         <div className="results-grid" style={{ marginTop: "2rem" }}>
           <div className="result-card">
             <h3>ریسک نهایی ساختمان</h3>

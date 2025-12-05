@@ -1,28 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CalculationResults } from "@/types";
-import {
-  calculateQ,
-  // calculateI,
-  // calculateG,
-  // calculateE,
-  // calculateV,
-  // calculateZ,
-  calculateTotalP,
-  // calculateHRR,
-} from "@/utils/calculations";
 import { BlockMath } from "react-katex";
+import Image from "next/image";
+import mezzIntExit from "../../../../../../../../public/assets/mezz_int_exit.png";
+import mezzDirExit from "../../../../../../../../public/assets/mezz_dir_exit.png";
+import atriumLevels from "../../../../../../../../public/assets/atrium_levels.png";
+import loftDuplex from "../../../../../../../../public/assets/loft_duplex.png";
 
-interface PotentialRiskSectionProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function PotentialRiskSection({
-  results,
-  updateResults,
-}: PotentialRiskSectionProps) {
+export default function PotentialRisk() {
   const [activeTab, setActiveTab] = useState("q-factor");
 
   const [showQiGuide, setShowQiGuide] = useState(false);
@@ -31,6 +17,7 @@ export default function PotentialRiskSection({
   const [showITable, setShowITable] = useState(false);
   const [showZGuide, setShowZGuide] = useState(false);
   const [showgGuide, setShowgGuide] = useState(false);
+  const [showAteruimodal, setShowAteruimodal] = useState(false);
 
   // Q Factor State
   const [qi, setQi] = useState(800);
@@ -43,10 +30,10 @@ export default function PotentialRiskSection({
   // const [multiSelectVisible] = useState(false);
 
   // G Factor State
-  // const [sectionLength, setSectionLength] = useState(0);
-  // const [sectionWidth, setSectionWidth] = useState(0);
-  // const [sectionArea, setSectionArea] = useState(0);
-  // const [accessType, setAccessType] = useState<"wide" | "narrow">("wide");
+  const [showG1Guide, setShowG1Guide] = useState(false);
+  const [showG2Guide, setShowG2Guide] = useState(false);
+  const [showG3Guide, setShowG3Guide] = useState(false);
+  const [showG4Guide, setShowG4Guide] = useState(false);
 
   // E Factor State
   // const [floorNumber, setFloorNumber] = useState(1);
@@ -73,36 +60,13 @@ export default function PotentialRiskSection({
   // const [height, setHeight] = useState(0);
 
   const handleCalculateQ = () => {
-    const q = calculateQ(qi, qm);
-    if (q !== null) {
-      updateResults({ q });
-      const { P, P1, P2 } = calculateTotalP({ ...results, q });
-      updateResults({ P, P1, P2 });
-    }
+    // const q = calculateQ(qi, qm);
+    // if (q !== null) {
+    //   updateResults({ q });
+    //   const { P, P1, P2 } = calculateTotalP({ ...results, q });
+    //   updateResults({ P, P1, P2 });
+    // }
   };
-
-  // const handleCalculateG = () => {
-  //   const g = calculateG(sectionLength, sectionWidth, accessType);
-  //   if (g !== null) {
-  //     updateResults({ g });
-  //     const { P, P1, P2 } = calculateTotalP({ ...results, g });
-  //     updateResults({ P, P1, P2 });
-  //   }
-  // };
-
-  // const handleCalculateE = () => {
-  //   const e = calculateE(floorNumber);
-  //   updateResults({ e });
-  //   const { P, P1, P2 } = calculateTotalP({ ...results, e });
-  //   updateResults({ P, P1, P2 });
-  // };
-
-  // const handleCalculateZ = () => {
-  //   const z = calculateZ(accessDistance, accessWidth, obstacles, height);
-  //   updateResults({ z });
-  //   const { P, P1, P2 } = calculateTotalP({ ...results, z });
-  //   updateResults({ P, P1, P2 });
-  // };
 
   const tabs = [
     { id: "q-factor", label: "ضریب بار آتش (q)" },
@@ -114,7 +78,7 @@ export default function PotentialRiskSection({
   ];
 
   return (
-    <section id="potential-risk" className="section">
+    <section id="potential-risk" className="">
       <div className="card">
         <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
           <h2 className="card-title">
@@ -153,13 +117,15 @@ export default function PotentialRiskSection({
         </div>
 
         {/* Tabs */}
-        <div className="tabs flex gap-0 mb-8 border-b-2 border-gray-200 justify-between overflow-x-auto">
+        <div className="tabs flex gap-0 mb-8 border-b-2 border-gray-200 dark:border-gray-800 justify-between overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`tab text-sm px-2 ${
-                activeTab === tab.id ? "active" : ""
+              className={`tab text-sm px-2 dark:text-gray-400 ${
+                activeTab === tab.id
+                  ? "active text-primary dark:text-primary"
+                  : ""
               }`}
             >
               {tab.label}
@@ -315,14 +281,14 @@ export default function PotentialRiskSection({
               محاسبه ضریب q
             </button>
 
-            {results.q !== null && (
+            {/* {results.q !== null && (
               <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
                 <div className="result-value">{results.q.toFixed(3)}</div>
                 <div className="text-sm text-gray-600 text-center">
                   (Q = {(qi + qm).toLocaleString()} MJ/m²)
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* Table guide */}
             <div
@@ -1596,31 +1562,62 @@ export default function PotentialRiskSection({
 
             {/* نوع دسترسی */}
             <div className="input-group">
-              <label>
+              <label className="input-label">
                 نوع دسترسی به ساختمان
-                <span
-                  className="input-help"
-                  // onClick={() => showGuide("access")}
+                <button
+                  type="button"
+                  onClick={() => setShowG1Guide((prev) => !prev)}
+                  className="text-[10px] font-semibold py-0.5 px-1 mr-1.5 bg-[#e3f2fd] rounded-sm text-primary-dark border border-[#1e88e530] hover:text-white hover:bg-[#90caf9] hover:border-primary-light transition-all duration-200 cursor-pointer"
                 >
-                  ؟
-                </span>
+                  راهنما
+                </button>
               </label>
               <select id="access-type" className="border p-2 rounded w-full">
                 <option value="wide">دسترسی از ضلع عریض (wide)</option>
                 <option value="narrow">دسترسی از ضلع باریک (narrow)</option>
               </select>
+
+              {/* G1 Guide */}
+              {showG1Guide && (
+                <div className="relative text-gray-600 dark:text-gray-300 left-0 mt-2 p-4 bg-[#e0f7fa] dark:bg-[#0f3460] text-sm rounded-lg shadow-md border border-[#00bfae30] dark:border-[#2196f380] w-full z-20">
+                  <p className="font-bold">نوع دسترسی به ساختمان</p>
+
+                  <br />
+
+                  <p className="mb-2">
+                    نوع ضلع دسترسی آتش‌نشانان بر سرعت و اثربخشی عملیات کنترل آتش
+                    تاثیر زیادی دارد.
+                  </p>
+                  <p className="mb-1">
+                    - <b>دسترسی از ضلع عریض (Wide)</b> یعنی دسترسی به ساختمان از
+                    ضلع بزرگ‌تر پلان است و آتش‌نشانی می‌تواند به بخش زیادی از
+                    محیط سریع دسترسی داشته باشد.
+                  </p>
+                  <p className="mb-1">
+                    - <b>دسترسی از ضلع باریک (Narrow)</b> یعنی فقط ضلع کوچک‌تر
+                    در معرض دسترسی آتش‌نشانان است. در این حالت گسترش آتش کنترل
+                    سخت‌تری دارد و طول و عرض برای محاسبه ضریب g جابجا در نظر
+                    گرفته می‌شوند (<b>مطابق بخش 4.5.2 سند FRAME</b>).
+                  </p>
+                  <p>
+                    انتخاب درست نوع دسترسی بسیار مهم است، زیرا روی برآورد ایمنی
+                    اثر مستقیم می‌گذارد.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* طول بخش */}
             <div className="input-group">
-              <label>
+              <label className="input-label">
                 طول بخش (l)
-                <span
-                  className="input-help"
-                  // onClick={() => showGuide("length")}
+                <button
+                  type="button"
+                  onClick={() => setShowG2Guide((prev) => !prev)}
+                  className="text-[10px] font-semibold py-0.5 px-1 mr-1.5 bg-[#e3f2fd] rounded-sm text-primary-dark border border-[#1e88e530] hover:text-white hover:bg-[#90caf9] hover:border-primary-light transition-all duration-200 cursor-pointer"
                 >
-                  ؟
-                </span>
+                  راهنما
+                </button>
               </label>
               <div className="input-wrapper">
                 <input
@@ -1633,18 +1630,44 @@ export default function PotentialRiskSection({
                 />
                 <span className="input-unit">متر</span>
               </div>
+
+              {/* G2 Guide */}
+              {showG2Guide && (
+                <div className="relative text-gray-600 dark:text-gray-300 left-0 mt-2 p-4 bg-[#e0f7fa] dark:bg-[#0f3460] text-sm rounded-lg shadow-md border border-[#00bfae30] dark:border-[#2196f380] w-full z-20">
+                  <p>
+                    <b>طول بخش (l)</b>
+                  </p>
+
+                  <br />
+
+                  <span className="text-[#666] dark:text-gray-300">
+                    <b>l</b> برابر با بیشترین فاصله بین مرکز دو ضلع روبروی هم در
+                    محدوده پلان طبقه است.
+                    <br />
+                    اگر شکل پلان مستطیل است، همان طول واقعی بزرگ‌تر را وارد
+                    کنید.
+                    <br />
+                    <b>در پلان‌های نامنظم</b>، از طول فرضی (طبق راهنمای سند:
+                    مساحت تقسیم بر عرض معادل) استفاده کنید.
+                    <br />
+                    <i>مثال:</i> در یک پلان مربعی، طول برابر با عرض خواهد بود.
+                    اگر پلان باریک است، طول همان ضلع بلند خواهد شد.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* عرض بخش */}
             <div className="input-group">
-              <label>
+              <label className="input-label">
                 عرض بخش (b)
-                <span
-                  className="input-help"
-                  // onClick={() => showGuide("width")}
+                <button
+                  type="button"
+                  onClick={() => setShowG3Guide((prev) => !prev)}
+                  className="text-[10px] font-semibold py-0.5 px-1 mr-1.5 bg-[#e3f2fd] rounded-sm text-primary-dark border border-[#1e88e530] hover:text-white hover:bg-[#90caf9] hover:border-primary-light transition-all duration-200 cursor-pointer"
                 >
-                  ؟
-                </span>
+                  راهنما
+                </button>
               </label>
               <div className="input-wrapper">
                 <input
@@ -1657,18 +1680,44 @@ export default function PotentialRiskSection({
                 />
                 <span className="input-unit">متر</span>
               </div>
+
+              {/* G3 Guide */}
+              {showG3Guide && (
+                <div className="relative text-gray-600 dark:text-gray-300 left-0 mt-2 p-4 bg-[#e0f7fa] dark:bg-[#0f3460] text-sm rounded-lg shadow-md border border-[#00bfae30] dark:border-[#2196f380] w-full z-20">
+                  <p>
+                    <b>عرض بخش (b)</b>
+                  </p>
+
+                  <br />
+
+                  <span className="text-[#666] dark:text-gray-300">
+                    <b>b</b> معادل عرض موثر پلان در نقطه ورودی یا &quot;عرض
+                    معادل&quot; است (بدست آمده از تقسیم مساحت بخش به طول l).
+                    <br />
+                    ورود مقدار دقیق عرض زمانی ضروری است که پلان نامتقارن یا
+                    کشیده باشد.
+                    <br />
+                    در صورت عدم قطعیت، از تقسیم مساحت به طول برای محاسبه استفاده
+                    کنید.
+                    <br />
+                    <i>یادآوری:</i> اگر فقط مساحت و طول را می‌دانید، می‌توانید
+                    مقدار عرض را خالی بگذارید تا سیستم خودش محاسبه کند.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* مساحت اختیاری */}
             <div className="input-group">
-              <label>
+              <label className="input-label">
                 یا مساحت (اختیاری)
-                <span
-                  className="input-help"
-                  // onClick={() => showGuide("area")}
+                <button
+                  type="button"
+                  onClick={() => setShowG4Guide((prev) => !prev)}
+                  className="text-[10px] font-semibold py-0.5 px-1 mr-1.5 bg-[#e3f2fd] rounded-sm text-primary-dark border border-[#1e88e530] hover:text-white hover:bg-[#90caf9] hover:border-primary-light transition-all duration-200 cursor-pointer"
                 >
-                  ؟
-                </span>
+                  راهنما
+                </button>
               </label>
               <div className="input-wrapper">
                 <input
@@ -1681,6 +1730,30 @@ export default function PotentialRiskSection({
                 />
                 <span className="input-unit">متر مربع</span>
               </div>
+
+              {/* G4 Guide */}
+              {showG4Guide && (
+                <div className="relative text-gray-600 dark:text-gray-300 left-0 mt-2 p-4 bg-[#e0f7fa] dark:bg-[#0f3460] text-sm rounded-lg shadow-md border border-[#00bfae30] dark:border-[#2196f380] w-full z-20">
+                  <p>
+                    <b>مساحت (اختیاری)</b>
+                  </p>
+
+                  <br />
+
+                  <span className="text-[#666] dark:text-gray-300">
+                    اگر فقط مساحت پلان را دارید و یکی از ابعاد l یا b را
+                    می‌دانید، وارد کردن مقدار مساحت کافی است.
+                    <br />
+                    <b>مساحت معادل = طول × عرض</b>
+                    <br />
+                    در محاسبه ضریب گسترش (g)، این مقدار به تعیین دقیق ابعاد موثر
+                    خصوصاً در پلان‌های نامنظم و راهروها کمک می‌کند.
+                    <br />
+                    <i>توصیه:</i> همیشه از مقدار دقیق و مهندسی‌شده مساحت طبق
+                    نقشه تأیید شده استفاده کنید.
+                  </span>
+                </div>
+              )}
             </div>
 
             <button
@@ -1731,10 +1804,132 @@ export default function PotentialRiskSection({
 
             <button
               id="special-guide-btn"
-              className="btn bg-primary-dark text-white text-sm mb-3"
+              className="px-3 py-2 md:px-7 md:py-3.5 rounded-lg font-semibold transition-all duration-300 inline-flex items-center justify-center gap-2 cursor-pointer bg-primary-dark text-white text-sm mb-3 sm:text-nowrap"
+              onClick={() => setShowAteruimodal((prev) => !prev)}
             >
               📖 راهنمای آتریوم ، نیم‌طبقه ، لوفت و دوبلکس
             </button>
+
+            {/* Collapsible Section */}
+            <div
+              className={`transition-all duration-300 overflow-hidden mb-8 ${
+                showAteruimodal
+                  ? "max-h-[5000px] opacity-100"
+                  : "max-h-0 opacity-0"
+              }`}
+            >
+              <div
+                className="p-6 rounded-lg border"
+                dir="rtl"
+                style={{
+                  background: "var(--bg-primary)",
+                  color: "var(--text-primary)",
+                  borderColor: "var(--color-border-color)",
+                }}
+              >
+                {/* Title */}
+                <h2 className="text-xl font-bold mb-4">
+                  راهنمای ویژه FRAME 2015 - آتریوم، Mezzanine، لوفت و دوبلکس
+                </h2>
+
+                <p className="mb-4">
+                  در روش FRAME 2015، فضاهای معماری ویژه مانند{" "}
+                  <strong>آتریوم</strong>، نیم‌طبقه یا <em>mezzanine</em>، و
+                  همچنین واحدهای دوبلکس یا لوفت، شرایط خاصی در محاسبات ضرایب{" "}
+                  <strong>e</strong>، <strong>z</strong> و گاهی{" "}
+                  <strong>g</strong> ایجاد می‌کنند.
+                </p>
+
+                {/* Mezzanine */}
+                <h3 className="text-lg font-semibold mb-2">
+                  ۱. Mezzanine (نیم‌طبقه)
+                </h3>
+                <p className="mb-2">
+                  نیم‌طبقه بخشی است که مساحت آن کمتر از طبقه کامل بوده و درون
+                  همان فضا ساخته می‌شود.
+                </p>
+                <ul className="list-disc pr-6 mb-4 text-[15px] leading-7">
+                  <li>
+                    اگر نیم‌طبقه خروج داخلی داشته باشد → در محاسبه{" "}
+                    <strong>e</strong> به صورت <strong>اعشار</strong> اضافه
+                    می‌شود.
+                  </li>
+                  <li>
+                    اگر نیم‌طبقه خروج مستقیم داشته باشد → دسترسی امداد بهتر و
+                    مقدار <strong>z</strong> کمتر می‌شود.
+                  </li>
+                </ul>
+
+                {/* Example images */}
+                <div className="space-y-4 mb-4">
+                  <Image
+                    src={mezzIntExit}
+                    alt="Mezzanine internal exit"
+                    className="w-fit rounded-lg"
+                  />
+
+                  <Image
+                    src={mezzDirExit}
+                    alt="Mezzanine direct exit"
+                    className="w-fit rounded-lg"
+                  />
+                </div>
+
+                {/* Atrium */}
+                <h3 className="text-lg font-semibold mb-2">۲. آتریوم</h3>
+                <p className="mb-2">
+                  آتریوم فضایی چندسطحی است که طبقات را به‌طور مستقیم به هم متصل
+                  می‌کند.
+                </p>
+
+                <ul className="list-disc pr-6 mb-4 text-[15px] leading-7">
+                  <li>
+                    ارتفاع مؤثر طبقه در آتریوم بر ضریب <strong>e</strong> تأثیر
+                    دارد.
+                  </li>
+                  <li>
+                    تهویه طبیعی و مسیر دود خروجی می‌تواند <strong>k</strong> و{" "}
+                    <strong>v</strong> را تغییر دهد.
+                  </li>
+                </ul>
+
+                <Image
+                  src={atriumLevels}
+                  className="w-fit rounded-lg mb-4"
+                  alt="Atrium levels"
+                />
+
+                {/* Loft & Duplex */}
+                <h3 className="text-lg font-semibold mb-2">۳. لوفت و دوبلکس</h3>
+
+                <p className="mb-2">
+                  طبقه دوم در این واحدها معمولاً بدون جداسازی کامل است،
+                  بنابراین:
+                </p>
+
+                <ul className="list-disc pr-6 mb-4 text-[15px] leading-7">
+                  <li>
+                    مقدار <strong>e</strong> برای طبقه دوم به صورت اعشاری محاسبه
+                    می‌شود.
+                  </li>
+                  <li>
+                    ضریب <strong>z</strong> باید دسترسی امداد به هر دو سطح را
+                    بررسی کند.
+                  </li>
+                </ul>
+
+                <Image
+                  src={loftDuplex}
+                  className="w-fit rounded-lg mb-4"
+                  alt="Loft duplex"
+                />
+
+                {/* Footer note */}
+                <p className="text-xs opacity-70 border-t pt-3">
+                  این راهنما بر اساس نسخه 2015 FRAME تهیه شده است.
+                </p>
+              </div>
+            </div>
 
             <div className="input-group">
               <label htmlFor="floor-E" className="input-label">
@@ -1988,7 +2183,7 @@ export default function PotentialRiskSection({
         )}
 
         {/* Total P Results */}
-        {(results.P !== null || results.P1 !== null || results.P2 !== null) && (
+        {/* {(results.P !== null || results.P1 !== null || results.P2 !== null) && (
           <div className="mt-8 p-6 bg-linear-to-br from-green-50 to-blue-50 rounded-xl border-2 border-green-500">
             <h3 className="text-xl font-bold text-green-700 mb-4 text-center">
               نتایج ریسک بالقوه
@@ -2025,7 +2220,7 @@ export default function PotentialRiskSection({
               )}
             </div>
           </div>
-        )}
+        )} */}
         <div className="results-grid" style={{ marginTop: "2rem" }}>
           <div className="result-card">
             <h3>ریسک ساختمان</h3>

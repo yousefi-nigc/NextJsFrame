@@ -1,19 +1,44 @@
 "use client";
 
 import { CalculationResults } from "@/types";
+// import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 interface ReportSectionProps {
   results: CalculationResults;
 }
 
+// async function getFloors(projectId: string) {
+//   const res = await fetch(`/api/project/${projectId}/floor`, {
+//     method: "GET",
+//     cache: "no-store",
+//   });
+
+//   if (!res.ok) throw new Error("Failed to fetch floors");
+//   return res.json();
+// }
+
 export default function ReportSection({ results }: ReportSectionProps) {
+  const [projectName, setProjectName] = useState("");
+  const [projectAddress, setProjectAddress] = useState("");
+  const [expertName, setExpertName] = useState("");
+  const [floorName, setFloorName] = useState("");
+
+  // const projectId = "123";
+
+  // const floorsQuery = useQuery({
+  //   queryKey: ["floors", projectId],
+  //   queryFn: () => getFloors(projectId),
+  //   enabled: !!projectId,
+  // });
+
   return (
     <section id="report" className="section">
       <div className="card">
         {/* HEADER */}
-        <div className="card-header">
-          <h2 className="card-title flex items-center gap-2">
-            <div className="h-10 bg-linear-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center text-white text-xl">
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+          <h2 className="card-title">
+            <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center text-white text-xl">
               📄
             </div>
             گزارش نهایی ارزیابی ریسک
@@ -21,44 +46,19 @@ export default function ReportSection({ results }: ReportSectionProps) {
         </div>
 
         {/* بخش اطلاعات پروژه */}
-        <div
-          className="
-              bg-[#f0f7ff]
-              p-1 sm:p-5 
-              rounded-lg 
-              m-5 
-              border 
-              border-[#4C84C6]
-            "
-        >
-          <h3
-            className="
-                text-primary-dark 
-                mb-4 
-                flex 
-                items-center 
-                gap-2
-                font-bold
-              "
-          >
+        <div className="bg-[#f0f7ff] dark:bg-(--bg-secondary) p-1 sm:p-5 rounded-lg m-5 border border-[#4C84C6]">
+          <h3 className="text-primary-dark mb-4 flex items-center gap-2 font-bold">
             <span className="text-[1.3em]">📋</span>
             اطلاعات پروژه و ذخیره‌سازی
           </h3>
 
           {/* GRID */}
-          <div
-            className="
-                grid 
-                gap-4 
-                mb-5
-                grid-cols-repeat(auto-fit,minmax(250px,1fr))]
-              "
-          >
+          <div className="grid gap-4 mb-5 grid-cols-repeat(auto-fit,minmax(250px,1fr))]">
             {/* نام پروژه */}
             <div className="form-group">
               <label
                 htmlFor="project-name"
-                className="block mb-1 font-bold text-[#333]"
+                className="block mb-1 font-bold text-[#333] dark:text-white"
               >
                 نام پروژه: <span className="text-red-500">*</span>
               </label>
@@ -66,15 +66,9 @@ export default function ReportSection({ results }: ReportSectionProps) {
                 id="project-name"
                 type="text"
                 placeholder="مثال: ساختمان اداری شرکت گاز"
-                className="
-                    w-full 
-                    px-3 
-                    py-2 
-                    border 
-                    border-[#ddd] 
-                    rounded 
-                    font-vazir
-                  "
+                className="w-full px-3 py-2 border border-[#ddd] rounded font-vazir"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
               />
             </div>
 
@@ -82,7 +76,7 @@ export default function ReportSection({ results }: ReportSectionProps) {
             <div className="form-group">
               <label
                 htmlFor="project-address"
-                className="block mb-1 font-bold text-[#333]"
+                className="block mb-1 font-bold text-[#333] dark:text-white"
               >
                 آدرس محل:
               </label>
@@ -90,15 +84,9 @@ export default function ReportSection({ results }: ReportSectionProps) {
                 id="project-address"
                 type="text"
                 placeholder="آدرس کامل پروژه"
-                className="
-                    w-full 
-                    px-3 
-                    py-2 
-                    border 
-                    border-[#ddd] 
-                    rounded 
-                    font-vazir
-                  "
+                className="w-full px-3 py-2 border border-[#ddd] rounded font-vazir"
+                value={projectAddress}
+                onChange={(e) => setProjectAddress(e.target.value)}
               />
             </div>
 
@@ -106,7 +94,7 @@ export default function ReportSection({ results }: ReportSectionProps) {
             <div className="form-group">
               <label
                 htmlFor="expert-name"
-                className="block mb-1 font-bold text-[#333]"
+                className="block mb-1 font-bold text-[#333] dark:text-white"
               >
                 نام کارشناس:
               </label>
@@ -114,15 +102,9 @@ export default function ReportSection({ results }: ReportSectionProps) {
                 id="expert-name"
                 type="text"
                 placeholder="نام و نام خانوادگی کارشناس"
-                className="
-                    w-full 
-                    px-3 
-                    py-2 
-                    border 
-                    border-[#ddd] 
-                    rounded 
-                    font-vazir
-                  "
+                className="w-full px-3 py-2 border border-[#ddd] rounded font-vazir"
+                value={expertName}
+                onChange={(e) => setExpertName(e.target.value)}
               />
             </div>
 
@@ -130,7 +112,7 @@ export default function ReportSection({ results }: ReportSectionProps) {
             <div className="form-group">
               <label
                 htmlFor="floor-name"
-                className="block mb-1 font-bold text-[#333]"
+                className="block mb-1 font-bold text-[#333] dark:text-white"
               >
                 طبقه/بخش ارزیابی شده:
               </label>
@@ -138,15 +120,9 @@ export default function ReportSection({ results }: ReportSectionProps) {
                 id="floor-name"
                 type="text"
                 placeholder="مثال: طبقه دوم - بخش اداری"
-                className="
-                    w-full 
-                    px-3 
-                    py-2 
-                    border 
-                    border-[#ddd] 
-                    rounded 
-                    font-vazir
-                  "
+                className="w-full px-3 py-2 border border-[#ddd] rounded font-vazir"
+                value={floorName}
+                onChange={(e) => setFloorName(e.target.value)}
               />
             </div>
           </div>

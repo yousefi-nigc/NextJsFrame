@@ -17,7 +17,7 @@ interface AcceptableRiskSectionProps {
   updateResults: (updates: Partial<CalculationResults>) => void;
 }
 
-export default function AcceptableRiskSection({
+export default function AcceptableRisk({
   results,
   updateResults,
 }: AcceptableRiskSectionProps) {
@@ -102,7 +102,7 @@ export default function AcceptableRiskSection({
       <div className="card">
         <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
           <h2 className="card-title">
-            <div className="w-10 h-10 bg-linear-to-br from-success to-info rounded-lg flex items-center justify-center text-white text-xl">
+            <div className="w-10 h-10 bg-linear-to-br from-success to-info dark:from-primary dark:to-secondary rounded-lg flex items-center justify-center text-white text-xl">
               ✅
             </div>
             محاسبه سطح پذیرش (A)
@@ -127,13 +127,15 @@ export default function AcceptableRiskSection({
         </div>
 
         {/* tabs */}
-        <div className="tabs flex gap-0 mb-8 border-b-2 border-gray-200 justify-between overflow-x-auto">
+        <div className="tabs flex gap-0 mb-8 border-b-2 border-gray-200 dark:border-gray-800 justify-between overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`tab text-sm px-2 ${
-                activeTab === tab.id ? "active" : ""
+              className={`tab text-sm px-2 dark:text-gray-400 ${
+                activeTab === tab.id
+                  ? "active text-primary dark:text-primary"
+                  : ""
               }`}
             >
               {tab.label}
