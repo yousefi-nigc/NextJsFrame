@@ -264,14 +264,14 @@ export default function ProjectEditPage() {
       <div>
         <h3 className="text-xl font-semibold mb-4">تمامی طبقات</h3>
 
-        <div className="overflow-x-auto rounded-lg shadow-md border border-gray-300 dark:border-gray-600 mt-4">
+        <div className="rounded-lg shadow-md border border-gray-300 dark:border-gray-600 mt-4">
           <table className="w-full text-sm text-right table-fixed">
             <thead className="bg-gray-100 dark:bg-[#ffffff11] font-semibold">
               <tr>
-                <th className="w-2/3 md:w-[80%] xl:w-6/7 font-semibold p-3 border-b border-gray-300 dark:border-gray-700 whitespace-nowrap md:text-lg">
+                <th className="w-2/3 md:w-[80%] xl:w-5/7 font-semibold p-3 border-b border-gray-300 dark:border-gray-700 whitespace-nowrap md:text-lg">
                   طبقات
                 </th>
-                <th className="w-1/3 md:w-[20%] xl:w-1/7 font-semibold p-3 border-b border-gray-300 dark:border-gray-700 whitespace-nowrap md:text-lg">
+                <th className="w-1/3 md:w-[20%] xl:w-2/7 font-semibold p-3 border-b border-gray-300 dark:border-gray-700 whitespace-nowrap md:text-lg">
                   عملیات
                 </th>
               </tr>

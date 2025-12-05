@@ -30,10 +30,16 @@ export default function AddUserForm() {
         }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        setError("Invalid response from server. Please try again.");
+        return;
+      }
 
       if (response.ok) {
-        setSuccess(`User "${data.user.name}" created successfully!`);
+        setSuccess(`User "${data.user?.name || email}" created successfully!`);
         setName("");
         setEmail("");
         setPassword("");
@@ -41,7 +47,12 @@ export default function AddUserForm() {
         setError(data.error || "Failed to create user");
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      // Handle network errors
+      if (err instanceof TypeError && err.message.includes("fetch")) {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

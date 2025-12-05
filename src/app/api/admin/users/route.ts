@@ -19,12 +19,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    // Parse request body with error handling
+    let body;
+    try {
+      body = await request.json();
+    } catch (error) {
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
+
     const { email, password, name } = body;
 
+    // Validate required fields
     if (!email || !password || !name) {
       return NextResponse.json(
         { error: "Email, password, and name are required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: "Invalid email format" },
+        { status: 400 }
+      );
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: "Password must be at least 6 characters long" },
         { status: 400 }
       );
     }
@@ -48,6 +76,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
   } catch (error: any) {
+    console.error("Error creating user:", error);
     return NextResponse.json(
       { error: error.message || "Internal server error" },
       { status: 500 }

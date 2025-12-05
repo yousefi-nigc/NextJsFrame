@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   // QueryClient,
   useMutation,
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 
 export default function ProjectsPage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   // const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch projects
@@ -49,7 +51,8 @@ export default function ProjectsPage() {
     },
   });
 
-  const handleDelete = async (projectId: string) => {
+  const handleDelete = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation(); // Prevent row click
     const yes = window.confirm(
       "حذف کردن این پروژه به منزله حذف کردن تمامی اطلاعات پروژه است. آیا مایل به حذف هستید؟"
     );
@@ -57,6 +60,10 @@ export default function ProjectsPage() {
     if (!yes) return;
 
     deleteMutation.mutate(projectId);
+  };
+
+  const handleRowClick = (projectId: string) => {
+    router.push(`/dashboard/projects/${projectId}`);
   };
 
   if (isLoading) return <p>در حال بارگذاری...</p>;
@@ -82,24 +89,23 @@ export default function ProjectsPage() {
         {projects?.map((project) => (
           <li
             key={project.id}
-            className="dark:border-primary border-gray-200 bg-gray-50 dark:bg-(--input-bg) p-3 mb-2 flex justify-between w-full px-4 py-3.5 border-2 rounded-lg text-gray-900 dark:text-white text-base font-vazir transition-all duration-200"
+            onClick={() => handleRowClick(project.id)}
+            className="dark:border-primary border-gray-200 bg-gray-50 dark:bg-(--input-bg) p-3 mb-2 flex justify-between w-full px-4 py-3.5 border-2 rounded-lg text-gray-900 dark:text-white text-base font-vazir transition-all duration-200 cursor-pointer hover:bg-primary/10 dark:hover:bg-primary/20 hover:shadow-md active:scale-[0.98]"
           >
-            <Link
-              href={`/dashboard/projects/${project.id}`}
-              className="font-semibold"
-            >
+            <span className="font-semibold flex items-center justify-center">
               {project.name}
-            </Link>
+            </span>
             <div className="flex gap-3 cursor-pointer md:gap-6">
               <button
-                className="text-red-500 cursor-pointer"
-                onClick={() => handleDelete(project.id)}
+                className="text-red-500 hover:text-red-700 dark:hover:text-red-400 cursor-pointer px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                onClick={(e) => handleDelete(e, project.id)}
               >
                 حذف
               </button>
               <Link
                 href={`/dashboard/projects/${project.id}`}
-                className="text-blue-500"
+                onClick={(e) => e.stopPropagation()}
+                className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
               >
                 ویرایش
               </Link>
