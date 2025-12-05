@@ -7,10 +7,10 @@ import { db } from "@/lib/db";
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { projectId: string; floorId: string } }
+    { params }: { params: Promise<{ projectId: string; floorId: string }> }
 ) {
     try {
-        return await getAssessmentController(request, params.floorId);
+        return await getAssessmentController(request, (await params).floorId);
     } catch (error: any) {
         return NextResponse.json(
             { error: error.message || "Internal server error" },
@@ -21,10 +21,10 @@ export async function GET(
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { projectId: string; floorId: string } }
+    { params }: { params: Promise<{ projectId: string; floorId: string }> }
 ) {
     try {
-        return await createAssessmentController(request, params.floorId);
+        return await createAssessmentController(request, (await params).floorId);
     } catch (error: any) {
         return NextResponse.json(
             { error: error.message || "Internal server error" },
@@ -35,12 +35,12 @@ export async function POST(
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { projectId: string; floorId: string } }
+    { params }: { params: Promise<{ projectId: string; floorId: string }>}
 ) {
     try {
         // Get assessmentId from floorId (one-to-one relationship)
         const assessment = await db.assessment.findUnique({
-            where: { floorId: params.floorId },
+            where: { floorId: (await params).floorId },
             select: { id: true }
         });
 
@@ -51,7 +51,7 @@ export async function PUT(
             );
         }
 
-        return await updateAssessmentController(request, assessment.id, params.floorId);
+        return await updateAssessmentController(request, assessment.id, (await params).floorId);
     } catch (error: any) {
         return NextResponse.json(
             { error: error.message || "Internal server error" },
@@ -62,12 +62,12 @@ export async function PUT(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { projectId: string; floorId: string } }
+    { params }: { params: Promise<{ projectId: string; floorId: string }> }
 ) {
     try {
         // Get assessmentId from floorId (one-to-one relationship)
         const assessment = await db.assessment.findUnique({
-            where: { floorId: params.floorId },
+            where: { floorId: (await params).floorId },
             select: { id: true }
         });
 
