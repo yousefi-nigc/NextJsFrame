@@ -1,0 +1,380 @@
+"use client";
+
+import { useState } from "react";
+import { BlockMath } from "react-katex";
+import { CalculationResults } from "@/types";
+
+interface VFactorTabProps {
+  results: CalculationResults;
+  updateResults: (updates: Partial<CalculationResults>) => void;
+}
+
+export default function VFactorTab({
+  results,
+  updateResults,
+}: VFactorTabProps) {
+  const [windowArea, setWindowArea] = useState<number | "">(0);
+  const [staticVentArea, setStaticVentArea] = useState<number | "">(0);
+  const [ventMode, setVentMode] = useState<"manual" | "advanced">("manual");
+  const [mechanicalVentFlow, setMechanicalVentFlow] = useState<number | "">(0);
+  const [qvAdvanced, setQvAdvanced] = useState<number | "">("");
+  const [cdAdvanced, setCdAdvanced] = useState<number | "">(0.65);
+  const [deltaPAdvanced, setDeltaPAdvanced] = useState<number | "">(25);
+  const [rhoAdvanced, setRhoAdvanced] = useState<number | "">(1.2);
+  const [compartmentArea, setCompartmentArea] = useState<number | "">(100);
+  const [ventingRatio, setVentingRatio] = useState<number | "">(0.01);
+  const [qmVentilation, setQmVentilation] = useState<number | "">(500);
+  const [ceilingHeight, setCeilingHeight] = useState<number | "">(3);
+
+  const calculateAutoK = () => {
+    const window = typeof windowArea === "number" ? windowArea : 0;
+    const staticVent = typeof staticVentArea === "number" ? staticVentArea : 0;
+    const area = typeof compartmentArea === "number" ? compartmentArea : 100;
+
+    if (area > 0) {
+      const k = (window + staticVent) / area;
+      setVentingRatio(k);
+    }
+  };
+
+  const calculateV = () => {
+    const qm = typeof qmVentilation === "number" ? qmVentilation : 500;
+    const k = typeof ventingRatio === "number" ? ventingRatio : 0.01;
+    const h = typeof ceilingHeight === "number" ? ceilingHeight : 3;
+
+    if (qm <= 0) {
+      alert("Qm باید بزرگتر از صفر باشد");
+      return;
+    }
+
+    const v = 0.84 + 0.1 * Math.log10(qm) - Math.sqrt(k * Math.sqrt(h));
+    updateResults({ v });
+
+    // Recalculate P, P1, P2 if other factors are available
+    const { q, i, g, e, z } = results;
+    if (q !== null && i !== null && g !== null && e !== null && z !== null) {
+      const P = q * i * g * e * v * z;
+      const P1 = q * i * e * v * z;
+      const P2 = i * g * e * v * z;
+      updateResults({ P, P1, P2 });
+    }
+  };
+
+  return (
+    <div id="v-factor" className="tab-content">
+      <div className="formula-card" dir="ltr">
+        <div className="text-primary mb-3 text-lg font-semibold">
+          فرمول محاسبه v
+        </div>
+        <div className="formula-content">
+          <BlockMath
+            math={`v = 0.84 + 0.1 \\times \\log(Q_m) - \\sqrt{k \\times \\sqrt{h}}`}
+          />
+        </div>
+      </div>
+
+      <div className="help-card">
+        <div className="text-primary mb-3 font-semibold">توضیحات</div>
+        <div className="text-gray-500 leading-relaxed text-sm dark:text-white">
+          ضریب تهویه تأثیر دود و حرارت داخل ساختمان را نشان می‌دهد. <br />
+          <b>
+            k = نسبت مساحت بازشوهای تخلیه دود به مساحت کف (معمولاً 0.01 تا
+            0.02)
+          </b>
+        </div>
+      </div>
+
+      <div className="input-group">
+        <label className="input-label">
+          مساحت کل پنجره‌ها و نورگیرها (A<sub>w</sub>)
+        </label>
+        <div className="input-wrapper">
+          <input
+            type="number"
+            id="windowArea"
+            min="0"
+            step="0.01"
+            value={windowArea}
+            onChange={(e) =>
+              setWindowArea(
+                e.target.value === "" ? "" : parseFloat(e.target.value)
+              )
+            }
+            className="w-full"
+          />
+          <span className="input-unit">m²</span>
+        </div>
+        <div className="input-hint">
+          جمع مساحت پنجره‌ها و نورگیرهای قابل باز شدن به بیرون
+        </div>
+      </div>
+
+      <div className="input-group">
+        <label className="input-label">
+          مساحت دریچه‌های ثابت (A<sub>s</sub>)
+        </label>
+        <div className="input-wrapper">
+          <input
+            type="number"
+            id="staticVentArea"
+            min="0"
+            step="0.01"
+            value={staticVentArea}
+            onChange={(e) =>
+              setStaticVentArea(
+                e.target.value === "" ? "" : parseFloat(e.target.value)
+              )
+            }
+            className="w-full"
+          />
+          <span className="input-unit">m²</span>
+        </div>
+        <div className="input-hint">
+          جمع مساحت دریچه‌های ثابت تخلیه دود
+        </div>
+      </div>
+
+      <div className="input-group">
+        <label className="input-label">دبی تهویه مکانیکی</label>
+
+        <div style={{ margin: "0.25rem 0" }}>
+          <label className="mr-3">
+            <input
+              type="radio"
+              name="ventMode"
+              value="manual"
+              checked={ventMode === "manual"}
+              onChange={() => setVentMode("manual")}
+            />{" "}
+            حالت دستی
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="ventMode"
+              value="advanced"
+              checked={ventMode === "advanced"}
+              onChange={() => setVentMode("advanced")}
+            />{" "}
+            حالت پیشرفته
+          </label>
+        </div>
+
+        {ventMode === "manual" && (
+          <div id="manual-vent">
+            <div className="input-wrapper">
+              <input
+                type="number"
+                id="mechanicalVentFlow"
+                min="0"
+                step="1"
+                value={mechanicalVentFlow}
+                onChange={(e) =>
+                  setMechanicalVentFlow(
+                    e.target.value === "" ? "" : parseFloat(e.target.value)
+                  )
+                }
+                className="w-full"
+              />
+              <span className="input-unit">Nm³/h</span>
+            </div>
+            <div className="input-hint">اگر وجود ندارد صفر وارد کنید</div>
+          </div>
+        )}
+
+        {ventMode === "advanced" && (
+          <div
+            id="advanced-vent"
+            className="mt-2 p-3 rounded-md border border-dashed"
+            style={{
+              background: "#f9f9f9",
+              borderStyle: "dashed",
+              borderColor: "#ccc",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "0.9rem",
+                marginBottom: "0.8rem",
+                lineHeight: 1.6,
+                backgroundColor: "#eef6fb",
+                padding: "0.6rem",
+                borderLeft: "4px solid #2196F3",
+                borderRadius: 4,
+              }}
+            >
+              <b>فرمول محاسبه طبق NFPA 204 و EN TR 12101-4:</b>
+              <br />
+              <code>Qv = Cd × A × √(2 × ΔP / ρ)</code>
+              <br />
+              که Qv بر حسب m³/s است و پس از محاسبه، به Nm³/h تبدیل می‌شود.
+              <br />
+              <span style={{ color: "#555" }}>
+                Cd: ضریب تخلیه — ΔP: اختلاف فشار (Pa) — ρ: چگالی هوا (kg/m³)
+              </span>
+            </div>
+
+            <div className="input-group">
+              <label>Qv (m³/s)</label>
+              <input
+                type="number"
+                id="qv-advanced"
+                step="0.001"
+                value={qvAdvanced}
+                onChange={(e) =>
+                  setQvAdvanced(
+                    e.target.value === "" ? "" : parseFloat(e.target.value)
+                  )
+                }
+                className="w-full"
+              />
+            </div>
+            <div className="input-group">
+              <label>Cd</label>
+              <input
+                type="number"
+                id="cd-advanced"
+                step="0.01"
+                value={cdAdvanced}
+                onChange={(e) =>
+                  setCdAdvanced(parseFloat(e.target.value || "0"))
+                }
+                className="w-full"
+              />
+            </div>
+            <div className="input-group">
+              <label>ΔP (Pa)</label>
+              <input
+                type="number"
+                id="deltaP-advanced"
+                step="1"
+                value={deltaPAdvanced}
+                onChange={(e) =>
+                  setDeltaPAdvanced(parseFloat(e.target.value || "0"))
+                }
+                className="w-full"
+              />
+            </div>
+            <div className="input-group">
+              <label>ρ (kg/m³)</label>
+              <input
+                type="number"
+                id="rho-advanced"
+                step="0.01"
+                value={rhoAdvanced}
+                onChange={(e) =>
+                  setRhoAdvanced(parseFloat(e.target.value || "0"))
+                }
+                className="w-full"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="input-group">
+        <label className="input-label">مساحت کل کف (A)</label>
+        <div className="input-wrapper">
+          <input
+            type="number"
+            id="compartmentArea"
+            min="1"
+            step="0.01"
+            value={compartmentArea}
+            onChange={(e) =>
+              setCompartmentArea(
+                e.target.value === "" ? "" : parseFloat(e.target.value)
+              )
+            }
+            className="w-full"
+          />
+          <span className="input-unit">m²</span>
+        </div>
+        <div className="input-hint">کل مساحت فضای مورد نظر</div>
+      </div>
+
+      <button
+        className="btn btn-secondary mb-6"
+        type="button"
+        onClick={calculateAutoK}
+      >
+        محاسبه خودکار k بر اساس بازشوها
+      </button>
+
+      <div className="input-group">
+        <label className="input-label">نسبت تهویه (k)</label>
+        <div className="input-wrapper">
+          <input
+            type="number"
+            id="venting-ratio"
+            readOnly
+            step="0.001"
+            value={ventingRatio}
+            className="w-full"
+          />
+        </div>
+        <div className="input-hint" id="k-details">
+          نسبت مساحت بازشوهای مؤثر به مساحت کف (بر اساس داده‌های بالا)
+        </div>
+      </div>
+
+      <div className="input-group">
+        <label className="input-label">بار آتش متحرک (Qm)</label>
+        <div className="input-wrapper">
+          <input
+            type="number"
+            id="qm-ventilation"
+            min="0"
+            step="100"
+            value={qmVentilation}
+            onChange={(e) =>
+              setQmVentilation(
+                e.target.value === "" ? "" : parseFloat(e.target.value)
+              )
+            }
+            className="w-full"
+          />
+          <span className="input-unit">MJ/m²</span>
+        </div>
+        <div className="input-hint">
+          همان مقدار استفاده شده در محاسبه q
+        </div>
+      </div>
+
+      <div className="input-group">
+        <label className="input-label">ارتفاع سقف (h)</label>
+        <div className="input-wrapper">
+          <input
+            type="number"
+            id="ceiling-height"
+            min="2"
+            max="15"
+            step="0.5"
+            value={ceilingHeight}
+            onChange={(e) =>
+              setCeilingHeight(
+                e.target.value === "" ? "" : parseFloat(e.target.value)
+              )
+            }
+            className="w-full"
+          />
+          <span className="input-unit">متر</span>
+        </div>
+        <div className="input-hint">
+          ارتفاع از کف تا سقف (حداکثر 15 متر)
+        </div>
+      </div>
+
+      <button className="btn btn-primary" onClick={calculateV}>
+        محاسبه ضریب v
+      </button>
+
+      {results.v !== null && (
+        <div className="result-display" style={{ marginTop: "1rem" }}>
+          <div className="result-value">{results.v.toFixed(3)}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
