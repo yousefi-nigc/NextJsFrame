@@ -167,9 +167,12 @@ model Assessment {
   dependencyType    String?  // Category code
   dependencyManual  Float?   // d (manual override)
   
+  // Floor level for e calculation
+  floorLevel        Float?   // E (can be negative for basements)
+  
   // Protection Inputs (W, N, S, F, U, Y)
-  waterStorageType  String?  // w1 logic
-  waterCapacity     Float?   // w2 logic
+  waterStorageType  String?  // w1 logic ("auto", "manual", "none")
+  waterCapacity     Float?   // w2 logic (m³)
   hydrantCount25    Int?
   hydrantCount3     Int?
   hydrantCount4     Int?
@@ -179,9 +182,9 @@ model Assessment {
   fireStationType   Float?   // s4
   
   structureResist   Float?   // fs (minutes)
-  facadeResist      Float?   // ff
-  roofResist        Float?   // fd
-  wallResist        Float?   // fw
+  facadeResist      Float?   // ff (minutes)
+  roofResist        Float?   // fd (minutes)
+  wallResist        Float?   // fw (minutes)
   
   // --- SECTION 2: CALCULATED FACTORS ---
   
