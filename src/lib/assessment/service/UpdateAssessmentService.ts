@@ -69,14 +69,18 @@ export async function updateAssessmentService({
             facadeResist: existing.facadeResist ?? undefined,
             roofResist: existing.roofResist ?? undefined,
             wallResist: existing.wallResist ?? undefined,
-            floorLevel: existing.floor.level,
+            floorLevel: (existing as any).floorLevel ?? existing.floor.level ?? undefined,
         };
 
-        // Merge with new inputs (only override defined values)
+        // Merge with new inputs (only override defined values, not undefined or null)
+        // This ensures that if a field is not sent, it won't overwrite existing values
         const mergedInputs: any = { ...currentInputs };
         Object.keys(inputs).forEach(key => {
-            if (inputs[key as keyof typeof inputs] !== undefined) {
-                mergedInputs[key] = inputs[key as keyof typeof inputs];
+            const value = inputs[key as keyof typeof inputs];
+            // Only update if value is explicitly provided (not undefined and not null)
+            // This prevents accidental overwriting of existing values
+            if (value !== undefined && value !== null) {
+                mergedInputs[key] = value;
             }
         });
 
@@ -86,49 +90,52 @@ export async function updateAssessmentService({
 
         // Update assessment with new inputs and recalculated values
         // Calculated values are always updated and stored in the database
+        // Only update input fields that are explicitly provided (not undefined and not null)
+        // This ensures optional fields that aren't sent won't overwrite existing values
         const assessment = await db.assessment.update({
             where: { id: assessmentId },
             data: {
-                // Update inputs
-                ...(inputs.qi !== undefined && { qi: inputs.qi }),
-                ...(inputs.qm !== undefined && { qm: inputs.qm }),
-                ...(inputs.tempDestruction !== undefined && { tempDestruction: inputs.tempDestruction }),
-                ...(inputs.avgDimension !== undefined && { avgDimension: inputs.avgDimension }),
-                ...(inputs.materialClass !== undefined && { materialClass: inputs.materialClass }),
-                ...(inputs.length !== undefined && { length: inputs.length }),
-                ...(inputs.width !== undefined && { width: inputs.width }),
-                ...(inputs.area !== undefined && { area: inputs.area }),
-                ...(inputs.height !== undefined && { height: inputs.height }),
-                ...(inputs.accessType !== undefined && { accessType: inputs.accessType }),
-                ...(inputs.windowArea !== undefined && { windowArea: inputs.windowArea }),
-                ...(inputs.staticVentArea !== undefined && { staticVentArea: inputs.staticVentArea }),
-                ...(inputs.mechVentFlow !== undefined && { mechVentFlow: inputs.mechVentFlow }),
-                ...(inputs.ventingRatio_k !== undefined && { ventingRatio_k: inputs.ventingRatio_k }),
-                ...(inputs.accessSides !== undefined && { accessSides: inputs.accessSides }),
-                ...(inputs.heightAbove !== undefined && { heightAbove: inputs.heightAbove }),
-                ...(inputs.depthBelow !== undefined && { depthBelow: inputs.depthBelow }),
-                ...(inputs.mainActivity !== undefined && { mainActivity: inputs.mainActivity }),
-                ...(inputs.occupantCount !== undefined && { occupantCount: inputs.occupantCount }),
-                ...(inputs.occupantFactor !== undefined && { occupantFactor: inputs.occupantFactor }),
-                ...(inputs.exitWidthTotal !== undefined && { exitWidthTotal: inputs.exitWidthTotal }),
-                ...(inputs.mobilityFactor !== undefined && { mobilityFactor: inputs.mobilityFactor }),
-                ...(inputs.valueTotal !== undefined && { valueTotal: inputs.valueTotal }),
-                ...(inputs.valueYear !== undefined && { valueYear: inputs.valueYear }),
-                ...(inputs.replaceability !== undefined && { replaceability: inputs.replaceability }),
-                ...(inputs.dependencyType !== undefined && { dependencyType: inputs.dependencyType }),
-                ...(inputs.dependencyManual !== undefined && { dependencyManual: inputs.dependencyManual }),
-                ...(inputs.waterStorageType !== undefined && { waterStorageType: inputs.waterStorageType }),
-                ...(inputs.waterCapacity !== undefined && { waterCapacity: inputs.waterCapacity }),
-                ...(inputs.hydrantCount25 !== undefined && { hydrantCount25: inputs.hydrantCount25 }),
-                ...(inputs.hydrantCount3 !== undefined && { hydrantCount3: inputs.hydrantCount3 }),
-                ...(inputs.hydrantCount4 !== undefined && { hydrantCount4: inputs.hydrantCount4 }),
-                ...(inputs.detectionType !== undefined && { detectionType: inputs.detectionType }),
-                ...(inputs.sprinklerType !== undefined && { sprinklerType: inputs.sprinklerType }),
-                ...(inputs.fireStationType !== undefined && { fireStationType: inputs.fireStationType }),
-                ...(inputs.structureResist !== undefined && { structureResist: inputs.structureResist }),
-                ...(inputs.facadeResist !== undefined && { facadeResist: inputs.facadeResist }),
-                ...(inputs.roofResist !== undefined && { roofResist: inputs.roofResist }),
-                ...(inputs.wallResist !== undefined && { wallResist: inputs.wallResist }),
+                // Update inputs - only if explicitly provided (not undefined and not null)
+                ...(inputs.qi !== undefined && inputs.qi !== null && { qi: inputs.qi }),
+                ...(inputs.qm !== undefined && inputs.qm !== null && { qm: inputs.qm }),
+                ...(inputs.tempDestruction !== undefined && inputs.tempDestruction !== null && { tempDestruction: inputs.tempDestruction }),
+                ...(inputs.avgDimension !== undefined && inputs.avgDimension !== null && { avgDimension: inputs.avgDimension }),
+                ...(inputs.materialClass !== undefined && inputs.materialClass !== null && { materialClass: inputs.materialClass }),
+                ...(inputs.length !== undefined && inputs.length !== null && { length: inputs.length }),
+                ...(inputs.width !== undefined && inputs.width !== null && { width: inputs.width }),
+                ...(inputs.area !== undefined && inputs.area !== null && { area: inputs.area }),
+                ...(inputs.height !== undefined && inputs.height !== null && { height: inputs.height }),
+                ...(inputs.accessType !== undefined && inputs.accessType !== null && { accessType: inputs.accessType }),
+                ...(inputs.windowArea !== undefined && inputs.windowArea !== null && { windowArea: inputs.windowArea }),
+                ...(inputs.staticVentArea !== undefined && inputs.staticVentArea !== null && { staticVentArea: inputs.staticVentArea }),
+                ...(inputs.mechVentFlow !== undefined && inputs.mechVentFlow !== null && { mechVentFlow: inputs.mechVentFlow }),
+                ...(inputs.ventingRatio_k !== undefined && inputs.ventingRatio_k !== null && { ventingRatio_k: inputs.ventingRatio_k }),
+                ...(inputs.accessSides !== undefined && inputs.accessSides !== null && { accessSides: inputs.accessSides }),
+                ...(inputs.heightAbove !== undefined && inputs.heightAbove !== null && { heightAbove: inputs.heightAbove }),
+                ...(inputs.depthBelow !== undefined && inputs.depthBelow !== null && { depthBelow: inputs.depthBelow }),
+                ...(inputs.mainActivity !== undefined && inputs.mainActivity !== null && { mainActivity: inputs.mainActivity }),
+                ...(inputs.occupantCount !== undefined && inputs.occupantCount !== null && { occupantCount: inputs.occupantCount }),
+                ...(inputs.occupantFactor !== undefined && inputs.occupantFactor !== null && { occupantFactor: inputs.occupantFactor }),
+                ...(inputs.exitWidthTotal !== undefined && inputs.exitWidthTotal !== null && { exitWidthTotal: inputs.exitWidthTotal }),
+                ...(inputs.mobilityFactor !== undefined && inputs.mobilityFactor !== null && { mobilityFactor: inputs.mobilityFactor }),
+                ...(inputs.valueTotal !== undefined && inputs.valueTotal !== null && { valueTotal: inputs.valueTotal }),
+                ...(inputs.valueYear !== undefined && inputs.valueYear !== null && { valueYear: inputs.valueYear }),
+                ...(inputs.replaceability !== undefined && inputs.replaceability !== null && { replaceability: inputs.replaceability }),
+                ...(inputs.dependencyType !== undefined && inputs.dependencyType !== null && { dependencyType: inputs.dependencyType }),
+                ...(inputs.dependencyManual !== undefined && inputs.dependencyManual !== null && { dependencyManual: inputs.dependencyManual }),
+                ...(inputs.waterStorageType !== undefined && inputs.waterStorageType !== null && { waterStorageType: inputs.waterStorageType }),
+                ...(inputs.waterCapacity !== undefined && inputs.waterCapacity !== null && { waterCapacity: inputs.waterCapacity }),
+                ...(inputs.hydrantCount25 !== undefined && inputs.hydrantCount25 !== null && { hydrantCount25: inputs.hydrantCount25 }),
+                ...(inputs.hydrantCount3 !== undefined && inputs.hydrantCount3 !== null && { hydrantCount3: inputs.hydrantCount3 }),
+                ...(inputs.hydrantCount4 !== undefined && inputs.hydrantCount4 !== null && { hydrantCount4: inputs.hydrantCount4 }),
+                ...(inputs.detectionType !== undefined && inputs.detectionType !== null && { detectionType: inputs.detectionType }),
+                ...(inputs.sprinklerType !== undefined && inputs.sprinklerType !== null && { sprinklerType: inputs.sprinklerType }),
+                ...(inputs.fireStationType !== undefined && inputs.fireStationType !== null && { fireStationType: inputs.fireStationType }),
+                ...(inputs.structureResist !== undefined && inputs.structureResist !== null && { structureResist: inputs.structureResist }),
+                ...(inputs.facadeResist !== undefined && inputs.facadeResist !== null && { facadeResist: inputs.facadeResist }),
+                ...(inputs.roofResist !== undefined && inputs.roofResist !== null && { roofResist: inputs.roofResist }),
+                ...(inputs.wallResist !== undefined && inputs.wallResist !== null && { wallResist: inputs.wallResist }),
+                ...(inputs.floorLevel !== undefined && inputs.floorLevel !== null && { floorLevel: inputs.floorLevel }),
                 // Always update calculated values
                 factor_q: calculations.factor_q,
                 factor_i: calculations.factor_i,
