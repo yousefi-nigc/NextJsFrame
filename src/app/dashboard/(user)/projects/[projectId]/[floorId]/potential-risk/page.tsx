@@ -1,54 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CalculationResults } from "@/types";
 import { BlockMath } from "react-katex";
 import PotentialRiskTabs from "@/components/potential-risk/PotentialRiskTabs";
-import PotentialRiskResults from "@/components/potential-risk/PotentialRiskResults";
 import QFactorTab from "@/components/potential-risk/QFactorTab";
-import IFactorTab from "@/components/potential-risk/IFactorTab";
-import VFactorTab from "@/components/potential-risk/VFactorTab";
-import GFactorTab from "@/components/potential-risk/GFactorTab";
-import EFactorTab from "@/components/potential-risk/EFactorTab";
-import ZFactorTab from "@/components/potential-risk/ZFactorTab";
+import { useParams } from "next/navigation";
 
-interface PotentialRiskSectionProps {
-  results?: CalculationResults;
-  updateResults?: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function PotentialRisk({
-  results: externalResults,
-  updateResults: externalUpdateResults,
-}: PotentialRiskSectionProps = {}) {
+export default function PotentialRisk({ }) {
   const [activeTab, setActiveTab] = useState("q-factor");
-
-  // Internal state management if props not provided
-  const [internalResults, setInternalResults] = useState<CalculationResults>({
-    q: null, i: null, g: null, e: null, v: null, z: null,
-    a: null, t: null, c: null, r: null, d: null,
-    W: null, N: null, S: null, F: null, U: null, Y: null,
-    P: null, P1: null, P2: null,
-    A: null, A1: null, A2: null,
-    D: null, D1: null, D2: null,
-    R: null, R1: null, R2: null,
-  });
-
-  const results = externalResults || internalResults;
-  const updateResults = externalUpdateResults || ((updates: Partial<CalculationResults>) => {
-    setInternalResults((prev) => ({ ...prev, ...updates }));
-  });
-
-  // Ensure results is always defined
-  const safeResults = results || {
-    q: null, i: null, g: null, e: null, v: null, z: null,
-    a: null, t: null, c: null, r: null, d: null,
-    W: null, N: null, S: null, F: null, U: null, Y: null,
-    P: null, P1: null, P2: null,
-    A: null, A1: null, A2: null,
-    D: null, D1: null, D2: null,
-    R: null, R1: null, R2: null,
-  };
+  const { projectId, floorId } = useParams();
 
   const tabs = [
     { id: "q-factor", label: "ضریب بار آتش (q)" },
@@ -105,30 +65,30 @@ export default function PotentialRisk({
         />
 
         {activeTab === "q-factor" && (
-          <QFactorTab results={safeResults} updateResults={updateResults} />
+          <QFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
-
+        {/* 
         {activeTab === "i-factor" && (
-          <IFactorTab results={safeResults} updateResults={updateResults} />
+          <IFactorTab />
         )}
 
         {activeTab === "v-factor" && (
-          <VFactorTab results={safeResults} updateResults={updateResults} />
+          <VFactorTab />
         )}
 
         {activeTab === "g-factor" && (
-          <GFactorTab results={safeResults} updateResults={updateResults} />
+          <GFactorTab />
         )}
 
         {activeTab === "e-factor" && (
-          <EFactorTab results={safeResults} updateResults={updateResults} />
+          <EFactorTab />
         )}
 
         {activeTab === "z-factor" && (
-          <ZFactorTab results={safeResults} updateResults={updateResults} />
+          <ZFactorTab />
         )}
 
-        <PotentialRiskResults results={safeResults} />
+        <PotentialRiskResults /> */}
       </div>
     </section>
   );

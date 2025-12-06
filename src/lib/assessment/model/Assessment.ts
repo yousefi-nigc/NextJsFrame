@@ -161,3 +161,131 @@ export type AssessmentServiceResponse = {
     error?: Error;
 };
 
+/**
+ * Assessment API Response Interface
+ * This represents the full assessment object returned from the API
+ */
+export interface AssessmentResponse {
+    id: string;
+    floorId: string;
+    
+    // Potential Risk Inputs
+    qi: number | null;
+    qm: number | null;
+    tempDestruction: number | null;
+    avgDimension: number | null;
+    materialClass: number | null;
+    
+    // Geometry
+    length: number | null;
+    width: number | null;
+    area: number | null;
+    height: number | null;
+    accessType: "wide" | "narrow" | null;
+    
+    // Venting
+    windowArea: number | null;
+    staticVentArea: number | null;
+    mechVentFlow: number | null;
+    ventingRatio_k: number | null;
+    
+    // Access Factors
+    accessSides: number | null;
+    heightAbove: number | null;
+    depthBelow: number | null;
+    
+    // Acceptable Risk Inputs
+    mainActivity: string | null;
+    occupantCount: number | null;
+    occupantFactor: number | null;
+    exitWidthTotal: number | null;
+    mobilityFactor: number | null;
+    
+    // Economic / C-Factor Inputs
+    valueTotal: number | null;
+    valueYear: number | null;
+    replaceability: number | null;
+    dependencyType: string | null;
+    dependencyManual: number | null;
+    
+    // Protection Inputs
+    waterStorageType: string | null;
+    waterCapacity: number | null;
+    hydrantCount25: number | null;
+    hydrantCount3: number | null;
+    hydrantCount4: number | null;
+    detectionType: number | null;
+    sprinklerType: number | null;
+    fireStationType: number | null;
+    structureResist: number | null;
+    facadeResist: number | null;
+    roofResist: number | null;
+    wallResist: number | null;
+    floorLevel: number | null;
+    
+    // Calculated Risk Factors
+    factor_q: number | null;
+    factor_i: number | null;
+    factor_g: number | null;
+    factor_e: number | null;
+    factor_v: number | null;
+    factor_z: number | null;
+    
+    // Calculated Acceptance Factors
+    factor_a: number | null;
+    factor_t: number | null;
+    factor_c: number | null;
+    factor_r: number | null;
+    factor_d: number | null;
+    
+    // Calculated Protection Factors
+    factor_W: number | null;
+    factor_N: number | null;
+    factor_S: number | null;
+    factor_F: number | null;
+    factor_U: number | null;
+    factor_Y: number | null;
+    
+    // Potential Risks
+    risk_P: number | null;
+    risk_P1: number | null;
+    risk_P2: number | null;
+    
+    // Acceptable Levels
+    level_A: number | null;
+    level_A1: number | null;
+    level_A2: number | null;
+    
+    // Protection Levels
+    level_D: number | null;
+    level_D1: number | null;
+    level_D2: number | null;
+    
+    // Initial Risk
+    factor_Fo: number | null;
+    risk_Ro: number | null;
+    
+    // Final Risks
+    final_R: number | null;
+    final_R1: number | null;
+    final_R2: number | null;
+    
+    // Status
+    status_R: string | null;
+    status_R1: string | null;
+    status_R2: string | null;
+    
+    // Metadata
+    updatedAt: string;
+}
+
+/**
+ * Assessment API Response Wrapper
+ * This is the complete response structure returned by the API endpoints
+ */
+export interface AssessmentUpdateApiResponse {
+    success: boolean;
+    message: string;
+    assessment: AssessmentResponse;
+}
+

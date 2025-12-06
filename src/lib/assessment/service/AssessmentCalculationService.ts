@@ -1,3 +1,4 @@
+import { calculateA } from "@/utils/calculations";
 import { AssessmentCalculationResult, CreateAssessmentValidationSchema } from "../model/Assessment";
 
 /**
@@ -518,118 +519,143 @@ function getRiskStatus(risk: number | null): string | null {
  * Main calculation function - calculates all factors and final results
  */
 export function calculateAssessment(inputs: CreateAssessmentValidationSchema): AssessmentCalculationResult {
-    // Calculate Risk Factors
-    const factor_q = calculateQ(inputs.qi, inputs.qm);
-    const factor_i = calculateI(inputs.tempDestruction, inputs.avgDimension, inputs.materialClass);
-    const factor_g = calculateG(inputs.length, inputs.width, inputs.area, inputs.accessType);
-    const factor_e = calculateE(inputs.floorLevel);
-    const factor_v = calculateV(inputs.qm, inputs.ventingRatio_k, inputs.height);
-    const factor_z = calculateZ(inputs.width, inputs.accessSides, inputs.heightAbove, inputs.depthBelow);
 
-    // Calculate Potential Risks
+    // Potential Risk Factors
+    let factor_q: number | null = null;
+    let factor_i: number | null = null;
+    let factor_g: number | null = null;
+    let factor_e: number | null = null;
+    let factor_v: number | null = null;
+    let factor_z: number | null = null;
+
+    // Acceptance Factors
+    let factor_a: number | null = null;
+    let factor_t: number | null = null;
+    let factor_c: number | null = null;
+    let factor_r: number | null = null;
+    let factor_d: number | null = null;
+
+    // Protection Factors
+    let factor_W: number | null = null;
+    let factor_N: number | null = null;
+    let factor_S: number | null = null;
+    let factor_F: number | null = null;
+    let factor_U: number | null = null;
+    let factor_Y: number | null = null;
+
+    // Potential Risks
     let risk_P: number | null = null;
     let risk_P1: number | null = null;
     let risk_P2: number | null = null;
 
-    if (factor_q && factor_i && factor_g && factor_e && factor_v && factor_z) {
-        risk_P = factor_q * factor_i * factor_g * factor_e * factor_v * factor_z;
-        risk_P1 = factor_q * factor_i * factor_e * factor_v * factor_z;
-        risk_P2 = factor_i * factor_g * factor_e * factor_v * factor_z;
-    }
-
-    // Calculate Acceptance Factors
-    const factor_a = null; // Would need activity inputs
-    const factor_t = calculateT(
-        inputs.length,
-        inputs.width,
-        inputs.area,
-        inputs.occupantCount,
-        inputs.occupantFactor,
-        inputs.exitWidthTotal,
-        inputs.mobilityFactor,
-        inputs.heightAbove,
-        inputs.depthBelow
-    );
-    const factor_c = calculateC(inputs.replaceability, inputs.valueTotal, inputs.valueYear);
-    const factor_r = calculateR(inputs.qi, inputs.materialClass);
-    const factor_d = calculateD(inputs.dependencyType, inputs.dependencyManual);
-
-    // Calculate Acceptable Levels
+    // Acceptable Levels
     let level_A: number | null = null;
     let level_A1: number | null = null;
     let level_A2: number | null = null;
 
-    if (factor_a !== null && factor_t !== null && factor_c !== null && factor_r !== null && factor_d !== null) {
-        level_A = Math.max(0.1, 1.6 - factor_a - factor_t - factor_c);
-        level_A1 = Math.max(0.1, 1.6 - factor_a - factor_t - factor_r);
-        level_A2 = Math.max(0.1, 1.6 - factor_a - factor_c - factor_d);
-    }
-
-    // Calculate Protection Factors
-    const factor_W = calculateW(
-        inputs.qi,
-        inputs.qm,
-        inputs.waterStorageType,
-        inputs.waterCapacity,
-        inputs.hydrantCount25,
-        inputs.hydrantCount3,
-        inputs.hydrantCount4,
-        inputs.length,
-        inputs.width
-    );
-    const factor_N = calculateN();
-    const factor_S = calculateS(inputs.detectionType, inputs.sprinklerType, inputs.fireStationType);
-    const factor_F = calculateF(
-        inputs.structureResist,
-        inputs.facadeResist,
-        inputs.roofResist,
-        inputs.wallResist,
-        factor_S || undefined
-    );
-    const factor_U = calculateU();
-    const factor_Y = calculateY();
-
-    // Calculate Protection Levels
+    // Protection Levels
     let level_D: number | null = null;
     let level_D1: number | null = null;
     let level_D2: number | null = null;
 
-    if (factor_W && factor_N && factor_S && factor_F) {
-        level_D = factor_W * factor_N * factor_S * factor_F;
-    }
-    if (factor_N && factor_U) {
-        level_D1 = factor_N * factor_U;
-    }
-    if (factor_W && factor_N && factor_S && factor_Y) {
-        level_D2 = factor_W * factor_N * factor_S * factor_Y;
-    }
-
-    // Calculate Initial Risk (Ro)
-    const factor_Fo = calculateFo(inputs.structureResist);
+    // Initial Risk
+    let factor_Fo: number | null = null;
     let risk_Ro: number | null = null;
-    if (risk_P && level_A && factor_Fo) {
-        risk_Ro = risk_P / (level_A * factor_Fo);
-    }
-
-    // Calculate Final Risks
     let final_R: number | null = null;
     let final_R1: number | null = null;
     let final_R2: number | null = null;
+    let status_R: string | null = null;
+    let status_R1: string | null = null;
+    let status_R2: string | null = null;
 
-    if (risk_P && level_A && level_D) {
-        final_R = risk_P / (level_A * level_D);
+    // Calculate Potential Risk Factors
+
+    if (inputs.qi && inputs.qm) {
+        factor_q = calculateQ(inputs.qi, inputs.qm);
     }
-    if (risk_P1 && level_A1 && level_D1) {
-        final_R1 = risk_P1 / (level_A1 * level_D1);
+    if (inputs.tempDestruction && inputs.avgDimension && inputs.materialClass) {
+        factor_i = calculateI(inputs.tempDestruction, inputs.avgDimension, inputs.materialClass);
     }
-    if (risk_P2 && level_A2 && level_D2) {
-        final_R2 = risk_P2 / (level_A2 * level_D2);
+    if (inputs.length && inputs.width && inputs.area && inputs.accessType) {
+        factor_g = calculateG(inputs.length, inputs.width, inputs.area, inputs.accessType);
+    }
+    if (inputs.floorLevel) {
+        factor_e = calculateE(inputs.floorLevel);
+    }
+    if (inputs.qm && inputs.ventingRatio_k && inputs.height) {
+        factor_v = calculateV(inputs.qm, inputs.ventingRatio_k, inputs.height);
+    }
+    if (inputs.width && inputs.accessSides && inputs.heightAbove && inputs.depthBelow) {
+        factor_z = calculateZ(inputs.width, inputs.accessSides, inputs.heightAbove, inputs.depthBelow);
     }
 
-    // Calculate Status
-    const status_R = getRiskStatus(final_R);
-    const status_R1 = getRiskStatus(final_R1);
-    const status_R2 = getRiskStatus(final_R2);
+    // Calculate Acceptance Factors
+    if (inputs.mainActivity && inputs.occupantCount && inputs.occupantFactor && inputs.exitWidthTotal && inputs.mobilityFactor && inputs.heightAbove && inputs.depthBelow) {
+        factor_a = calculateA(inputs.mainActivity);
+    }
+    if (inputs.length && inputs.width && inputs.area && inputs.occupantCount && inputs.occupantFactor && inputs.exitWidthTotal && inputs.mobilityFactor && inputs.heightAbove && inputs.depthBelow) {
+        factor_t = calculateT(inputs.length, inputs.width, inputs.area, inputs.occupantCount, inputs.occupantFactor, inputs.exitWidthTotal, inputs.mobilityFactor, inputs.heightAbove, inputs.depthBelow);
+    }
+    if (inputs.replaceability && inputs.valueTotal && inputs.valueYear) {
+        factor_c = calculateC(inputs.replaceability, inputs.valueTotal, inputs.valueYear);
+    }
+    if (inputs.qi && inputs.materialClass) {
+        factor_r = calculateR(inputs.qi, inputs.materialClass);
+    }
+    if (inputs.dependencyType && inputs.dependencyManual) {
+        factor_d = calculateD(inputs.dependencyType, inputs.dependencyManual);
+    }
+
+    // if (factor_a !== null && factor_t !== null && factor_c !== null && factor_r !== null && factor_d !== null) {
+    //     level_A = Math.max(0.1, 1.6 - factor_a - factor_t - factor_c);
+    //     level_A1 = Math.max(0.1, 1.6 - factor_a - factor_t - factor_r);
+    //     level_A2 = Math.max(0.1, 1.6 - factor_a - factor_c - factor_d);
+    // }
+
+    // // Calculate Protection Factors
+    // factor_W = calculateW(
+    //     inputs.qi,
+    //     inputs.qm,
+    //     inputs.waterStorageType,
+    //     inputs.waterCapacity,
+    //     inputs.hydrantCount25,
+    //     inputs.hydrantCount3,
+    //     inputs.hydrantCount4,
+    //     inputs.length,
+    //     inputs.width
+    // );
+    // factor_N = calculateN();
+    // factor_S = calculateS(inputs.detectionType, inputs.sprinklerType, inputs.fireStationType);
+    // factor_F = calculateF(
+    //     inputs.structureResist,
+    //     inputs.facadeResist,
+    //     inputs.roofResist,
+    //     inputs.wallResist,
+    //     factor_S || undefined
+    // );
+    // factor_U = calculateU();
+    // factor_Y = calculateY();
+
+    // // Calculate Protection Levels
+    // let level_D: number | null = null;
+    // let level_D1: number | null = null;
+    // let level_D2: number | null = null;
+
+    // if (factor_W && factor_N && factor_S && factor_F) {
+    //     level_D = factor_W * factor_N * factor_S * factor_F;
+    // }
+    // if (factor_N && factor_U) {
+    //     level_D1 = factor_N * factor_U;
+    // }
+    // if (factor_W && factor_N && factor_S && factor_Y) {
+    //     level_D2 = factor_W * factor_N * factor_S * factor_Y;
+    // }
+
+    // // Calculate Initial Risk (Ro)
+    // factor_Fo = calculateFo(inputs.structureResist);
+    // if (risk_P && level_A && factor_Fo) {
+    //     risk_Ro = risk_P / (level_A * factor_Fo);
+    // }
 
     return {
         factor_q,

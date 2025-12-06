@@ -26,15 +26,6 @@ export async function createAssessmentService({
             return { success: false, error: new Error("Access denied") };
         }
 
-        // Check if assessment already exists
-        const existing = await db.assessment.findUnique({
-            where: { floorId }
-        });
-
-        if (existing) {
-            return { success: false, error: new Error("Assessment already exists for this floor") };
-        }
-
         // Calculate all factors and results automatically
         // Users only send raw input data - all calculated fields are computed here
         const calculations = calculateAssessment(inputs);

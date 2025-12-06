@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAssessmentController } from "@/lib/assessment/controller/GetAssessmentController";
-import { createAssessmentController } from "@/lib/assessment/controller/CreateAssessmentController";
 import { updateAssessmentController } from "@/lib/assessment/controller/UpdateAssessmentController";
 import { deleteAssessmentController } from "@/lib/assessment/controller/DeleteAssessmentController";
 import { db } from "@/lib/db";
@@ -19,39 +18,13 @@ export async function GET(
     }
 }
 
-export async function POST(
-    request: NextRequest,
-    { params }: { params: Promise<{ projectId: string; floorId: string }> }
-) {
-    try {
-        return await createAssessmentController(request, (await params).floorId);
-    } catch (error: any) {
-        return NextResponse.json(
-            { error: error.message || "Internal server error" },
-            { status: 500 }
-        );
-    }
-}
-
 export async function PUT(
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string; floorId: string }>}
 ) {
     try {
-        // Get assessmentId from floorId (one-to-one relationship)
-        const assessment = await db.assessment.findUnique({
-            where: { floorId: (await params).floorId },
-            select: { id: true }
-        });
-
-        if (!assessment) {
-            return NextResponse.json(
-                { error: "Assessment not found for this floor" },
-                { status: 404 }
-            );
-        }
-
-        return await updateAssessmentController(request, assessment.id, (await params).floorId);
+        // Update or create assessment (upsert)
+        return await updateAssessmentController(request, (await params).floorId);
     } catch (error: any) {
         return NextResponse.json(
             { error: error.message || "Internal server error" },

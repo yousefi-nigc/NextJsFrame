@@ -3,40 +3,47 @@
 import { useState } from "react";
 import { BlockMath } from "react-katex";
 import { CalculationResults } from "@/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { da } from "zod/v4/locales";
+import { AssessmentUpdateApiResponse } from "@/lib/assessment/model/Assessment";
 
-interface QFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function QFactorTab({
-  results,
-  updateResults,
-}: QFactorTabProps) {
+export default function QFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [showQiGuide, setShowQiGuide] = useState(false);
   const [showQmGuide, setShowQmGuide] = useState(false);
   const [showQTable, setShowQTable] = useState(false);
   const [qi, setQi] = useState(800);
   const [qm, setQm] = useState(500);
+  const [q, setQ] = useState<number | null>(null);
 
-  const handleCalculateQ = () => {
-    if (qi + qm === 0) {
-      alert("Q_i + Q_m باید مخالف صفر باشد");
-      return;
-    }
 
-    const q = (2 / 3) * Math.log10(qi + qm) - 0.55;
-    updateResults({ q });
+  // Mutation logic
+  const handleCalculateQ = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({ qi, qm }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("q محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
 
-    // Recalculate P, P1, P2 if other factors are available
-    const { i, g, e, v, z } = results;
-    if (i !== null && g !== null && e !== null && v !== null && z !== null) {
-      const P = q * i * g * e * v * z;
-      const P1 = q * i * e * v * z;
-      const P2 = i * g * e * v * z;
-      updateResults({ P, P1, P2 });
-    }
-  };
+      const res = data as AssessmentUpdateApiResponse;
+
+      setQ(res.assessment.factor_q);
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه q");
+      console.log(error);
+    },
+  })
+
+
+
 
   return (
     <div>
@@ -96,6 +103,7 @@ export default function QFactorTab({
             id="qi"
             min="0"
             step="100"
+            name="qi"
             value={qi}
             onChange={(e) => setQi(parseFloat(e.target.value) || 0)}
             className="flex-1"
@@ -150,6 +158,7 @@ export default function QFactorTab({
             id="qm"
             min="0"
             step="100"
+            name="qm"
             value={qm}
             onChange={(e) => setQm(parseFloat(e.target.value) || 0)}
             className="flex-1"
@@ -181,303 +190,31 @@ export default function QFactorTab({
         )}
       </div>
 
-      <button className="btn btn-primary" onClick={handleCalculateQ}>
+      <button className="btn btn-primary" onClick={() => handleCalculateQ.mutate()}>
         محاسبه ضریب q
       </button>
 
-      {results.q !== null && (
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-          <div className="result-value">{results.q.toFixed(3)}</div>
-          <div className="text-sm text-gray-600 text-center">
-            (Q = {(qi + qm).toLocaleString()} MJ/m²)
-          </div>
+      {/* {results.q !== null && ( */}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{q ? q.toFixed(3) : "-"}</div>
+        <div className="text-sm text-gray-600 text-center">
+          (Q = {q ? q.toLocaleString() : "-"} MJ/m²)
         </div>
-      )}
+      </div>
+      {/* )} */}
 
       {/* Table guide */}
       <div
         id="table-section"
-        className={`transition-all duration-300 ${
-          showQTable ? "block" : "hidden"
-        }`}
+        className={`transition-all duration-300 ${showQTable ? "block" : "hidden"
+          }`}
       >
         {showQTable && (
           <div className="card mt-4 p-4 dark:bg-[#0f3460] rounded-lg shadow-md border border-[#35363630] dark:border-[#2196f380] max-w-full overflow-x-auto">
             <b>راهنمای انتخاب سریع:</b>
 
-            {/* Qi Table */}
-            <table className="table-auto border-collapse w-full mt-2 text-sm">
-              <thead>
-                <tr className="bg-[#f5f5f5] dark:bg-gray-700">
-                  <th className="border border-neutral-300 px-2 py-1 md:py-3 text-right">
-                    نوع ساخت‌وساز
-                  </th>
-                  <th className="border border-neutral-300 px-2 py-1 md:py-3">
-                    MJ/m²
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    A. کاملاً غیرقابل احتراق (مانند بتن / فقط فولاد)
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    0
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    B. سازه غیرقابل احتراق با حداکثر ۱۰٪ اجزای قابل احتراق
-                    مجاز مانند پنجره‌ها، پوشش سقف و غیره
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    100
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    C1. سازه چوبی با تکمیل با مواد غیرقابل احتراق
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    300
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    C2. سازه بنایی با کف‌ها و تیرهای چوبی
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    300
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    D. سازه غیرقابل احتراق با پوشش نهایی قابل احتراق
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    1000
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    E. سازه کاملاً قابل احتراق
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    1500
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
-            {/* Qm Table */}
-            <table className="table-auto border-collapse w-full mt-4 text-sm">
-              <thead>
-                <tr className="bg-[#f5f5f5] dark:bg-gray-700">
-                  <th className="border border-neutral-300 px-2 py-1 md:py-3 text-right">
-                    دسته‌بندی
-                  </th>
-                  <th className="border border-neutral-300 px-2 py-1 md:py-3">
-                    Qm (MJ/m²)
-                  </th>
-                  <th className="border border-neutral-300 px-2 py-1 md:py-3">
-                    بازه (MJ/m²)
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    a. اشغال با خطر آتش‌سوزی کم (LH یا Light Hazard)
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    200
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    —
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    a1. دفتر کار
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    400
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    80 – 550
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    a2. واحد مسکونی
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    500
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    330 – 780
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    a3. مدرسه
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    200
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    215 – 340
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    a4. بیمارستان
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    250
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    100 – 330
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    a5. هتل
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    250
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    310 – 330
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    b. خطر آتش‌سوزی معمولی با بار آتش کم (OH1 / NFPA: OH
-                    Gp1)
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    600
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    —
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    c. خطر آتش‌سوزی معمولی با بار آتش متوسط (OH2 / NFPA OH
-                    Gp2)
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    1500
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    —
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    d. خطر آتش‌سوزی معمولی با بار آتش زیاد (OH3 / NFPA OH
-                    Gp2+)
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    2000
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    —
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    e. خطر آتش‌سوزی معمولی با بار آتش بسیار زیاد (OH4)
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    2500
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    —
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    f. کلاس خطر زیاد HH1
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    2500
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    —
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    g. کلاس خطر زیاد HH2 (NFPA EH Gp1)
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    3000
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    —
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    h. کلاس خطر زیاد HH3 (NFPA EH Gp2)
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    3750
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    —
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    i. ذخیره قفسه‌ای (Rack storage)
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    6750
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    —
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    j. انبار محافظت‌شده با اسپرینکلر قطر بزرگ (Large Drop)
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    7500
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    —
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    k. انبار محافظت‌شده ESFR با ارتفاع ۷ متر
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    12000
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    0
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    l. انبار محافظت‌شده ESFR فشار 5.5 بار
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    15000
-                  </td>
-                  <td className="border border-neutral-300 px-2 py-1 md:py-3">
-                    0
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <QiTable />
+            <QmTable />
 
             <button
               type="button"
@@ -493,3 +230,283 @@ export default function QFactorTab({
   );
 }
 
+const QmTable = () => {
+  return <>
+    {/* Qm Table */}
+    <table className="table-auto border-collapse w-full mt-4 text-sm" >
+      <thead>
+        <tr className="bg-[#f5f5f5] dark:bg-gray-700">
+          <th className="border border-neutral-300 px-2 py-1 md:py-3 text-right">
+            دسته‌بندی
+          </th>
+          <th className="border border-neutral-300 px-2 py-1 md:py-3">
+            Qm (MJ/m²)
+          </th>
+          <th className="border border-neutral-300 px-2 py-1 md:py-3">
+            بازه (MJ/m²)
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            a. اشغال با خطر آتش‌سوزی کم (LH یا Light Hazard)
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            200
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            a1. دفتر کار
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            400
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            80 – 550
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            a2. واحد مسکونی
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            500
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            330 – 780
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            a3. مدرسه
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            200
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            215 – 340
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            a4. بیمارستان
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            250
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            100 – 330
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            a5. هتل
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            250
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            310 – 330
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            b. خطر آتش‌سوزی معمولی با بار آتش کم (OH1 / NFPA: OH
+            Gp1)
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            600
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            c. خطر آتش‌سوزی معمولی با بار آتش متوسط (OH2 / NFPA OH
+            Gp2)
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            1500
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            d. خطر آتش‌سوزی معمولی با بار آتش زیاد (OH3 / NFPA OH
+            Gp2+)
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            2000
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            e. خطر آتش‌سوزی معمولی با بار آتش بسیار زیاد (OH4)
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            2500
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            f. کلاس خطر زیاد HH1
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            2500
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            g. کلاس خطر زیاد HH2 (NFPA EH Gp1)
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            3000
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            h. کلاس خطر زیاد HH3 (NFPA EH Gp2)
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            3750
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            i. ذخیره قفسه‌ای (Rack storage)
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            6750
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            j. انبار محافظت‌شده با اسپرینکلر قطر بزرگ (Large Drop)
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            7500
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            k. انبار محافظت‌شده ESFR با ارتفاع ۷ متر
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            12000
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            0
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            l. انبار محافظت‌شده ESFR فشار 5.5 بار
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            15000
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            0
+          </td>
+        </tr>
+      </tbody>
+    </table >
+  </>
+}
+
+const QiTable = () => {
+  return <>
+    <table className="table-auto border-collapse w-full mt-2 text-sm">
+      <thead>
+        <tr className="bg-[#f5f5f5] dark:bg-gray-700">
+          <th className="border border-neutral-300 px-2 py-1 md:py-3 text-right">
+            نوع ساخت‌وساز
+          </th>
+          <th className="border border-neutral-300 px-2 py-1 md:py-3">
+            MJ/m²
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            A. کاملاً غیرقابل احتراق (مانند بتن / فقط فولاد)
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            0
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            B. سازه غیرقابل احتراق با حداکثر ۱۰٪ اجزای قابل احتراق
+            مجاز مانند پنجره‌ها، پوشش سقف و غیره
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            100
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            C1. سازه چوبی با تکمیل با مواد غیرقابل احتراق
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            300
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            C2. سازه بنایی با کف‌ها و تیرهای چوبی
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            300
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            D. سازه غیرقابل احتراق با پوشش نهایی قابل احتراق
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            1000
+          </td>
+        </tr>
+        <tr>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            E. سازه کاملاً قابل احتراق
+          </td>
+          <td className="border border-neutral-300 px-2 py-1 md:py-3">
+            1500
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </>
+}
