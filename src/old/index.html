@@ -1,0 +1,2548 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه ارزیابی ریسک حریق FRAME 2025</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- MathJax برای نمایش فرمول‌ها -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- در قسمت head فایل index.html -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- قبل از تگ بسته شدن </body> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- فونت فارسی برای jsPDF -->
+   
+    <!-- اضافه کردن فونت فارسی به صورت مستقیم -->
+<style>
+@font-face {
+    font-family: 'Vazir';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Regular.woff2') format('woff2');
+    font-weight: normal;
+}
+</style>
+
+    
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    
+</head>
+<body>
+    <!-- بنر معرفی برنامه هفتم -->
+<div id="intro-banner" style="display:none; text-align:center; direction:rtl; 
+    background:#eef3f9; color:#1b285a; font-family:'Vazir',Yekan,sans-serif; 
+    font-size:1.05rem; padding:0.75rem 1rem; margin:0.8rem auto; max-width:900px; 
+    border-radius:8px; border:1px solid #c4d4eb;">
+    این نرم‌افزار در راستای اجرای احکام قانون برنامه پنجساله هفتم پیشرفت جمهوری اسلامی ایران 
+    و هم‌سو با سیاست‌های دولت در ایمن‌سازی ساختمان‌ها، ارتقاء تاب‌آوری شهری، 
+    بهبود مدیریت بحران و تقویت خدمات آتش‌نشانی توسعه یافته است.
+</div>
+
+<!-- هدر -->
+<!-- هدر -->
+<!-- هدر -->
+<header>
+   
+    <div class="header-container">
+    <!-- بخش لوگو و عنوان شرکت - سمت راست -->
+    <div class="company-section">
+        <img src="images/nigc-logo.png" alt="لوگوی شرکت ملی گاز ایران" class="company-logo">
+        <div class="company-title">مدیریت HSE و پدافند غیرعامل</div>
+    </div>
+    
+    <!-- بخش عنوان اصلی - وسط -->
+    <div class="main-title-section">
+        <h1>سامانه ارزیابی ریسک حریق FRAME 2025</h1>
+        <p>Fire Risk Assessment Method for Engineering</p>
+    </div>
+    
+    <!-- فضای خالی برای تعادل - سمت چپ -->
+    <div class="header-spacer"></div>
+</div>
+
+    <!-- 🔰 صفحه راهنما: الزامات انجام ارزیابی ریسک FRAME -->
+<div id="frame-guide-modal" class="guide-modal" style="font-family:'Vazir',Yekan,sans-serif;direction:rtl;background:#f7fafb;border:1.5px solid #4c7ebb;max-width:730px;margin:2rem auto 2.5rem auto;padding:2.1rem 2.2rem 2rem 2.2rem;border-radius:20px;box-shadow:0 6px 30px #1b2e4622;position:relative;">
+  <span style="position:absolute; top:1.2rem; left:1.6rem; color:#4c7ebb; font-size:18px;cursor:pointer;" onclick="document.getElementById('frame-guide-modal').style.display='none'">✖️</span>
+  
+  <h1 style="color:#1b285a;font-size:2rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem;">
+    <span style="font-size:2.1rem">  </span> راهنمای الزامات ارزیابی ریسک حریق - FRAME
+  </h1>
+  
+  <p style="margin-bottom:.6rem;color:#224ce6 ;font-size:1.16rem;">
+    ⚠️ قبل از وارد کردن اطلاعات محاسباتی و شروع ارزیابی، لطفاً الزامات کلیدی روش FRAME را با دقت بخوانید:
+  </p>
+  
+  <ul style="margin-bottom:1.2rem;font-size:1.08rem;line-height:2;">
+    <li><b>واحد مبنای ارزیابی:</b> هر <b>کمپارتمنت آتش</b> (یا بخش مستقل، معمولاً هر طبقه یا قسمت مجزا از نظر ساختاری/عملکردی) باید جداگانه ارزیابی شود.</li>
+    <li>
+      <b>در ساختمان‌های چند طبقه:</b>
+      ارزیابی باید برای هر طبقه یا هر بخش مجزا به صورت مستقل انجام گیرد؛ مگر کل ساختمان از لحاظ خطر و حفاظت یکپارچه باشد (در این‌صورت فقط یک ارزیابی کفایت می‌کند).
+    </li>
+    <li>
+      <b>اطلاعات ضروری قبل از شروع:</b>
+      <ol style="margin:0 0 0 1.5rem;">
+        <li>مشخصات هر طبقه/کمپارتمنت (کاربری، ابعاد، بار آتش، سیستم‌های حفاظت)</li>
+        <li>اطلاعات افراد حاضر و نوع فعالیت‌های بحرانی در ساختمان</li>
+        <li>جزییات مسیرهای خروج و دسترسی نیروهای امدادی</li>
+      </ol>
+    </li>
+    <li>
+      <b>هر ارزیابی برای یک بخش خاص:</b>
+      ابتدا یک طبقه یا کمپارتمنت را انتخاب و ارزیابی‌اش را تا انتها انجام دهید؛ در صورت نیاز، برای طبقات/بخش‌های بعدی، همین فرایند را تکرار کنید.
+    </li>
+    <li>
+      <span style="color:#007a34"><b>داده‌های دقیق</b></span> و مستند وارد کنید تا نتایج قابل اتکا و توصیه‌های اصلاحی، کاربردی باشند.
+    </li>
+  </ul>
+  
+  <div style="background:#e8f3fc;color:#1b285a;padding:.9rem 1.2rem;border-radius:.8rem;font-size:.99rem;">
+    <b>یادآوری:</b> نتایج هر ارزیابی صرفاً مربوط به همان طبقه/کمپارتمنت است و ممکن است نیاز به اقدامات متفاوتی در طبقات مختلف ساختمان داشته باشید.
+  </div>
+  
+  <button onclick="document.getElementById('frame-guide-modal').style.display='none'"
+    style="background:#368aeb;color:#fff;border:none;padding:.73rem 2.1rem;border-radius:10px;font-size:1.14rem;margin:1.6rem auto 0 auto;display:block;box-shadow:0 3px 10px #014ec928;cursor:pointer;transition:.13s;">
+    <span style="font-size:1.2rem">🚀</span>&nbsp;شروع ارزیابی
+  </button>
+</div>
+
+</header>
+
+
+
+    <!-- کانتینر اصلی -->
+    <div class="container">
+        <div class="main-grid">
+            <!-- نوار کناری -->
+            <aside class="sidebar">
+                <h2>منوی محاسبات</h2>
+                <nav>
+                    <a href="#potential-risk" class="nav-item active" onclick="showSection('potential-risk')">
+                        🎯 ریسک بالقوه (P)
+                    </a>
+                    <a href="#acceptable-risk" class="nav-item" onclick="showSection('acceptable-risk')">
+                        ✅ سطح پذیرش (A)
+                    </a>
+                    <a href="#protection-level" class="nav-item" onclick="showSection('protection-level')">
+                        🛡️ سطح حفاظت (D)
+                    </a>
+                    <a href="#initial-risk" class="nav-item" onclick="showSection('initial-risk'); return false;">
+                       🎯 ریسک اولیه (R₀)
+                    </a>
+                    <a href="#final-risk" class="nav-item" onclick="showSection('final-risk')">
+                        📊 محاسبه نهایی ریسک
+                    </a>
+                    <a href="#report" class="nav-item" onclick="showSection('report')">
+                        📄 گزارش نهایی
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- محتوای اصلی -->
+            <main class="content">
+                <!-- بخش ریسک بالقوه -->
+                <section id="potential-risk" class="section active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <div class="card-icon">🎯</div>
+                                محاسبه ریسک بالقوه (P)
+                            </h2>
+                        </div>
+                        <!-- Progress Bar برای نمایش میزان تکمیل -->
+        <div class="validation-progress">
+            <div class="validation-progress-bar form-progress"></div>
+        </div>
+
+                        <!-- فرمول اصلی -->
+                        <div class="formula-card">
+                            <div class="formula-title">فرمول محاسبه ریسک بالقوه</div>
+                            <div class="formula-content">
+                                برای ساختمان: \[ P = q \times i \times g \times e \times v \times z \]
+                                برای افراد: \[ P_1 = q \times i \times e \times v \times z \]
+                                برای فعالیت‌ها: \[ P_2 = i \times g \times e \times v \times z \]
+                            </div>
+                        </div>
+
+                        <!-- راهنمای کلی -->
+                        <div class="help-card">
+                            <div class="help-title">راهنمای محاسبه</div>
+                            <div class="help-content">
+                                ریسک بالقوه نشان‌دهنده میزان خطر احتمالی حریق در ساختمان است. این مقدار از ضرب شش عامل اصلی محاسبه می‌شود که هر کدام جنبه‌ای از خطر حریق را نشان می‌دهند.
+                            </div>
+                        </div>
+
+                        <!-- تب‌های عوامل -->
+                        <div class="tabs">
+                            <button class="tab active" onclick="showTab('q-factor')">ضریب بار آتش (q)</button>
+                            <button class="tab" onclick="showTab('i-factor')">ضریب گسترش (i)</button>
+                            <button class="tab" onclick="showTab('v-factor')">ضریب تهویه (v)</button>
+                            <button class="tab" onclick="showTab('g-factor')">ضریب سطح (g)</button>
+                            <button class="tab" onclick="showTab('e-factor')">ضریب طبقه (e)</button>
+                            <button class="tab" onclick="showTab('z-factor')">ضریب دسترسی (z)</button>
+                        </div>
+
+                        <!-- محتوای تب q -->
+                        <div id="q-factor" class="tab-content active">
+    <div class="formula-card">
+        <div class="formula-title">فرمول محاسبه q</div>
+        <div class="formula-content">
+            \[ q = \frac{2}{3} \log_{10}(Q_i + Q_m) - 0.55 \]
+        </div>
+    </div>
+    <div class="help-card">
+        <div class="help-title">توضیحات کاربردی</div>
+        <div class="help-content">
+            <ul style="margin-bottom:0.7rem">
+                <li><b>q</b> نمایانگر شدت بار آتش است؛ تابع لگاریتمی از مجموع بار آتش ثابت و متحرک بر واحد سطح.</li>
+                <li>برای برآورد <b>Qi</b> و <b>Qm</b> می‌توان به راهنمای پایین مراجعه کرد
+                    <a href="#" onclick="document.getElementById('fire-load-guide').style.display='block';return false;" style="font-size:.9em">[جدول‌های کمک] 🔎</a>
+                </li>
+                 <li>با افزایش بار آتش به مقادیر بالا، q به ‌آرامی رشد می‌کند و خطری در به خطا افتادن تخمین‌ها وجود ندارد.</li>
+                 <li> Q_i + Q_m .باید مخالف صفر باشد </li>
+                 
+            </ul>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">بار آتش ثابت (Qi)
+            <button class="btn btn-secondary" style="font-size:.7em;padding:0.2em 0.7em;margin-right:.6em"
+                    onclick="showQiGuide()">راهنما</button>
+        </label>
+        <div class="input-wrapper">
+            <input type="number" id="qi" min="0" step="100" value="800">
+            <span class="input-unit">MJ/m²</span>
+        </div>
+        <div class="input-hint" id="qi-hint" style="display:none"></div>
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">بار آتش متحرک (Qm)
+            <button class="btn btn-secondary" style="font-size:.7em;padding:0.2em 0.7em;margin-right:.6em"
+                    onclick="showQmGuide()">راهنما</button>
+        </label>
+        <div class="input-wrapper">
+            <input type="number" id="qm" min="0" step="100" value="500">
+            <span class="input-unit">MJ/m²</span>
+        </div>
+        <div class="input-hint" id="qm-hint" style="display:none"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="calculateQ()">محاسبه ضریب q</button>
+
+    <div class="result-display" id="q-result" style="margin-top: 1rem;"></div>
+
+    <!-- پنجره راهنمای سریع Qi و Qm -->
+    <div id="fire-load-guide" class="card" style="display:none;max-width:600px;margin:1rem auto;">
+        <b>راهنمای انتخاب سریع:</b>
+
+<!-- جدول Qi -->
+<table class="table-box">
+  <tr>
+    <th>نوع ساخت‌وساز</th>
+    <th>MJ/m²</th>
+  </tr>
+  <tr><td>A. کاملاً غیرقابل احتراق (مانند بتن / فقط فولاد)</td><td>0</td></tr>
+  <tr><td>B. سازه غیرقابل احتراق با حداکثر ۱۰٪ اجزای قابل احتراق مجاز مانند پنجره‌ها، پوشش سقف و غیره</td><td>100</td></tr>
+  <tr><td>C1. سازه چوبی با تکمیل با مواد غیرقابل احتراق</td><td>300</td></tr>
+  <tr><td>C2. سازه بنایی با کف‌ها و تیرهای چوبی</td><td>300</td></tr>
+  <tr><td>D. سازه غیرقابل احتراق با پوشش نهایی قابل احتراق</td><td>1000</td></tr>
+  <tr><td>E. سازه کاملاً قابل احتراق</td><td>1500</td></tr>
+</table>
+
+<!-- جدول Qm -->
+<table class="table-box">
+  <tr>
+    <th>دسته‌بندی</th>
+    <th>Qm (MJ/m²)</th>
+    <th>بازه (MJ/m²)</th>
+  </tr>
+  <tr><td>a. اشغال با خطر آتش‌سوزی کم (LH یا Light Hazard)</td><td>200</td><td>—</td></tr>
+  <tr><td>a1. دفتر کار</td><td>400</td><td>80 – 550</td></tr>
+  <tr><td>a2. واحد مسکونی</td><td>500</td><td>330 – 780</td></tr>
+  <tr><td>a3. مدرسه</td><td>200</td><td>215 – 340</td></tr>
+  <tr><td>a4. بیمارستان</td><td>250</td><td>100 – 330</td></tr>
+  <tr><td>a5. هتل</td><td>250</td><td>310 – 330</td></tr>
+  <tr><td>b. خطر آتش‌سوزی معمولی با بار آتش کم (OH1 / NFPA: OH Gp1)</td><td>600</td><td>—</td></tr>
+  <tr><td>c. خطر آتش‌سوزی معمولی با بار آتش متوسط (OH2 / NFPA OH Gp2)</td><td>1500</td><td>—</td></tr>
+  <tr><td>d. خطر آتش‌سوزی معمولی با بار آتش زیاد (OH3 / NFPA OH Gp2+)</td><td>2000</td><td>—</td></tr>
+  <tr><td>e. خطر آتش‌سوزی معمولی با بار آتش بسیار زیاد (OH4)</td><td>2500</td><td>—</td></tr>
+  <tr><td>f. کلاس خطر زیاد HH1</td><td>2500</td><td>—</td></tr>
+  <tr><td>g. کلاس خطر زیاد HH2 (NFPA EH Gp1)</td><td>3000</td><td>—</td></tr>
+  <tr><td>h. کلاس خطر زیاد HH3 (NFPA EH Gp2)</td><td>3750</td><td>—</td></tr>
+  <tr><td>i. ذخیره قفسه‌ای (Rack storage)</td><td>6750</td><td>—</td></tr>
+  <tr><td>j. انبار محافظت‌شده با اسپرینکلر قطر بزرگ (Large Drop)</td><td>7500</td><td>—</td></tr>
+  <tr><td>k. انبار محافظت‌شده ESFR با ارتفاع ۷ متر</td><td>12000</td><td>0</td></tr>
+  <tr><td>l. انبار محافظت‌شده ESFR فشار 5.5 بار</td><td>15000</td><td>0</td></tr>
+</table>
+        <br>
+        <button class="btn btn-primary" onclick="document.getElementById('fire-load-guide').style.display='none';">بستن راهنمای جداول</button>
+    </div>
+                        </div>
+
+
+                       <!-- محتوای تب i بهینه شده -->
+<div id="i-factor" class="tab-content">
+    <div class="formula-card">
+        <div class="formula-title">فرمول محاسبه i</div>
+        <div class="formula-content" style="direction:ltr;text-align:center">
+            \( i = 1 - \frac{T}{1000} - (0.1 \times \log_{10} m) + \frac{M}{10} \)
+        </div>
+    </div>
+
+    <div class="help-card">
+        <div class="help-title">توضیحات مهندسی و ارتباط با سرعت رشد حریق (HRR)</div>
+        <div class="help-content">
+            <ul style="font-size:.96em">
+                <li>
+                    <b>i</b> بیانگر سرعت و نرخ رشد آتش است. هر چه مقدار بالاتر باشد، رشد آتش سریع‌تر است.<br>
+                </li>
+                <li>
+                    مقدار <b>i</b> معمولاً بین <b>0.5 تا 1.65</b> (سقف تجربی: 0.4 تا 1.8) قرار می‌گیرد.
+                </li>
+                <li>
+                    ارتباط i با "نرخ آزادسازی گرما HRR":<br>
+                    <span style="background:#f5f5f5; border-radius:5px">
+                        HRR (kW/m²) = 25 × 10<sup>i</sup>
+                    </span><br>
+                    مقدار HRR برای رشد آتش را نمایش می‌دهد.
+                </li>
+                <li>
+                    مثال‌ها: <br>
+                    <b>فلزات (بتن):</b> i=0.5 → HRR=<b>80</b> kW/m² |
+                    <b>اداری (رزیدنشیال):</b> i=1.0 → HRR=250 kW/m² |
+                    <b>پلی‌استایرن:</b> i=1.65 → HRR=1120 kW/m²
+                </li>
+            </ul>
+        </div>
+    </div>
+
+   <div class="input-group">
+  <label class="input-label">دمای تخریب T (درجه سانتیگراد)</label>
+  <select id="temp-destruction" onchange="handleTSelectionChange()">
+      <option value="20">a. مایعات قابل‌اشتعال — 21°C تا 70°F (≈20°C میانگین)</option>
+      <option value="100">b. پلاستیک / لوازم الکترونیکی / انسان — 100°C (212°F)</option>
+      <option value="200">c. منسوجات، چوب، کاغذ، غذا — 200°C (400°F)</option>
+      <option value="250" selected>d. متوسط محتویات ساختمان مسکونی — 250°C (482°F)</option>
+      <option value="300">e. ماشین‌آلات، لوازم خانگی — 300°C (572°F)</option>
+      <option value="400">f. اجسام فلزی — 400°C (752°F)</option>
+      <option value="500">g. مواد غیرقابل‌احتراق (مصالح ساختمانی) — 500°C (932°F)</option>
+      <option value="multi">📊 انتخاب چند دما (میانگین وزنی)</option>
+  </select>
+</div>
+
+<!-- جدول چند انتخابی T -->
+<div id="t-weighted-table" style="display:none; margin-top:10px;">
+  <table border="1" cellpadding="4">
+    <thead>
+      <tr>
+        <th>انتخاب</th>
+        <th>دمای T (°C)</th>
+        <th>توضیحات</th>
+        <th>درصد (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="checkbox" onchange="toggleTPercent(this)"></td>
+        <td>20</td>
+        <td>a. مایعات قابل‌اشتعال — 21°C تا 70°F (≈20°C میانگین)</td>
+        <td><input type="number" value="0" min="0" max="100" disabled onchange="updateWeightedT()"> %</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" onchange="toggleTPercent(this)"></td>
+        <td>100</td>
+        <td>b. پلاستیک / لوازم الکترونیکی / انسان — 100°C (212°F)</td>
+        <td><input type="number" value="0" min="0" max="100" disabled onchange="updateWeightedT()"> %</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" onchange="toggleTPercent(this)"></td>
+        <td>200</td>
+        <td>c. منسوجات، چوب، کاغذ، غذا — 200°C (400°F)</td>
+        <td><input type="number" value="0" min="0" max="100" disabled onchange="updateWeightedT()"> %</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" onchange="toggleTPercent(this)"></td>
+        <td>250</td>
+        <td>d. متوسط محتویات ساختمان مسکونی — 250°C (482°F)</td>
+        <td><input type="number" value="0" min="0" max="100" disabled onchange="updateWeightedT()"> %</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" onchange="toggleTPercent(this)"></td>
+        <td>300</td>
+        <td>e. ماشین‌آلات، لوازم خانگی — 300°C (572°F)</td>
+        <td><input type="number" value="0" min="0" max="100" disabled onchange="updateWeightedT()"> %</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" onchange="toggleTPercent(this)"></td>
+        <td>400</td>
+        <td>f. اجسام فلزی — 400°C (752°F)</td>
+        <td><input type="number" value="0" min="0" max="100" disabled onchange="updateWeightedT()"> %</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" onchange="toggleTPercent(this)"></td>
+        <td>500</td>
+        <td>g. مواد غیرقابل‌احتراق (مصالح ساختمانی) — 500°C (932°F)</td>
+        <td><input type="number" value="0" min="0" max="100" disabled onchange="updateWeightedT()"> %</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr style="font-weight:bold; background-color:#f0f0f0;">
+        <td colspan="3" style="text-align:left;">جمع درصدها:</td>
+        <td id="t-percent-sum">0 %</td>
+      </tr>
+      <tr style="font-weight:bold; background-color:#e0ffe0;">
+        <td colspan="3" style="text-align:left;">دمای وزنی (Weighted T):</td>
+        <td id="t-weighted-value">250 °C</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<script>
+  function toggleTPercent(checkbox) {
+    const percentInput = checkbox.closest('tr').querySelector('input[type="number"]');
+    percentInput.disabled = !checkbox.checked;
+    if (!checkbox.checked) {
+      percentInput.value = 0;
+    }
+    updateWeightedT();
+  }
+
+  function updateWeightedT() {
+    const table = document.getElementById('t-weighted-table');
+    const rows = table.querySelectorAll('tbody tr');
+    let weightedSum = 0;
+    let totalPercent = 0;
+
+    rows.forEach(row => {
+      const tempValue = parseFloat(row.cells[1].textContent);
+      const percentInput = row.cells[3].querySelector('input[type="number"]');
+      const percent = parseFloat(percentInput.value) || 0;
+
+      if (!percentInput.disabled && percent > 0) {
+        weightedSum += tempValue * (percent / 100);
+        totalPercent += percent;
+      }
+    });
+
+    // ذخیره مقدار وزنی
+    if (totalPercent > 0) {
+      window.selectedTValue = weightedSum;
+    } else {
+      window.selectedTValue = 250; // پیش‌فرض
+    }
+
+    // نمایش درصد کل و دمای وزنی
+    document.getElementById('t-percent-sum').textContent = totalPercent + ' %';
+    document.getElementById('t-weighted-value').textContent = window.selectedTValue.toFixed(2) + ' °C';
+
+    // به‌روزرسانی محاسبه i
+    calculateI();
+  }
+</script>
+
+
+
+    <div style="margin-bottom:10px;">
+  <label><b>ابعاد متوسط محتویات m (متر):</b></label>
+  
+  <div>
+    <label><input type="radio" name="m-mode" value="formula" onchange="switchMMode()"> فرمول محاسباتی میانگین هندسی ابعاد</label>
+    <label><input type="radio" name="m-mode" value="reference" onchange="switchMMode()" checked> مقادیر مرجع</label>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:8px;margin-top:5px;">
+    <input type="number" id="avg-dimension" step="0.001" min="0.001" max="2" placeholder="m" style="flex:1;">
+    <button type="button" id="btn-dims" class="btn-add" onclick="showDimsModal()" style="display:none;">🧮 ورود ابعاد</button>
+  </div>
+
+  <div id="m-ref-guide" style="display:none; font-size:0.9em; color:#333; background:#f0f8ff; padding:8px; border-radius:5px; margin-top:6px;">
+    <b>مقادیر مرجع:</b><br>
+    رایج‌ترین مقدار مورد استفاده برای m= <b>0.3</b> است که به عنوان میانگین ابعاد اکثر اشیاء در محیط روزمره ما در نظر گرفته می‌شود.<br>
+    سایر مقادیر معمول عبارتند از:<br>
+    انبار کردن کالا روی پالت: <b>1</b> =m<br>
+    صنایع تولیدکننده اجسام کوچک: <b>0.1</b>=m<br>
+    صنایع تولیدکننده کالاهای نوع فیلمی (ورقه‌ای): <b>0.01</b> =m<br>
+    غلات، پلت و کالاهای مشابه: <b>0.001</b> =m
+</div>
+</div>
+
+<!-- Modal جدول ابعاد -->
+<div id="dims-modal" class="chart-modal" style="display:none;">
+  <div class="chart-container" style="max-width:500px;">
+   
+    <h3>ورود ابعاد اشیاء (متر)</h3>
+    <table id="dims-table" style="width:100%; border-collapse:collapse; text-align:center;">
+      <thead>
+        <tr><th>بُعد</th><th>مقدار (متر)</th></tr>
+      </thead>
+      <tbody>
+        <script>
+          for (let i = 1; i <= 10; i++) {
+              document.write(`<tr><td>${i}</td><td><input type="number" step="0.001" min="0.001" class="dim-input" style="width:100%;"></td></tr>`);
+          }
+        </script>
+      </tbody>
+    </table>
+    <div style="margin-top:10px; text-align:right;">
+      <button type="button" class="btn-add" onclick="calcMFromModal()">محاسبه m</button>
+    </div>
+    <div id="m-calc-result" style="margin-top:10px; font-weight:bold;"></div>
+     <button type="button" class="btn-close" onclick="closeDimsModal()">✖</button>
+  </div>
+</div>
+
+
+    <div class="input-group">
+    <label class="input-label">کلاس واکنش در برابر آتش M
+        <button class="btn btn-secondary" style="font-size:.7em" onclick="showClassHint()">جدول</button>
+    </label>
+    
+    <select id="fire-class" onchange="toggleMultiSelect()">
+        <option value="0">A1 - طبق EN13501-1 یا غیرقابل‌احتراق (M=0)</option>
+        <option value="0.5">A2 - طبق EN13501-1 یا تقریباً غیرقابل‌احتراق (M=0.5)</option>
+        <option value="1">B - طبق EN13501 یا EN12845 Cat. I : سخت برای اشتعال (خودخاموش‌شونده) (M=1)</option>
+        <option value="2">C - طبق EN13501-1 : مواد کندسوز (M=2)</option>
+        <option value="3">D - طبق EN13501 یا EN12845 Cat. II : سطوح قابل‌احتراق (M=3)</option>
+        <option value="4">E - طبق EN13501-1 یا EN12845 Cat. III : سطوح قابل‌اشتعال (M=4)</option>
+        <option value="5" selected>F - طبق EN12845 Cat. IV : سطوح بسیار قابل‌اشتعال (M=5)</option>
+        <option value="multi">📊 انتخاب چندکلاسی (میانگین وزنی)</option>
+    </select>
+
+    <!-- بخش چند انتخابی -->
+    <div id="multi-select-container" style="display:none; margin-top:10px; border:1px solid #ccc; padding:8px; border-radius:5px;">
+        <table>
+            <tr>
+                <th>انتخاب</th>
+                <th>کلاس + توضیحات</th>
+                <th>درصد</th>
+            </tr>
+            <tr>
+                <td><input type="checkbox" value="0" onchange="updateWeightedM()"></td>
+                <td>A1 (M=0) : طبق EN13501-1 | غیرقابل‌احتراق</td>
+                <td><input type="number" min="0" max="100" value="0" onchange="updateWeightedM()">%</td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" value="0.5" onchange="updateWeightedM()"></td>
+                <td>A2 (M=0.5) : تقریباً غیرقابل‌احتراق | EN13501-1</td>
+                <td><input type="number" min="0" max="100" value="0" onchange="updateWeightedM()">%</td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" value="1" onchange="updateWeightedM()"></td>
+                <td>B (M=1) : سخت برای اشتعال (خودخاموش‌شونده) | EN12845 Cat. I</td>
+                <td><input type="number" min="0" max="100" value="0" onchange="updateWeightedM()">%</td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" value="2" onchange="updateWeightedM()"></td>
+                <td>C (M=2) : مواد کندسوز | EN13501-1</td>
+                <td><input type="number" min="0" max="100" value="0" onchange="updateWeightedM()">%</td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" value="3" onchange="updateWeightedM()"></td>
+                <td>D (M=3) : سطوح قابل‌احتراق | EN12845 Cat. II</td>
+                <td><input type="number" min="0" max="100" value="0" onchange="updateWeightedM()">%</td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" value="4" onchange="updateWeightedM()"></td>
+                <td>E (M=4) : سطوح قابل‌اشتعال | EN12845 Cat. III</td>
+                <td><input type="number" min="0" max="100" value="0" onchange="updateWeightedM()">%</td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" value="5" onchange="updateWeightedM()"></td>
+                <td>F (M=5) : سطوح بسیار قابل‌اشتعال | EN12845 Cat. IV</td>
+                <td><input type="number" min="0" max="100" value="0" onchange="updateWeightedM()">%</td>
+            </tr>
+        </table>
+        <div style="margin-top:5px; font-weight:bold;">
+            M میانگین وزنی: <span id="weightedM">0</span>
+        </div>
+    </div>
+
+    <div class="input-hint" id="class-hint" style="display:none"></div>
+</div>
+
+<script>
+function toggleMultiSelect(){
+    let select = document.getElementById("fire-class");
+    let multiContainer = document.getElementById("multi-select-container");
+    if(select.value === "multi"){
+        multiContainer.style.display = "block";
+    } else {
+        multiContainer.style.display = "none";
+    }
+}
+
+function updateWeightedM(){
+    let rows = document.querySelectorAll("#multi-select-container table tr");
+    let totalPercent = 0;
+    let weightedSum = 0;
+    rows.forEach((row, index) => {
+        if(index === 0) return; // skip header
+        let checkbox = row.querySelector("input[type='checkbox']");
+        let percentInput = row.querySelector("input[type='number']");
+        if(checkbox.checked){
+            let mValue = parseFloat(checkbox.value);
+            let percent = parseFloat(percentInput.value) || 0;
+            weightedSum += mValue * percent;
+            totalPercent += percent;
+        }
+    });
+
+    let weightedM = (totalPercent > 0) ? (weightedSum / totalPercent) : 0;
+    document.getElementById("weightedM").textContent = weightedM.toFixed(2);
+    window.selectedMValue = weightedM; // ذخیره برای محاسبات
+}
+</script>
+
+
+    <button class="btn btn-primary" onclick="calculateI()">محاسبه ضریب i</button>
+
+    <div class="result-display" id="i-result" style="margin-top: 1rem;"></div>
+
+
+</div>
+
+
+        
+                        <!-- محتوای تب v -->
+<div id="v-factor" class="tab-content">
+  <div class="formula-card">
+    <div class="formula-title">فرمول محاسبه v</div>
+    <div class="formula-content">
+      \[ v = 0.84 + 0.1 \times \log(Q_m) - \sqrt{k \times \sqrt{h}} \]
+    </div>
+  </div>
+
+  <div class="help-card">
+    <div class="help-title">توضیحات</div>
+    <div class="help-content">
+      ضریب تهویه تأثیر دود و حرارت داخل ساختمان را نشان می‌دهد. <br>
+      <b>k = نسبت مساحت بازشوهای تخلیه دود به مساحت کف (معمولاً 0.01 تا 0.02)</b>
+    </div>
+  </div>
+
+  <!-- ورودی‌های ریز بازشوها و تهویه مکانیکی -->
+  <div class="input-group">
+    <label class="input-label">مساحت کل پنجره‌ها و نورگیرها (A<sub>w</sub>)</label>
+    <div class="input-wrapper">
+      <input type="number" id="windowArea" min="0" step="0.01" value="0">
+      <span class="input-unit">m²</span>
+    </div>
+    <div class="input-hint">جمع مساحت پنجره‌ها و نورگیرهای قابل باز شدن به بیرون</div>
+  </div>
+  <div class="input-group">
+    <label class="input-label">مساحت دریچه‌های ثابت (A<sub>s</sub>)</label>
+    <div class="input-wrapper">
+      <input type="number" id="staticVentArea" min="0" step="0.01" value="0">
+      <span class="input-unit">m²</span>
+    </div>
+    <div class="input-hint">جمع مساحت دریچه‌های ثابت تخلیه دود</div>
+  </div>
+
+ <div class="input-group">
+  <label class="input-label">دبی تهویه مکانیکی</label>
+
+  <div style="margin: 0.25rem 0;">
+    <label><input type="radio" name="ventMode" value="manual" checked onchange="toggleVentMode()"> حالت دستی</label>
+    <label style="margin-right: 1rem;"><input type="radio" name="ventMode" value="advanced" onchange="toggleVentMode()"> حالت پیشرفته</label>
+  </div>
+
+  <!-- حالت دستی -->
+  <div id="manual-vent">
+    <div class="input-wrapper">
+      <input type="number" id="mechanicalVentFlow" min="0" step="1" value="0">
+      <span class="input-unit">Nm³/h</span>
+    </div>
+    <div class="input-hint">اگر وجود ندارد صفر وارد کنید</div>
+  </div>
+
+  <!-- حالت پیشرفته -->
+  <div id="advanced-vent" style="display:none; margin-top:0.6rem; padding:0.8rem; border:1px dashed #ccc; border-radius:6px; background:#f9f9f9;">
+    
+    <!-- توضیح و فرمول -->
+    <div style="font-size:0.9rem; margin-bottom:0.8rem; line-height:1.6; background-color:#eef6fb; padding:0.6rem; border-left:4px solid #2196F3; border-radius:4px;">
+      <b>فرمول محاسبه طبق NFPA 204 و EN TR 12101‑4:</b><br>
+      <code>Qv = Cd × A × √(2 × ΔP / ρ)</code><br>
+      که Qv بر حسب m³/s است و پس از محاسبه، به Nm³/h تبدیل می‌شود.<br>
+      <span style="color:#555;">Cd: ضریب تخلیه — ΔP: اختلاف فشار (Pa) — ρ: چگالی هوا (kg/m³)</span>
+    </div>
+
+    <div class="input-group">
+      <label>Qv (m³/s)</label>
+      <input type="number" id="qv-advanced" step="0.001">
+    </div>
+    <div class="input-group">
+      <label>Cd</label>
+      <input type="number" id="cd-advanced" step="0.01" value="0.65">
+    </div>
+    <div class="input-group">
+      <label>ΔP (Pa)</label>
+      <input type="number" id="deltaP-advanced" step="1" value="25">
+    </div>
+    <div class="input-group">
+      <label>ρ (kg/m³)</label>
+      <input type="number" id="rho-advanced" step="0.01" value="1.2">
+    </div>
+    <button type="button" onclick="calculateMechanicalFromAdvanced()">محاسبه از فرمول پیشرفته</button>
+  </div>
+</div>
+
+  <div class="input-group">
+    <label class="input-label">مساحت کل کف (A)</label>
+    <div class="input-wrapper">
+      <input type="number" id="compartmentArea" min="1" step="0.01" value="100">
+      <span class="input-unit">m²</span>
+    </div>
+    <div class="input-hint">کل مساحت فضای مورد نظر</div>
+  </div>
+
+  <button class="btn btn-secondary" type="button" onclick="autoCalculateK()">محاسبه خودکار k بر اساس بازشوها</button>
+
+  <div class="input-group">
+    <label class="input-label">نسبت تهویه (k)</label>
+    <div class="input-wrapper">
+      <input type="number" id="venting-ratio" readonly step="0.001" value="0.01">
+    </div>
+    <div class="input-hint" id="k-details">
+      نسبت مساحت بازشوهای مؤثر به مساحت کف (بر اساس داده‌های بالا)
+    </div>
+  </div>
+
+  <div class="input-group">
+    <label class="input-label">بار آتش متحرک (Qm)</label>
+    <div class="input-wrapper">
+      <input type="number" id="qm-ventilation" min="0" step="100" value="500">
+      <span class="input-unit">MJ/m²</span>
+    </div>
+    <div class="input-hint">همان مقدار استفاده شده در محاسبه q</div>
+  </div>
+
+  <div class="input-group">
+    <label class="input-label">ارتفاع سقف (h)</label>
+    <div class="input-wrapper">
+      <input type="number" id="ceiling-height" min="2" max="15" step="0.5" value="3">
+      <span class="input-unit">متر</span>
+    </div>
+    <div class="input-hint">ارتفاع از کف تا سقف (حداکثر 15 متر)</div>
+  </div>
+
+  <button class="btn btn-primary" onclick="calculateV()">
+    محاسبه ضریب v
+  </button>
+  
+  <div class="result-display" id="v-result" style="margin-top: 1rem;"></div>
+</div>
+
+
+                        <!-- تب ضریب g -->
+<div id="g-factor" class="tab-content">
+    <div class="formula-card">
+        <div class="formula-title">فرمول محاسبه <b>g</b></div>
+        <div class="formula-content" dir="ltr">
+             \[ g = \frac{b + 5 \times \sqrt[3]{b^2 \times l}}{200} \]
+        </div>
+        <div style="direction:ltr;font-size:0.95em;color:#388e3c;margin-top:4px" id="area-tip"></div>
+    </div>
+
+   <div class="help-card">
+    <div>
+        <b>توضیح:</b> ضریب سطح، مقدار گسترش افقی آتش را بسته به ابعاد بخش و نوع پلان نشان می‌دهد. 
+        هرچه مساحت و شکل ساختمان به مربع نزدیک‌تر باشد (l ≈ b) و راهرو دسترسی به دلیل طول زیاد باریک‌تر باشد، g بزرگ‌تر خواهد شد.
+    </div>
+
+
+    <h2 class="toggle-help" onclick="toggleHelpContent(this)">
+    راهنمای محاسبه ضریب g <span style="font-size:0.8em;color:#888;">(کلیک کنید)</span>
+</h2>
+
+<div class="g-help-content">
+    <p>
+        ضریب <b>g</b> تأثیر افقی آتش را بر اساس ابعاد و نوع دسترسی آتش‌نشانی نشان می‌دهد.
+    </p>
+    <ol>
+        <li>طول (l) را اندازه بگیرید.</li>
+        <li>عرض (b) را اندازه بگیرید یا مساحت کل (A) را داشته باشید.</li>
+        <li>نوع دسترسی را مشخص کنید (wide یا narrow).</li>
+        <li>اگر narrow انتخاب شد، طول و عرض جابجا می‌شوند.</li>
+        <li>مقادیر را وارد کنید تا مطابق فرمول محاسبه شود:    
+            <code>g = (b + 5 × ∛(b² × l)) / 200</code>
+        </li>
+    </ol>
+</div>
+</div>
+
+
+<!-- نوع دسترسی به ساختمان -->
+<div class="input-group">
+    <label>
+        نوع دسترسی به ساختمان
+        <span class="input-help" onclick="showGuide('access')">؟</span>
+    </label>
+    <select id="access-type">
+        <option value="wide">دسترسی از ضلع عریض (wide)</option>
+        <option value="narrow">دسترسی از ضلع باریک (narrow)</option>
+    </select>
+</div>
+
+<!-- طول بخش (l) -->
+<div class="input-group">
+    <label>
+        طول بخش (l)
+        <span class="input-help" onclick="showGuide('length')">؟</span>
+    </label>
+    <div class="input-wrapper">
+        <input type="number" id="section-length" min="1" step="1" value="30">
+        <span class="input-unit">متر</span>
+    </div>
+</div>
+
+<!-- عرض بخش (b) -->
+<div class="input-group">
+    <label>
+        عرض بخش (b)
+        <span class="input-help" onclick="showGuide('width')">؟</span>
+    </label>
+    <div class="input-wrapper">
+        <input type="number" id="section-width" min="1" step="1" value="20">
+        <span class="input-unit">متر</span>
+    </div>
+</div>
+
+<!-- یا مساحت (اختیاری) -->
+<div class="input-group">
+    <label>
+        یا مساحت (اختیاری)
+        <span class="input-help" onclick="showGuide('area')">؟</span>
+    </label>
+    <div class="input-wrapper">
+        <input type="number" id="section-area" min="1" step="1" placeholder="اختیاری">
+        <span class="input-unit">متر مربع</span>
+    </div>
+</div>
+
+
+    <button class="btn btn-primary" onclick="calculateG()">
+        محاسبه ضریب g
+    </button>
+
+    <div class="result-display" id="g-result" style="margin-top: 1rem;"></div>
+</div>
+
+
+                        <!-- محتوای تب e -->
+                        <div id="e-factor" class="tab-content">
+    <div class="formula-card">
+        <div class="formula-title">فرمول محاسبه e</div>
+        <div class="formula-content" dir="ltr" style="font-size: 1.15em">
+           \[ e = \left[\frac{|E| + 3}{|E| + 2}\right]^{0.7 \times |E|} \]
+        </div>
+    </div>
+
+    <div class="help-card" style="margin-bottom:.7em;">
+        <div class="help-title">توضیحات مهندسی</div>
+        <div class="help-content" style="font-size:.95em">
+            ضریب طبقه، اثر ارتفاع یا عمق طبقه نسبت به سطح زمین را لحاظ می‌کند.<br>
+            هرچه طبقه موردنظر بالاتر یا پایین‌تر باشد، <b>e</b> بیشتر شده و ریسک افزایش می‌یابد.<br>
+            <span style="color:#7986cb">
+                برای طبقات با گالری/نیم‌طبقه (مثل سالن‌های چندسطحی)، مقدار اعشاری وارد کنید.<br>
+                <i>مثال: طبقه اول با ۴۰٪ مساحت گالری &rarr; عدد 1.4</i>
+            </span>
+        </div>
+    </div>
+    
+     <button id="special-guide-btn" class="btn btn-guide">
+        📖 راهنمای آتریوم ، نیم‌طبقه ، لوفت و دوبلکس
+    </button>
+
+    <div class="input-group" style="min-width:220px;">
+        <label for="floor-E" class="input-label">شماره طبقه (E)</label>
+        <input type="number" step="0.01" id="floor-E" class="input" style="width:100px;display:inline" min="-4" max="150" placeholder="مثلاً 0, 2, 1.4">
+        <select id="preset-floor-E" style="width:120px;display:inline;margin-right:5px;" onchange="document.getElementById('floor-E').value=this.value;">
+            <option disabled selected>انتخاب سریع</option>
+            <option value="-2">زیرزمین 2</option>
+            <option value="-1">زیرزمین 1</option>
+            <option value="0">همکف</option>
+            <option value="1">طبقه اول</option>
+            <option value="2">طبقه دوم</option>
+            <option value="3">طبقه سوم</option>
+            <option value="4">طبقه چهارم</option>
+            <option value="5">پنجم/بالاتر</option>
+        </select>
+    </div>
+
+    <button class="btn btn-primary" onclick="calculateE()">
+        محاسبه ضریب e
+    </button>
+
+    <div id="e-result" class="result-display" style="margin-top: 1.2em;"></div>
+</div>
+
+
+                        <!-- محتوای تب z -->
+<div id="z-factor" class="tab-content">
+    <div class="formula-card">
+    <div class="formula-title">
+        فرمول محاسبه z
+        <button class="help-btn" onclick="toggleZHelp()">راهنما 📖</button>
+    </div>
+    <div class="formula-content">
+        \[ z = 1 + 0.05 \times INT\left[\frac{b}{20 \times Z} +         \left(\frac{H^+}{25} \text{ or } \frac{H^-}{3}\right)\right] \]
+    </div>
+
+    <div id="z-help" class="help-content">
+
+    <h4>جزءها:</h4>
+    <ul>
+        <li><b>INT</b> = فقط قسمت صحیح عدد (rounded down).</li>
+        <li><b>b</b> = عرض مؤثر ساختمان (متر).</li>
+        <li><b>Z</b> = تعداد جبهه‌های دسترسی آتش‌نشانی (۱ تا ۴).</li>
+        <li><b>H⁺</b> = ارتفاعی که باید از سطح دسترسی تا محل حریق به بالا رفت (متر).</li>
+        <li><b>H⁻</b> = عمقی که باید به پایین رفت تا به محل حریق رسید (متر).</li>
+    </ul>
+
+    <p><b>مقسوم‌علیه ثابت‌ها:</b></p>
+    <ul>
+        <li>۲۰ متر = طول استاندارد یک شلنگ آتش‌نشانی در بسیاری از کشورها.</li>
+        <li>۲۵ متر = ارتفاع مرجع نردبان هوایی.</li>
+        <li>۳ متر = ارتفاع تقریبی یک زیرزمین.</li>
+    </ul>
+
+    <h4>الف) قسمت اول: \(\frac{b}{20 \times Z}\)</h4>
+    <ul>
+        <li>اگر فقط از یک سمت شود (Z = 1)، عرض مؤثر را بر ۲۰ متر تقسیم می‌کنیم تا بفهمیم چند شلنگ سری لازم است.</li>
+        <li>هر چه Z بیشتر باشد (دسترسی از چند سمت)، این عدد کوچک‌تر و دسترسی آسان‌تر می‌شود.</li>
+    </ul>
+
+    <h4>ب) قسمت دوم: \(\frac{H^+}{25}\) یا \(\frac{H^-}{3}\)</h4>
+    <p><b>بالا رفتن (\(H^+\)):</b> ارتفاع از محل توقف ماشین آتش‌نشانی تا طبقه محل حریق تقسیم بر ۲۵ متر.</p>
+    <ul>
+        <li>۲۵ متر = طول مرجع نردبان‌ها و محدودیت پمپ آب.</li>
+    </ul>
+    <p><b>پایین رفتن (\(H^-\)):</b> عمق زیر سطح دسترسی تقسیم بر ۳ متر.</p>
+    <ul>
+        <li>۳ متر: ارتفاع معمولی یک طبقه زیرزمین؛ این عمق با دود/حرارت جهت بالا کار را سخت‌تر می‌کند.</li>
+    </ul>
+
+    <h4>پ) قسمت سوم: INT[…]</h4>
+    <p>INT یعنی فقط قسمت صحیح عدد محاسبه‌شده بدون گرد کردن اعشار.</p>
+
+    <p><b>محدوده z:</b> از 1.00 (دسترسی عالی) تا حدود 1.20 (محدود) یا بیشتر در شرایط خاص.</p>
+</div>
+</div>
+
+
+    <div class="help-card">
+        <div class="help-title">توضیحات</div>
+        <div class="help-content">
+            ضریب دسترسی میزان سهولت دسترسی آتش‌نشانان به محل را نشان می‌دهد. INT بخش صحیح عدد است. برای طبقات بالا از H+ و برای زیرزمین از H- استفاده کنید. <br>
+            <b>Z:</b> تعداد جبهه‌های دسترسی مستقل آتش‌نشانی (عدد صحیح: 1 تا 4) 
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">عرض مؤثر ساختمان (b)</label>
+        <div class="input-wrapper">
+            <input type="number" id="section-width-z" min="1" step="0.1" value="20">
+            <span class="input-unit">متر</span>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">تعداد جبهه دسترسی (Z)</label>
+        <div class="input-wrapper">
+            <input type="number" id="access-directions-z" min="1" max="4" step="1" value="1">
+            <span class="input-unit">عدد</span>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">ارتفاع بالای سطح دسترسی (H+)</label>
+        <div class="input-wrapper">
+            <input type="number" id="height-above-z" min="0" step="1" value="0">
+            <span class="input-unit">متر</span>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">عمق زیر سطح دسترسی (H-)</label>
+        <div class="input-wrapper">
+            <input type="number" id="height-below-z" min="0" step="1" value="0">
+            <span class="input-unit">متر</span>
+        </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="calculateZ()">
+        محاسبه ضریب z
+    </button>
+
+    <div class="result-display" id="z-result" style="margin-top: 1rem;"></div>
+</div>
+
+
+                               <!-- نتیجه نهایی P -->
+                               <div class="results-grid" style="margin-top: 2rem;">
+                              <div class="result-card">
+                                <h3>ریسک ساختمان</h3>
+                                <div class="result-value" id="total-p">-</div>
+                               </div>
+                               <div class="result-card">
+                                <h3>ریسک افراد</h3>
+                                <div class="result-value" id="total-p1">-</div>
+                               </div>
+                               <div class="result-card">
+                                <h3>ریسک فعالیت‌ها</h3>
+                                <div class="result-value" id="total-p2">-</div>
+                               </div>
+                                  </div>
+                                
+                               <div style="text-align: center; margin-top: 1rem;">
+                                 <button class="btn btn-secondary" onclick="calculateTotalP()">
+                                 محاسبه همه سطوح ریسک
+                                  </button>
+                                 </div>
+                    </div>
+                </section>
+
+                <!-- بخش سطح پذیرش -->
+                <section id="acceptable-risk" class="section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <div class="card-icon">✅</div>
+                                محاسبه سطح پذیرش (A)
+                            </h2>
+                        </div>
+                        <!-- Progress Bar برای نمایش میزان تکمیل -->
+        <div class="validation-progress">
+            <div class="validation-progress-bar form-progress"></div>
+        </div>
+
+                        <!-- فرمول‌های اصلی -->
+                        <div class="formula-card">
+                            <div class="formula-title">فرمول‌های محاسبه سطح پذیرش</div>
+                            <div class="formula-content">
+                                <p>برای ساختمان: \[ A = 1.6 - a - t - c \]</p>
+                                <p>برای افراد: \[ A_1 = 1.6 - a - t - r \]</p>
+                                <p>برای فعالیت‌ها: \[ A_2 = 1.6 - a - c - d \]</p>
+                            </div>
+                        </div>
+
+                        <!-- تب‌های عوامل -->
+                        <div class="tabs">
+                            <button class="tab active" onclick="showTab('a-activation')">ضریب فعال‌سازی (a)</button>
+                            <button class="tab" onclick="showTab('t-evacuation')">زمان تخلیه (t)</button>
+                            <button class="tab" onclick="showTab('c-value')">ضریب ارزش (c)</button>
+                            <button class="tab" onclick="showTab('r-environment')">ضریب محیطی (r)</button>
+                            <button class="tab" onclick="showTab('d-dependency')">ضریب وابستگی (d)</button>
+                        </div>
+
+                       
+                        <!-- محتوای تب a -->
+<div id="a-activation" class="tab-content active">
+    <div class="help-card">
+        <div class="help-title">ضریب فعال‌سازی (a)</div>
+        <div class="help-content">
+            این ضریب بر اساس منابع احتمالی آتش‌سوزی و فعالیت‌های خطرناک محاسبه می‌شود.
+            مقادیر هر گزینه دقیقاً مطابق با جداول سند FRAME است.
+        </div>
+    </div>
+
+    <!-- ===== گروه 1: فعالیت‌های اصلی ===== -->
+    <h4 class="group-title">فعالیت‌های اصلی</h4>
+    <div class="input-group">
+        <label class="input-label">فعالیت اصلی</label>
+        <select id="main-activity">
+            <option value="0">A1 - کاربری غیرصنعتی: اداری، مسکونی، آموزشی</option>
+            <option value="0">A2 - صنایع محصولات غیرقابل احتراق (OH1)</option>
+            <option value="0.2">B - صنایع عمومی/فروشگاه‌های بزرگ (OH2–OH3)</option>
+            <option value="0.4">C - صنایع محصولات قابل احتراق (OH4 / HH1–HH4)</option>
+            <option value="0">D - انبارها و ذخیره‌سازی مشابه (S)</option>
+        </select>
+    </div>
+
+
+    <!-- ===== گروه 2: سیستم‌های گرمایشی ===== -->
+    <h4 class="group-title">سیستم‌های گرمایشی</h4>
+    <!-- منبع انرژی -->
+    <div class="input-group">
+        <label class="input-label">منبع انرژی (G)</label>
+        <select id="energy-source">
+            <option value="0">G0 - قابل‌اعمال نیست</option>
+            <option value="0">G1 - برق، زغال‌سنگ، نفت کوره</option>
+            <option value="0.1">G2 - گاز</option>
+            <option value="0.15">G3 - چوب یا ضایعات سوختنی</option>
+        </select>
+    </div>
+    <!-- نوع انتقال حرارت -->
+    <div class="input-group">
+        <label class="input-label">نوع انتقال حرارت (E)</label>
+        <select id="heat-transfer-type">
+            <option value="0">E1 -بدون گرمایش: بدون خطر</option>
+            <option value="0">E2 - آب، بخار یا جامدات</option>
+            <option value="0.05">E3 - هوای پرفشار یا روغن</option>
+        </select>
+    </div>
+    <!-- محل ژنراتور حرارت -->
+    <div class="input-group">
+        <label class="input-label">محل ژنراتور حرارت (F)</label>
+        <select id="generator-location">
+            <option value="0">F0 - قابل‌اعمال نیست</option>
+            <option value="0">F1 - اتاق جداگانه مقاوم در برابر آتش</option>
+            <option value="0.1">F2 - داخل همان کمپارتمان</option>
+        </select>
+    </div>
+    
+
+    <!-- ===== گروه 3: تأسیسات الکتریکی ===== -->
+    <h4 class="group-title">تأسیسات الکتریکی</h4>
+    <div class="input-group">
+        <label class="input-label">تأسیسات برق (I)</label>
+        <select id="electrical-system">
+            <option value="0">I1 - منطبق و بازرسی منظم</option>
+            <option value="0.1">I2 - منطبق ولی بدون بازرسی منظم</option>
+            <option value="0.2">I3 - غیرمنطبق با مقررات</option>
+        </select>
+    </div>
+
+    <!-- ===== گروه 4: خطرات انفجار ===== -->
+    <h4 class="group-title">خطرات انفجار</h4>
+    <!-- مایعات و گازها -->
+    <div class="input-group">
+        <label class="input-label">مایعات و گازهای قابل اشتعال (Z)</label>
+        <select id="flammable-liquids">
+            <option value="0" selected>Z - هیچکدام</option>
+            <option value="0.3">Z0 - خطر انفجار دائمی</option>
+            <option value="0.2">Z1 - خطر در شرایط عادی</option>
+            <option value="0.1">Z2 - خطر گاه‌به‌گاه</option>
+        </select>
+    </div>
+    <!-- گردوغبار -->
+    <div class="input-group">
+        <label class="input-label">گردوغبار قابل اشتعال (K)</label>
+        <select id="combustible-dust">
+            <option value="0">K0 - هیچکدام</option>
+            <option value="0.2">K1 - خطر انفجار گردوغبار (زون 20/21/22)</option>
+            <option value="0.1">K2 - تولید گردوغبار بدون سیستم مکش</option>
+        </select>
+    </div>
+
+    <!-- گروه 1.2: رنگ‌آمیزی / اسپری / پوشش -->
+    <div class="input-group">
+        <label class="input-label">رنگ‌آمیزی / اسپری / پوشش</label>
+        <select id="painting-spraying-coating">
+            <option value="0">NONE - هیچ‌کدام</option>
+            <option value="0.05">N1 - در فضای جداشده با تهویه مناسب</option>
+            <option value="0.1">N2 - در فضای جداشده بدون تهویه اضافی</option>
+            <option value="0.2">N3 - بدون جداسازی</option>
+        </select>
+    </div>
+
+    <button class="btn btn-primary" onclick="calculateA()">محاسبه ضریب a</button>
+    <div class="result-display" id="a-result" style="margin-top: 1rem;"></div>
+</div>
+
+
+                        <!-- محتوای تب t -->
+
+<div id="t-evacuation" class="tab-content">
+    <div class="formula-card">
+        <div class="formula-title">فرمول محاسبه t (FRAME 2015)</div>
+        <div class="formula-content">
+            \[ t = \frac{p \times \left[(b + l) + \frac{X}{x} + 1.25\,H^+ + 2\,H^- \right] \times \left[x \times (b + l)\right]}{800 \times K \times \left[1.4\,x\,(b + l) - 0.44\,X \right]} \]
+        </div>
+        <div class="formula-description">
+            <p><strong>t:</strong> ضریب زمان تخلیه بر اساس FRAME 2015</p>
+            <p><strong>b, l:</strong> عرض و طول بخش (متر) – اگر خالی باشد از نتایج ضریب g استفاده می‌شود</p>
+            <p><strong>X:</strong> تعداد کل افراد – از ورودی یا ضریب اشغال</p>
+            <p><strong>x:</strong> تعداد واحدهای خروج (هر 0.6m = 1 واحد)</p>
+            <p><strong>K:</strong> عرض مؤثر کل خروج‌ها (متر)</p>
+            <p><strong>p:</strong> ضریب تحرک افراد</p>
+            <p><strong>H<sup>+</sup>/H<sup>-</sup>:</strong> ارتفاع یا عمق نسبت به سطح دسترسی</p>
+        </div>
+    </div>
+
+    <!-- ضریب بار اشغال -->
+    <div class="input-group">
+        <label>
+            کاربری و ضریب بار اشغال
+            <span class="help-icon" onclick="showTHelpInline('occupant-factor', this)"></span>
+        </label>
+        <select id="occupant-factor">
+            <option value="">-- انتخاب کنید --</option>
+            <option value="3">فضاهای انتظار</option>
+            <option value="1.5">محل تجمع – فشرده</option>
+            <option value="0.6">محل تجمع – معمولی</option>
+            <option value="0.5">کلاس مدارس</option>
+            <option value="0.3">مهدکودک</option>
+            <option value="0.2">آموزش فنی/کارگاه</option>
+            <option value="0.1">مرکز درمانی/زندان</option>
+            <option value="0.05">ساختمان مسکونی/هتل</option>
+            <option value="0.3">فضای فروش (هم‌سطح)</option>
+            <option value="0.2">فضای فروش (بالا)</option>
+            <option value="0.1">دفتر اداری</option>
+            <option value="0.03">کارخانه</option>
+            <option value="0.003">انبار</option>
+        </select>
+    </div>
+
+    <!-- تعداد افراد X -->
+    <div class="input-group">
+        <label>
+            تعداد افراد (X)
+            <span class="help-icon" onclick="showTHelpInline('occupants-count', this)"></span>
+        </label>
+        <input type="number" id="occupants-count" min="0" step="1" placeholder="در صورت خالی گذاشتن، از ضریب بار اشغال محاسبه می‌شود">
+        <small class="input-hint">می‌توانید مستقیماً وارد کنید یا سیستم محاسبه کند</small>
+    </div>
+
+    <!-- مساحت -->
+    <div class="input-group">
+        <label>
+            مساحت بخش (m²)
+            <span class="help-icon" onclick="showTHelpInline('section-area-t', this)"></span>
+        </label>
+        <input type="number" id="section-area-t" min="1" step="1" placeholder="یا از طول × عرض محاسبه می‌شود">
+    </div>
+
+    <!-- عرض مؤثر مسیرهای خروج -->
+    <div class="input-group">
+        <label>
+            عرض مؤثر مسیرهای خروج (متر) – جدا با کاما
+            <span class="help-icon" onclick="showTHelpInline('exit-widths', this)"></span>
+        </label>
+        <input type="text" id="exit-widths" placeholder="مثلاً 1.2, 0.9, 2.0">
+        <small class="input-hint">حداقل عرض مؤثر: 0.6 متر | هر 0.6 متر = 1 واحد خروج</small>
+    </div>
+
+    <!-- عرض کل K -->
+    <div class="input-group">
+        <label for="manual-k">
+            عرض مؤثر کل (K) - دستی
+            <span class="help-icon" title="اگر خالی باشد، از مجموع عرض‌ها محاسبه می‌شود">?</span>
+        </label>
+        <input type="number" id="manual-k" step="0.1" min="0.6" max="10" placeholder="محاسبه خودکار">
+        <span class="unit">متر</span>
+    </div>
+
+    <!-- تعداد خروج‌های مستقیم -->
+    <div class="input-group">
+        <label>
+            تعداد خروج‌های منتهی به فضای آزاد
+            <span class="help-icon" onclick="showTHelpInline('external-exits', this)"></span>
+        </label>
+        <input type="number" id="external-exits" min="1" placeholder="خروجی مستقیم به بیرون">
+    </div>
+
+    <!-- ضریب تحرک p -->
+    <div class="input-group">
+        <label>
+            ضریب تحرک (p)
+            <span class="help-icon" onclick="showTHelpInline('mobility-factor', this)"></span>
+        </label>
+        <select id="mobility-factor">
+            <option value="1">A – متحرک و مستقل</option>
+            <option value="2">B – نیازمند راهنمایی</option>
+            <option value="8">C – تحرک محدود</option>
+            <option value="20">D – نیازمند کمک فردی</option>
+            <option value="6.1">E – گروه مختلط</option>
+        </select>
+    </div>
+
+    <!-- طول و عرض بخش -->
+    <div class="input-row">
+        <div class="input-group">
+            <label>
+                طول بخش (l) - متر
+                <span class="help-icon" onclick="showTHelpInline('section-length', this)"></span>
+            </label>
+            <input type="number" id="section-length-t" min="1" step="0.1" placeholder="بزرگترین بُعد">
+        </div>
+        <div class="input-group">
+            <label>
+                عرض بخش (b) - متر
+                <span class="help-icon" onclick="showTHelpInline('section-width', this)"></span>
+            </label>
+            <input type="number" id="section-width-t" min="1" step="0.1" placeholder="کوچکترین بُعد">
+        </div>
+    </div>
+
+    <!-- ارتفاع‌ها -->
+    <div class="input-row">
+        <div class="input-group">
+            <label>
+                ارتفاع بالای سطح زمین (H+) - متر
+                <span class="help-icon" onclick="showTHelpInline('height-above', this)"></span>
+            </label>
+            <input type="number" id="height-above" min="0" step="0.1" placeholder="ارتفاع طبقه">
+        </div>
+        <div class="input-group">
+            <label>
+                عمق زیر سطح زمین (H-) - متر
+                <span class="help-icon" onclick="showTHelpInline('height-below', this)"></span>
+            </label>
+            <input type="number" id="height-below" min="0" step="0.1" placeholder="عمق زیرزمین">
+        </div>
+    </div>
+
+    <!-- نتایج میانی -->
+    <div class="intermediate-results" id="t-intermediate" style="display:none;">
+        <h4>محاسبات میانی:</h4>
+        <div class="calc-detail">
+            <span class="calc-label">تعداد واحدهای خروج (x):</span>
+            <span class="calc-value" id="calc-x"></span>
+        </div>
+        <div class="calc-detail">
+            <span class="calc-label">عرض کل خروج‌ها (K):</span>
+            <span class="calc-value" id="calc-K"></span>
+            <span class="calc-unit">متر</span>
+        </div>
+        <div class="calc-detail">
+            <span class="calc-label">زمان تخلیه:</span>
+            <span class="calc-value" id="calc-time"></span>
+            <span class="calc-unit">دقیقه</span>
+        </div>
+        <div class="calc-detail">
+            <span class="calc-label">وضعیت:</span>
+            <span class="calc-value" id="calc-status"></span>
+        </div>
+    </div>
+
+    <!-- دکمه محاسبه -->
+    <button class="btn btn-primary" onclick="calculateT()">
+        <i class="fas fa-calculator"></i> محاسبه ضریب t
+    </button>
+
+    <!-- نمایش نتیجه -->
+    <div class="result-display" id="t-result" style="margin-top: 1rem;"></div>
+
+    <!-- جدول مرجع سریع -->
+    <div class="quick-reference" style="margin-top: 2rem;">
+        <h4>جدول مرجع سریع زمان تخلیه</h4>
+        <table class="reference-table">
+            <thead>
+                <tr>
+                    <th>زمان تخلیه (دقیقه)</th>
+                    <th>ضریب t</th>
+                    <th>وضعیت</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="safe"><td>≤ 1</td><td>0</td><td>عالی</td></tr>
+                <tr class="good"><td>1-2</td><td>0.1</td><td>خوب</td></tr>
+                <tr class="moderate"><td>2-3</td><td>0.2</td><td>متوسط</td></tr>
+                <tr class="warning"><td>3-4</td><td>0.3</td><td>نیاز به بهبود</td></tr>
+                <tr class="danger"><td>4-5</td><td>0.4</td><td>بحرانی</td></tr>
+                <tr class="critical"><td>&gt; 5</td><td>0.5</td><td>غیرقابل قبول</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+                        <!-- محتوای تب c -->
+<!-- محتوای تب c (FRAME 2008 با تبدیل سال) -->
+<div id="c-value" class="tab-content">
+    <div class="help-card">
+        <div class="help-title">ضریب ارزش محتویات (c) - FRAME 2008</div>
+        <div class="help-content">
+            <p>
+                این ضریب از مجموع:
+                <ul>
+                    <li><b>c₁:</b> قابلیت جایگزینی محتویات</li>
+                    <li><b>c₂:</b> ارزش محتویات (فرمول دقیق)</li>
+                </ul>
+                <b>فرمول 2008:</b> برای V سال 2000 بزرگ‌تر از 7.1 میلیون یورو:
+                <pre style="direction:ltr">c₂ = 0.25 × log₁₀(V / 7,100,000)</pre>
+            </p>
+            <p><strong>تعریف V:</strong> مجموع ارزش کمپارتمنت + محتویات + ارزش اقتصادی معادل ساکنان.</p>
+            <p>اگر ارزش را به سالی غیر از 2000 دارید، سال شمسی را وارد کنید تا سیستم به طور خودکار به یورو سال 2000 تبدیل کند.</p>
+        </div>
+    </div>
+
+    <!-- c₁ -->
+    <div class="input-group">
+        <label class="input-label">قابلیت جایگزینی (c₁)</label>
+        <select id="replaceability" onchange="calculateC()">
+            <option value="0">به راحتی قابل جایگزینی</option>
+            <option value="0.1">جایگزینی با تأخیر کوتاه</option>
+            <option value="0.2">غیرقابل جایگزینی</option>
+        </select>
+    </div>
+
+    <!-- V: ارزش + سال -->
+    <div class="input-group">
+        <label class="input-label">ارزش کل ساختمان، محتویات و افراد (ریال ایران)</label>
+        <div class="input-wrapper">
+            <input type="number" id="current-value-rial" min="0" step="1000000" oninput="calculateC()">
+            <span class="input-unit">﷼</span>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">سال ارزش جاری (شمسی / میلادی)</label>
+        <select id="value-year" onchange="calculateC()">
+            <option value="">انتخاب کنید</option>
+            <option value="2000">1379 <span style="color:#999;">(2000)</span></option>
+            <option value="2005">1384 <span style="color:#999;">(2005)</span></option>
+            <option value="2010">1389 <span style="color:#999;">(2010)</span></option>
+            <option value="2015">1394 <span style="color:#999;">(2015)</span></option>
+            <option value="2020">1399 <span style="color:#999;">(2020)</span></option>
+            <option value="2021">1400 <span style="color:#999;">(2021)</span></option>
+            <option value="2022">1401 <span style="color:#999;">(2022)</span></option>
+            <option value="2023">1402 <span style="color:#999;">(2023)</span></option>
+            <option value="2024">1403 <span style="color:#999;">(2024)</span></option>
+            <option value="2025">1404 <span style="color:#999;">(2025)</span></option>
+        </select>
+    </div>
+
+    <button class="btn btn-primary" onclick="calculateC()">محاسبه ضریب c</button>
+    <div class="result-display" id="c-result" style="margin-top: 1rem;"></div>
+
+   <button type="button" onclick="toggleCalcDescription()" style="margin-top:10px;">
+    📄 شرح فرآیند محاسبه
+</button>
+<div id="calc-description" style="display:none; margin-top:10px; padding:10px; border:1px solid #ccc; background:#fafafa; line-height:1.6;">
+    <b>فرآیند تبدیل و محاسبه c₂ بر پایه FRAME 2008:</b><br><br>
+    1️⃣ ورود مقدار ارزش (ریال ایران) + سال شمسی<br>
+    2️⃣ تبدیل به یورو همان سال با نرخ بانک مرکزی<br>
+    3️⃣ تعدیل با شاخص ساخت‌وساز ایران → یورو سال 2000<br>
+    4️⃣ مقایسه با آستانه ۷.۱ میلیون یورو و محاسبه c₂ طبق فرمول FRAME 2008<br>
+    5️⃣ جمع c₁ و c₂ برای استفاده در محاسبه سطح پذیرش (A)<br>
+
+    <hr>
+    <b>مثال عددی (ساختمان خدماتی - سال 1404 / 2025):</b><br>
+    <ul style="margin-top:6px; margin-bottom:6px;">
+        <li>c₁ = 0.10 (جایگزینی با تأخیر کوتاه)</li>
+        <li>ارزش کل = 50٬000٬000٬000 ریال</li>
+        <li>سال ارزش جاری = 1404 (2025)</li>
+    </ul>
+    <b>گام‌های محاسبه:</b><br>
+🔹 نرخ یورو 2025 = 1٬100٬000 ریال/€<br>
+🔹 شاخص ساخت 2025 = 11٬400.0<br>
+🔹 <code>ارزش یورو همان سال = 50٬000٬000٬000 ÷ 1٬100٬000 ≈ 45٬454.55 €</code><br>
+🔹 <code>ارزش معادل سال 2000 = 45٬454.55 ÷ (11400.0 ÷ 100) ≈ 398.72 €</code><br>
+🔹 چون 398.72 € &lt; 7.1M € → c₂ = 0<br>
+<br>
+<b>نتیجه:</b><br>
+<code>c = 0.10 + 0 = 0.10</code><br>
+معادل سال 2000 ≈ <code>398.72 €</code>
+<hr>
+<i style="color:#666;">(خروجی واقعی کد هنگام وارد کردن همین داده‌ها باید با این محاسبات یکی باشد)</i>
+  </div>
+</div>
+
+
+
+
+
+                       
+                        <!-- محتوای تب r -->
+
+<div id="r-environment" class="tab-content">
+
+    <!-- کارت راهنما -->
+    <div class="help-card">
+        <div class="help-title">ضریب محیطی (r) </div>
+        <div class="help-content">
+            این ضریب شاخص سرعت تولید دود و حرارت است که بر مدت زمان تخلیه ایمن (ASET) اثر می‌گذارد.
+            مقدار r بر اساس <b>بار آتش ثابت (Qi)</b> و <b>کلاس گسترش شعله (M)</b> در بدترین سناریوی آتش‌سوزی محاسبه می‌شود.
+            <br><br>
+            <b>یادآوری:</b> هرچه r بزرگ‌تر باشد، آتش سریع‌تر توسعه می‌یابد و ASET کوتاه‌تر می‌شود.
+        </div>
+    </div>
+
+    <!-- کارت فرمول -->
+    <div class="formula-card">
+        <div class="formula-title">فرمول محاسبه </div>
+        <div class="formula-content">
+            <p class="math-formula">
+                \( r = 0.1 \times \log_{10}(Qi + 1) + \frac{M}{10} \)
+            </p>
+            <ul>
+                <li><b>Qi</b>: بار آتش ثابت (MJ/m²)</li>
+                <li><b>M</b>: کلاس گسترش شعله (۰ تا ۵)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ورودی‌های محاسبه -->
+    <div class="input-group">
+        <label class="input-label">بار آتش ثابت Qi (MJ/m²)</label>
+        <input type="number" id="qi-fixed" min="0" placeholder="مثلاً 300">
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">
+            کلاس گسترش شعله (M)
+            <!-- لینک تب راهنما -->
+            <span class="hint-link" onclick="showTab('m-guide')">راهنما</span>
+        </label>
+        <select id="flame-class">
+            <option value="0">A1 - غیرقابل احتراق</option>
+            <option value="0.5">A2 - تقریباً غیرقابل احتراق</option>
+            <option value="1">B - دیرسوز</option>
+            <option value="2">C - سوزش کند</option>
+            <option value="3">D - قابل احتراق</option>
+            <option value="4">E - به راحتی مشتعل</option>
+            <option value="5">F - خیلی سریع شعله‌ور</option>
+        </select>
+    </div>
+
+    <!-- دکمه محاسبه -->
+    <button class="btn btn-primary" onclick="calculateR()">محاسبه ضریب r</button>
+
+    <!-- محل نمایش نتیجه -->
+    <div class="result-display" id="r-result" style="margin-top: 1rem;"></div>
+</div>
+
+<!-- تب راهنمای کلاس M -->
+<div id="m-guide" class="tab-content" style="display:none;">
+    <div style="text-align:left; margin-bottom:10px;">
+    <button onclick="showTab('r-environment')" 
+            style="background:none;border:none;font-size:1.5em;cursor:pointer;">
+        ✖
+    </button>
+</div>
+
+    <div class="help-card">
+        <div class="help-title">راهنمای کلاس گسترش شعله (M)</div>
+        <div class="help-content">
+            این جدول کلاس واکنش به آتش مواد را بر اساس <b>EN 13501‑1</b> و ضرایب <b>M</b> تعریف‌شده
+            در <b>FRAME </b> نشان می‌دهد.
+        </div>
+    </div>
+    <div style="overflow-x:auto; margin-top:1rem;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.95em;text-align:center;">
+            <thead style="background:#607d8b;color:#fff;">
+                <tr>
+                    <th style="padding:8px;border:1px solid #ccc;">کلاس EN 13501‑1</th>
+                    <th style="padding:8px;border:1px solid #ccc;">مقدار M</th>
+                    <th style="padding:8px;border:1px solid #ccc;">مثال‌های متداول</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td style="border:1px solid #ccc;">A1 – غیرقابل احتراق کامل</td><td style="border:1px solid #ccc;">0.0</td><td style="border:1px solid #ccc;">بتن، سنگ، فولاد</td></tr>
+                <tr><td style="border:1px solid #ccc;">A2 – تقریباً غیرقابل احتراق</td><td style="border:1px solid #ccc;">0.5</td><td style="border:1px solid #ccc;">شیشه، آجر نسوز</td></tr>
+                <tr><td style="border:1px solid #ccc;">B – دیرسوز (Slow burning)</td><td style="border:1px solid #ccc;">1.0</td><td style="border:1px solid #ccc;">پانل گچی دیرسوز</td></tr>
+                <tr><td style="border:1px solid #ccc;">C – سوزش کند</td><td style="border:1px solid #ccc;">2.0</td><td style="border:1px solid #ccc;">چوب طبیعی، کف پارکت</td></tr>
+                <tr><td style="border:1px solid #ccc;">D – قابل احتراق</td><td style="border:1px solid #ccc;">3.0</td><td style="border:1px solid #ccc;">فرش پلاستیکی، پلیمرها</td></tr>
+                <tr><td style="border:1px solid #ccc;">E – به راحتی مشتعل</td><td style="border:1px solid #ccc;">4.0</td><td style="border:1px solid #ccc;">فوم پلی‌یورتان معمولی</td></tr>
+                <tr><td style="border:1px solid #ccc;">F – خیلی سریع شعله‌ور</td><td style="border:1px solid #ccc;">5.0</td><td style="border:1px solid #ccc;">پلی‌استایرن منبسط</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+                        <!-- محتوای تب d -->
+                        <div id="d-dependency" class="tab-content">
+    <div class="help-card">
+        <div class="help-title">ضریب وابستگی اقتصادی (نسخه 2015 FRAME)</div>
+        <div class="help-content">
+            این ضریب حساسیت فعالیت‌ها به توقف ناشی از آتش‌سوزی را بر اساس نسبت ارزش افزوده به گردش مالی برآورد می‌کند.
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">انتخاب گروه فعالیت</label>
+        <select id="dependency-category">
+            <option value="">-- انتخاب کنید --</option>
+            <option value="0.8">صنایع فناوری پیشرفته (مثلاً هوافضا) - 0.7 تا 0.9 (میانگین 0.8)</option>
+            <option value="0.6">صنایع دقیق (مثلاً الکترونیک) - 0.45 تا 0.7 (میانگین 0.6)</option>
+            <option value="0.35">صنایع تولیدی - 0.25 تا 0.45 (میانگین 0.35)</option>
+            <option value="0.1">شرکت‌های تجاری و انبارها - 0.05 تا 0.15 (میانگین 0.1)</option>
+            <option value="0.8">خدمات اداری - 0.8</option>
+            <option value="0.3">میانگین کسب‌وکارها - 0.3</option>
+            <option value="manual">-- ورود دستی --</option>
+        </select>
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">ورود دستی مقدار d (0 تا 1)</label>
+        <input type="number" id="dependency-manual" min="0" max="1" step="0.01" 
+               placeholder="مثلاً 0.45" disabled style="opacity: 0.5;">
+    </div>
+
+    <button class="btn btn-primary" onclick="calculateD()">
+        محاسبه ضریب d
+    </button>
+
+    <div class="result-display" id="d-result" style="margin-top: 1rem;"></div>
+                       </div>
+
+
+
+                        <!-- نتایج نهایی A -->
+                        <div class="results-grid" style="margin-top: 2rem;">
+                            <div class="result-card">
+                                <h3>سطح پذیرش ساختمان</h3>
+                                <div class="result-value" id="total-a">-</div>
+                            </div>
+                            <div class="result-card">
+                                <h3>سطح پذیرش افراد</h3>
+                                <div class="result-value" id="total-a1">-</div>
+                            </div>
+                            <div class="result-card">
+                                <h3>سطح پذیرش فعالیت‌ها</h3>
+                                <div class="result-value" id="total-a2">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- بخش سطح حفاظت -->
+                <section id="protection-level" class="section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <div class="card-icon">🛡️</div>
+                                محاسبه سطح حفاظت (D)
+                            </h2>
+                        </div>
+                        <!-- Progress Bar برای نمایش میزان تکمیل -->
+        <div class="validation-progress">
+            <div class="validation-progress-bar form-progress"></div>
+        </div>
+                        
+                        <div class="formula-card">
+                            <div class="formula-title">فرمول‌های محاسبه سطح حفاظت</div>
+                            <div class="formula-content">
+                                <p>برای ساختمان: \[ D = W \times N \times S \times F \]</p>
+                                <p>برای افراد: \[ D_1 = N \times U \]</p>
+                                <p>برای فعالیت‌ها: \[ D_2 = W \times N \times S \times Y \]</p>
+                            </div>
+                        </div>
+
+                        <!-- تب‌های عوامل حفاظت -->
+                        <div class="tabs">
+                            <button class="tab active" onclick="showTab('w-water')">سیستم‌های آب (W)</button>
+                            <button class="tab" onclick="showTab('n-normal')">تجهیزات عادی (N)</button>
+                            <button class="tab" onclick="showTab('s-special')">تجهیزات خاص (S)</button>
+                            <button class="tab" onclick="showTab('f-resistance')">مقاومت آتش (F)</button>
+                            <button class="tab" onclick="showTab('u-escape')">فرار و نجات (U)</button>
+                            <button class="tab" onclick="showTab('y-salvage')">نجات اموال (Y)</button>
+                        </div>
+
+                        <!-- محتوای تب W -->
+
+<div id="w-water" class="tab-content">
+    <div class="formula-card">
+        <div class="formula-title">فرمول محاسبه W</div>
+        <div class="formula-content">
+            \[ W = 0.95^w \quad , \quad w = \sum_{i=1}^{4} w_i \]
+        </div>
+    </div>
+
+    <div class="help-card">
+        <div class="help-title">راهنمای FRAME 2015 - ضریب تأمین آب (W)</div>
+        <div class="help-content">
+            ضریب W کیفیت و کفایت سیستم تأمین آب برای اطفای حریق را می‌سنجد.  
+            هر ضعف در سیستم بر اساس جداول سند FRAME 2015 جریمه می‌گیرد.
+        </div>
+    </div>
+
+    <!-- w1: نوع ذخیره آب -->
+    <div class="input-group">
+        <label class="input-label">نوع ذخیره آب 
+            <button type="button" class="btn-help" onclick="showGuideW('w1')">?</button>
+        </label>
+        <select id="water-storage-type">
+            <option value="auto">ذخیره اتوماتیک (w₁=0)</option>
+            <option value="manual">ذخیره دستی (w₁=4)</option>
+            <option value="none">بدون ذخیره (≤300m) (w₁=10)</option>
+        </select>
+    </div>
+
+    <!-- w2: ظرفیت ذخیره آب -->
+    <div class="input-group">
+        <label class="input-label">ظرفیت ذخیره آب موجود 
+            <button type="button" class="btn-help" onclick="showGuideW('w2')">?</button>
+        </label>
+        <div class="input-wrapper">
+            <input type="number" id="water-capacity" min="0" step="10" value="0">
+            <span class="input-unit">m³</span>
+        </div>
+        <div class="input-hint">
+            آب مورد نیاز = مجموع بار آتش (MJ/m²) ÷ 4  
+            جریمه w₂: 0%→4, 70%→3, 80%→2, 90%→1, 100%→0
+        </div>
+    </div>
+
+    <!-- w3: شبکه توزیع -->
+    <div class="input-group">
+        <label class="input-label">ظرفیت شبکه توزیع آب 
+            <button type="button" class="btn-help" onclick="showGuideW('w3')">?</button>
+        </label>
+        <select id="distribution-network">
+            <option value="adequate">شبکه مناسب (w₃=0)</option>
+            <option value="limited">محدود (w₃=2)</option>
+            <option value="none">بدون شبکه (w₃=6)</option>
+        </select>
+    </div>
+
+    <!-- w4: اتصالات هیدرانت -->
+    <div class="input-group">
+        <label class="input-label">تعداد اتصالات هیدرانت 
+            <button type="button" class="btn-help" onclick="showGuideW('w4')">?</button>
+        </label>
+        <div class="input-wrapper">
+            <input type="number" id="hydrant-25" placeholder="تعداد 2.5&quot;(70)" value="0" min="0">
+            <span class="input-unit">عدد</span>
+        </div>
+        <div class="input-wrapper">
+            <input type="number" id="hydrant-3" placeholder="تعداد 3&quot;" value="0" min="0">
+            <span class="input-unit">عدد</span>
+        </div>
+        <div class="input-wrapper">
+            <input type="number" id="hydrant-4" placeholder="تعداد 4&quot;(100)" value="0" min="0">
+            <span class="input-unit">عدد</span>
+        </div>
+        <div class="input-hint">
+            نیاز: ≥ 1 اتصال 2.5" به ازای هر 50m محیط  
+            3" معادل 2×اتصال 2.5" | 4" معادل 3×اتصال 2.5"
+        </div>
+    </div>
+
+
+    <button class="btn btn-primary" onclick="calculateW2015()">محاسبه W (FRAME 2015)</button>
+
+    <div id="W-result" class="result-display" style="margin-top:1rem;"></div>
+</div>
+
+
+
+
+
+ 
+                        <!-- محتوای تب N -->
+<div id="n-normal" class="tab-content">
+    <div class="formula-card">
+        <div class="formula-title">فرمول محاسبه N - ضریب حفاظت عادی </div>
+        <div class="formula-content">
+            \[ N = 0.95^{n} \quad \text{که} \quad n = n_۱ + n₂ + n₃ + n₄ + n₅ \]
+        </div>
+    </div>
+
+    <!-- n1 -->
+    <div class="input-section">
+        <h4 class="section-title">n₁ - کشف و هشدار</h4>
+        <select id="n1" class="form-control">
+            <option value="0">زنجیره کامل کشف و هشدار به آتش‌نشانی و ساکنان</option>
+            <option value="2">کشف یا هشدار ناقص</option>
+            <option value="4">هشدار محلی بدون اطلاع‌رسانی</option>
+            <option value="6">فاقد کشف و هشدار</option>
+        </select>
+    </div>
+
+    <!-- n2 -->
+    <div class="input-section">
+        <h4 class="section-title">n₂ - خاموش‌کن دستی</h4>
+        <select id="n2" class="form-control">
+            <option value="0">خاموش‌کن‌ها کافی و درست</option>
+            <option value="2">خاموش‌کن ناکافی</option>
+            <option value="4">بدون خاموش‌کن</option>
+        </select>
+    </div>
+
+    <!-- n3 -->
+    <div class="input-section">
+        <h4 class="section-title">n₃ - جعبه/هوزریل آتش‌نشانی</h4>
+        <select id="n3" class="form-control">
+            <option value="0">پوشش کامل جعبه آتش‌نشانی</option>
+            <option value="2">تعداد یا مکان ناکافی</option>
+            <option value="4">فاقد جعبه آتش‌نشانی</option>
+        </select>
+    </div>
+
+    <!-- n4 -->
+    <div class="input-section">
+        <h4 class="section-title">n₄ - زمان رسیدن آتش‌نشانی</h4>
+        <select id="n4" class="form-control">
+            <option value="0">کمتر از 10 دقیقه</option>
+            <option value="2">10 تا 15 دقیقه</option>
+            <option value="5">15 تا 30 دقیقه</option>
+            <option value="10">بیش از 30 دقیقه</option>
+        </select>
+    </div>
+
+    <!-- n5 -->
+    <div class="input-section">
+        <h4 class="section-title">n₅ - آموزش ساکنان</h4>
+        <select id="n5" class="form-control">
+            <option value="0">همه آموزش دیده‌اند</option>
+            <option value="2">برخی آموزش دیده‌اند</option>
+            <option value="4">هیچ آموزش ندیده‌اند</option>
+        </select>
+    </div>
+
+    <div class="result-display" id="n-result" style="margin-top: 1rem;"></div>
+    <div id="n-calculation-details" class="calculation-details" style="display: none;">
+        <h4>جزئیات محاسبه:</h4>
+        <div id="n-details-content"></div>
+    </div>
+</div>
+
+
+
+
+<!-- محتوای تب S -->
+<div id="s-special" class="tab-content">
+    <div class="formula-card">
+        <div class="formula-title">فرمول محاسبه S - ضریب حفاظت ویژه</div>
+        <div class="formula-content">
+            \[ S = 1.05^{s} \quad \text{که} \quad s = s_1 + s_2 + s_3 + s_4 + s_5 \]
+        </div>
+    </div>
+
+    <!-- s1 -->
+    <div class="input-section">
+        <h4 class="section-title">s₁ - سیستم‌های تشخیص خودکار حریق</h4>
+        <div class="input-group">
+            <label class="input-label">نوع سیستم تشخیص</label>
+            <select id="detection-type" onchange="calculateS()">
+                <option value="0">ندارد</option>
+                <option value="4">تشخیص خودکار توسط اسپرینکلر + سوئیچ فشار/جریان</option>
+                <option value="5">توسط حسگر حرارتی</option>
+                <option value="8">توسط حسگر دود یا شعله</option>
+                <option value="2">توسط آلارم دود مستقل</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- s2 -->
+    <div class="input-section">
+        <h4 class="section-title">s₂ - منابع آب بهبود یافته</h4>
+        <div class="input-group">
+            <label class="input-label">وضعیت منابع آب</label>
+            <select id="water-supply" onchange="calculateS()">
+                <option value="0">منبع تک جریان/فشار</option>
+                <option value="5">قابل اطمینان بالا: یک مخزن + دو جریان/فشار</option>
+                <option value="12">دو مخزن مستقل هر کدام با جریان/فشار</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- s3 -->
+    <div class="input-section">
+        <h4 class="section-title">s₃ - سیستم‌های اطفاء خودکار</h4>
+        <div class="input-group">
+            <label class="input-label">سیستم اسپرینکلر</label>
+            <select id="sprinkler-system" onchange="calculateS()">
+                <option value="0">ندارد</option>
+                <option value="11">اسپرینکلر با یک منبع آب شهری</option>
+                <option value="14">اسپرینکلر با یک منبع آب مستقل</option>
+                <option value="20">اسپرینکلر با دو منبع آب مستقل</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- s4 -->
+    <div class="input-section">
+        <h4 class="section-title">s₄ - ایستگاه آتش‌نشانی</h4>
+        <div class="input-group">
+            <label class="input-label">نوع ایستگاه آتش‌نشانی</label>
+            <select id="fire-station" onchange="calculateS()">
+                <option value="8">ایستگاه تمام‌وقت ۲۴ساعته در ۷ روز هفته</option>
+                <option value="6">ایستگاه نیمه‌وقت (روز تمام‌وقت، شب آنکال)</option>
+                <option value="4">ایستگاه با پرسنل پاره‌وقت</option>
+                <option value="2">ایستگاه داوطلب</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- s5 -->
+    <div class="input-section">
+        <h4 class="section-title">s₅ - آتش‌نشانی صنعتی خصوصی</h4>
+        <div class="input-group">
+            <label class="input-label">وضعیت تیم آتش‌نشانی صنعتی</label>
+            <select id="industrial-brigade" onchange="calculateS()">
+                <option value="0">ندارد</option>
+                <option value="6">تیم پاره‌وقت (ساعات کاری)</option>
+                <option value="14">تیم تمام‌وقت ۲۴ساعته</option>
+            </select>
+        </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="calculateS()">محاسبه ضریب S</button>
+
+    <div class="result-display" id="s-result" style="margin-top: 1rem;"></div>
+    <div id="s-calculation-details" class="calculation-details" style="display: none;">
+        <h4>جزئیات محاسبه:</h4>
+        <div id="s-details-content"></div>
+    </div>
+</div>
+
+
+
+
+                        <!-- محتوای تب F -->
+<div id="f-resistance" class="tab-content">
+    <div class="formula-card">
+        <div class="formula-title">فرمول محاسبه F - ضریب مقاومت آتش</div>
+        <div class="formula-content">
+            <p>محاسبه میانگین مقاومت آتش:</p>
+            \[ f = \frac{1}{2}f_s + \frac{1}{4}f_f + \frac{1}{8}f_d + \frac{1}{8}f_w \]
+            
+            <p>محاسبه ضریب F:</p>
+            \[ F = \left[1 + \frac{f}{100} - \frac{f^{2.5}}{10^6}\right] \times \left[1 - \frac{(S-1)}{40}\right] \]
+        </div>
+        <div class="formula-explanation">
+            <ul>
+                <li>f<sub>s</sub>: مقاومت سازه و عناصر جداکننده (REI)</li>
+                <li>f<sub>f</sub>: مقاومت دیوارهای خارجی (E)</li>
+                <li>f<sub>d</sub>: مقاومت سقف یا بام (RE)</li>
+                <li>f<sub>w</sub>: مقاومت دیوارهای داخلی (EI)</li>
+                <li>حداکثر مقدار مجاز: 120 دقیقه</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- مقاومت سازه -->
+    <div class="input-section">
+        <h4 class="section-title">مقاومت آتش اجزای ساختمان</h4>
+        
+        <div class="input-group">
+            <label class="input-label">f<sub>s</sub> - مقاومت سازه (ستون‌ها، تیرها، دیوارهای باربر)</label>
+            <select id="fs-structural" onchange="calculateF()">
+                <option value="0">بدون مقاومت (R0)</option>
+                <option value="15">15 دقیقه (R15) - سازه فولادی بدون پوشش</option>
+                <option value="30">30 دقیقه (R30)</option>
+                <option value="60" selected>60 دقیقه (R60) - بنایی/بتن معمولی</option>
+                <option value="90">90 دقیقه (R90)</option>
+                <option value="120">120 دقیقه (R120) - بتن مسلح ضخیم</option>
+                <option value="180">بیش از 120 دقیقه (محاسبه با 120)</option>
+            </select>
+            <div class="input-hint">
+                <i class="fas fa-info-circle"></i>
+                مقاومت سازه مهم‌ترین عامل است (ضریب 1/2)
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">f<sub>f</sub> - مقاومت دیوارهای خارجی</label>
+            <select id="ff-facade" onchange="calculateF()">
+                <option value="0">شیشه معمولی یا بدون مقاومت</option>
+                <option value="15">15 دقیقه</option>
+                <option value="30">30 دقیقه</option>
+                <option value="60">60 دقیقه - آجر یا بتن</option>
+                <option value="90">90 دقیقه</option>
+                <option value="120">120 دقیقه</option>
+            </select>
+            <div class="input-hint">
+                <i class="fas fa-info-circle"></i>
+                درصد پنجره‌ها: بیش از 5% = مقاومت صفر
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">
+                <input type="checkbox" id="facade-windows" onchange="calculateF()">
+                دیوار خارجی دارای بیش از 5% پنجره (مقاومت = 0)
+            </label>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">f<sub>d</sub> - مقاومت سقف/بام</label>
+            <select id="fd-roof" onchange="calculateF()">
+                <option value="0">بدون مقاومت یا عایق سوختنی</option>
+                <option value="15">15 دقیقه</option>
+                <option value="30">30 دقیقه</option>
+                <option value="60">60 دقیقه</option>
+                <option value="90">90 دقیقه</option>
+                <option value="120">120 دقیقه</option>
+            </select>
+            <div class="input-hint">
+                <i class="fas fa-info-circle"></i>
+                عایق سوختنی در زیر سقف = مقاومت صفر
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">f<sub>w</sub> - مقاومت دیوارهای داخلی</label>
+            <select id="fw-walls" onchange="calculateF()">
+                <option value="0">بدون دیوار جداکننده یا مساحت > 1000 m²</option>
+                <option value="30">30 دقیقه</option>
+                <option value="60">60 دقیقه</option>
+                <option value="90">90 دقیقه</option>
+                <option value="120">120 دقیقه</option>
+            </select>
+            <div class="input-hint">
+                <i class="fas fa-info-circle"></i>
+                فقط برای دیوارهایی که فضا را به بخش‌های کمتر از 1000 m² و حداکثر 25% کل تقسیم می‌کنند
+            </div>
+        </div>
+    </div>
+
+    <!-- شرایط خاص -->
+    <div class="input-section">
+        <h4 class="section-title">شرایط ویژه</h4>
+        
+        <div class="input-group">
+            <label class="input-label">
+                <input type="checkbox" id="no-internal-separation" onchange="calculateF()">
+                فضای باز بدون تقسیم‌بندی داخلی (انبار بزرگ)
+            </label>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">
+                <input type="checkbox" id="combustible-insulation" onchange="calculateF()">
+                عایق سوختنی در زیر سقف
+            </label>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">S - ضریب حفاظت ویژه (محاسبه شده قبلی)</label>
+            <div class="input-wrapper">
+                <input type="number" id="s-value-for-f" value="1" step="0.01" readonly>
+                <button class="btn-small" onclick="document.getElementById('s-value-for-f').value = calculationResults.S || 1">
+                    بروزرسانی از محاسبه S
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="calculateF()">
+        محاسبه ضریب F
+    </button>
+
+    <div class="result-display" id="f-result" style="margin-top: 1rem;"></div>
+    
+    <div id="f-calculation-details" class="calculation-details" style="display: none;">
+        <h4>جزئیات محاسبه:</h4>
+        <div id="f-details-content"></div>
+    </div>
+</div>
+
+
+                        <!-- محتوای تب U -->
+ 
+<div id="u-escape" class="tab-content">
+    <div class="formula-card">
+        <div class="formula-title">فرمول محاسبه U</div>
+        <div class="formula-content">
+            \[ U = 1.05^{u} \quad \text{که} \quad u = \sum u_i \]
+        </div>
+    </div>
+
+    <!-- توضیحات کاربردی کلی -->
+    <div style="background:#e8f5e9;padding:12px;border-radius:8px;margin-top:10px;">
+        <b style="color:#2e7d32;">توضیحات کاربردی</b>
+        <p style="color:#555;line-height:1.6;margin-top:6px;">
+            ضریب U بیانگر اثربخشی شرایط فرار و نجات در ساختمان است و از مجموع امتیازهای چهار بخش اصلی محاسبه می‌شود:
+            <b>بخش‌بندی فرعی، نوع پله‌های تخلیه، خروج افقی، حفاظت اسپرینکلر</b>.
+            هر گزینه در این بخش‌ها بسته به سطح حفاظت و تسهیل مسیر فرار، امتیاز مثبت می‌گیرد.
+            مجموع امتیازها (<span style="direction:ltr;">u</span>) در فرمول 
+            <code>U = 1.05<sup>u</sup></code>
+            قرار می‌گیرد؛ هرچه U بزرگ‌تر، شرایط تخلیه مناسب‌تر است.
+        </p>
+    </div>
+
+    <!-- Subcompartments -->
+    <div class="section-divider">بخش‌بندی فرعی (Subcompartments)</div>
+    <div class="input-group">
+        <label class="input-label">نوع بخش‌بندی</label>
+        <select id="u-subcompartment">
+            <option value="0">بدون بخش‌بندی</option>
+            <option value="2">EI30 – حداکثر 1000 m²</option>
+            <option value="4">EI60 – حداکثر 1000 m²</option>
+        </select>
+    </div>
+    <!-- توضیح تفاوت EI30 و EI60 -->
+    <div style="background:#fff8e1;padding:8px;border-radius:6px;margin-top:6px;font-size:0.92em;line-height:1.6;">
+        <b style="color:#f57c00;">راهنما:</b> 
+        <b>EI&nbsp;30</b> یعنی دیوار/جداکننده‌ها ۳۰ دقیقه مقاومت حریق دارند 
+        (<i>E</i> = یکپارچگی، <i>I</i> = عایق حرارتی).
+        <br>
+        <b>EI&nbsp;60</b> یعنی مقاومت حریق این جداکننده‌ها ۶۰ دقیقه است؛
+        حفاظت بیشتر و زمان تخلیه امن‌تر در شرایط آتش.
+    </div>
+
+    <!-- Type of stairways -->
+    <div class="section-divider">نوع پله‌های تخلیه</div>
+    <div class="input-group">
+        <label class="input-label">نوع راه‌پله</label>
+        <select id="u-stair-type">
+            <option value="0">بدون پله یا پله باز داخلی</option>
+            <option value="1">یک پله محصور داخلی</option>
+            <option value="2">چند پله محصور داخلی</option>
+            <option value="3">حداقل یک پله محصور ضد دود</option>
+            <option value="4">چند پله محصور ضد دود</option>
+            <option value="6">پله داخلی + یک پله خارجی</option>
+            <option value="8">پله داخلی + چند پله خارجی</option>
+            <option value="2">پله داخلی + سرسره/نردبان (طبقه 1 و 2)</option>
+        </select>
+    </div>
+
+    <!-- Horizontal exits -->
+    <div class="section-divider">خروج افقی</div>
+    <div class="input-group">
+        <label class="input-label">نوع خروج افقی</label>
+        <select id="u-horizontal-exit">
+            <option value="0">بدون خروج افقی</option>
+            <option value="2">تا ۵۰٪ ظرفیت موردنیاز</option>
+            <option value="8">۱۰۰٪ ظرفیت موردنیاز</option>
+        </select>
+    </div>
+
+    <!-- Sprinkler protection -->
+    <div class="section-divider">حفاظت اسپرینکلر</div>
+    <div class="input-group">
+        <label class="input-label">نوع حفاظت</label>
+        <select id="u-sprinkler">
+            <option value="0">بدون اسپرینکلر</option>
+            <option value="5">اسپرینکلر فقط در نواحی پُرخطر</option>
+            <option value="10">کل بخش مجهز به اسپرینکلر</option>
+        </select>
+    </div>
+
+    <button class="btn btn-primary" onclick="calculateU()">محاسبه ضریب U</button>
+    <div class="result-display" id="u-result" style="margin-top:1rem;"></div>
+
+    <!-- جدول کامل امتیازدهی -->
+    <div class="help-table" style="margin-top:2rem;">
+        <h4>جدول امتیازات فاکتور U بر اساس FRAME 2015</h4>
+        <!-- ... همان جدول که قبلاً گذاشتیم ... -->
+    </div>
+</div>
+
+
+
+
+                        <!-- محتوای تب Y -->
+
+<!-- محتوای تب Y -->
+<div id="y-salvage" class="tab-content">
+    <div class="formula-card">
+        <div class="formula-title">فرمول محاسبه Y</div>
+        <div class="formula-content">
+            \[ Y = 1.05^{y} \quad \text{که} \quad y = \sum y_i \]
+        </div>
+    </div>
+
+    <!-- باکس توضیحی -->
+    <div class="help-card">
+        <div class="help-title">توضیح فاکتور Y</div>
+        <div class="help-content">
+            فاکتور Y میزان آمادگی برای نجات و حفظ فعالیت‌ها را پس از وقوع حریق نشان می‌دهد. این شامل حفاظت از داده‌ها،
+            تامین قطعات یدکی، امکان تعمیر سریع، انتقال فعالیت‌ها به مکان دیگر و ظرفیت تولید چندمحلی است.
+            هر چه این اقدامات بیشتر رعایت شود، مقدار Y بیشتر شده و حفاظت بهبود می‌یابد.
+        </div>
+    </div>
+
+    <!-- حفاظت فیزیکی -->
+    <div class="section-divider">حفاظت فیزیکی مناطق حساس</div>
+    <div class="help-card">
+        <div class="help-title">توجه مهم</div>
+        <div class="help-content">
+            امتیازات حفاظت موضعی فقط زمانی داده می‌شود که حفاظت کلی از همان نوع در کل ساختمان وجود نداشته باشد.
+            برای مثال، اگر کل ساختمان اسپرینکلر دارد، امتیاز اسپرینکلر موضعی داده نمی‌شود.
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">تقسیم‌بندی مناطق حساس</label>
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="sub-compartment-ei30" value="2">
+                تقسیم به زون‌های حداکثر 1000m² با جداسازی EI30
+            </label>
+            <label>
+                <input type="checkbox" id="sub-compartment-ei60" value="4">
+                تقسیم به زون‌های حداکثر 1000m² با جداسازی EI60
+            </label>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">سیستم‌های حفاظتی موضعی</label>
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="partial-detection-critical" value="3">
+                سیستم اعلام حریق اتوماتیک موضعی
+            </label>
+            <label>
+                <input type="checkbox" id="partial-sprinkler-critical" value="5">
+                اسپرینکلر موضعی در مناطق حیاتی
+            </label>
+            <label>
+                <input type="checkbox" id="other-auto-extinguish" value="4">
+                سایر سیستم‌های اطفای اتوماتیک (گاز، فوم، پودر)
+            </label>
+        </div>
+    </div>
+
+    <!-- برنامه‌ریزی بحران -->
+    <div class="section-divider">برنامه‌ریزی مدیریت بحران</div>
+    <div class="input-group">
+        <label class="input-label">اقدامات سازمانی</label>
+        <div class="checkbox-group">
+            <label><input type="checkbox" id="financial-data-backup" value="2"> پشتیبان‌گیری از داده‌های مالی و اقتصادی در مکان امن </label>
+            <label><input type="checkbox" id="spare-parts-access" value="4"> دسترسی آسان به قطعات یدکی و تجهیزات جایگزین </label>
+            <label><input type="checkbox" id="self-repair-capability" value="2"> توانایی تعمیر با حداقل کمک خارجی </label>
+            <label><input type="checkbox" id="relocation-agreements" value="3"> قرارداد جابجایی موقت فعالیت‌ها </label>
+            <label><input type="checkbox" id="multiple-production" value="4"> ظرفیت تولید در بیش از یک مکان </label>
+        </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="calculateY()">محاسبه ضریب Y</button>
+    <div class="result-display" id="y-result" style="margin-top: 1rem;"></div>
+
+    <!-- جدول خلاصه امتیازات -->
+    <div class="summary-table" style="margin-top: 2rem;">
+        <h4>خلاصه امتیازات بر اساس FRAME 2015</h4>
+        <table class="info-table">
+            <thead>
+                <tr>
+                    <th>عامل</th>
+                    <th>امتیاز (y<sub>i</sub>)</th>
+                    <th>شرط</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>تقسیم‌بندی EI30</td><td>2</td><td>زون‌های کمتر از 1000m²</td></tr>
+                <tr><td>تقسیم‌بندی EI60</td><td>4</td><td>زون‌های کمتر از 1000m²</td></tr>
+                <tr><td>اعلام حریق موضعی</td><td>3</td><td>در مناطق حیاتی</td></tr>
+                <tr><td>اسپرینکلر موضعی</td><td>5</td><td>در مناطق حیاتی</td></tr>
+                <tr><td>سایر سیستم‌های اطفا</td><td>4</td><td>گاز، فوم یا پودر</td></tr>
+                <tr class="divider"><td colspan="3"><strong>برنامه‌ریزی بحران</strong></td></tr>
+                <tr><td>پشتیبان داده‌ها</td><td>2</td><td>در مکان امن</td></tr>
+                <tr><td>قطعات یدکی</td><td>4</td><td>دسترسی آسان</td></tr>
+                <tr><td>توانایی تعمیر</td><td>2</td><td>با حداقل کمک</td></tr>
+                <tr><td>توافقات جابجایی</td><td>3</td><td>مکان جایگزین</td></tr>
+                <tr><td>تولید چندگانه</td><td>4</td><td>چند مرکز تولید</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+                        <!-- نتایج نهایی D -->
+                        <div class="results-grid" style="margin-top: 2rem;">
+                            <div class="result-card">
+                                <h3>حفاظت ساختمان</h3>
+                                <div class="result-value" id="total-d">-</div>
+                            </div>
+                            <div class="result-card">
+                                <h3>حفاظت افراد</h3>
+                                <div class="result-value" id="total-d1">-</div>
+                            </div>
+                            <div class="result-card">
+                                <h3>حفاظت فعالیت‌ها</h3>
+                                <div class="result-value" id="total-d2">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                  <!-- بخش ریسک اولیه -->
+<section id="initial-risk" class="section" style="display: none;">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <div class="card-icon">🎯</div>
+                محاسبه ریسک اولیه (R₀) و انتخاب سیستم حفاظت
+            </h2>
+        </div>
+        <!-- Progress Bar برای نمایش میزان تکمیل -->
+        <div class="validation-progress">
+            <div class="validation-progress-bar form-progress"></div>
+        </div>
+
+        <div class="formula-card">
+            <div class="formula-title">فرمول‌های محاسبه</div>
+            <div class="formula-content">
+                \[ F_o = 1 + \frac{f_s}{100} - \frac{f_s^{2.5}}{10^6} \]
+                \[ R_o = \frac{P}{A \times F_o} \]
+            </div>
+        </div>
+
+        <div class="help-card">
+            <div class="help-title">هدف از محاسبه R₀</div>
+            <div class="help-content">
+                ریسک اولیه نشان می‌دهد که با توجه به اقدامات ایمنی موجود در ساختمان (مثل جداسازی، تهویه دود و مقاومت سازه)، 
+                چه سطحی از سیستم حفاظت در برابر حریق مورد نیاز است.
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <label class="input-label">مقاومت آتش سازه (fs)</label>
+            <select id="fire-resistance-initial">
+                <option value="15">سازه فولادی بدون محافظ (R15)</option>
+                <option value="60" selected>سازه بتنی و بنایی (R60)</option>
+                <option value="90">سازه با پوشش ضد حریق (R90)</option>
+                <option value="120">سازه با پوشش ضد حریق پیشرفته (R120)</option>
+                <option value="0">سازه چوبی سبک (R0)</option>
+                <option value="75">سازه چوبی سنگین روی دیوار بنایی (R75)</option>
+            </select>
+            <div class="input-hint">مقاومت در برابر آتش بر حسب دقیقه طبق استاندارد ISO R 834</div>
+        </div>
+        
+        <button class="btn btn-primary" onclick="calculateInitialRisk()">
+            محاسبه ریسک اولیه و دریافت توصیه
+        </button>
+        
+        <div class="results-grid" style="margin-top: 1.5rem;">
+            <div class="result-card">
+                <h3>ضریب مقاومت سازه (F₀)</h3>
+                <div class="result-value" id="fo-result">-</div>
+            </div>
+            <div class="result-card">
+                <h3>ریسک اولیه (R₀)</h3>
+                <div class="result-value" id="ro-result">-</div>
+            </div>
+        </div>
+        
+        <div id="protection-recommendation" style="margin-top: 2rem;"></div>
+        
+        <!-- نمودار بصری سطوح ریسک -->
+        <div class="risk-scale" style="margin-top: 2rem; text-align: center;">
+            <h4>مقیاس سطوح ریسک و سیستم‌های توصیه شده</h4>
+            <div class="risk-bars">
+                <div class="risk-bar green" style="width: 20%;">
+                    <span>R₀ < 1</span>
+                    <small>دستی</small>
+                </div>
+                <div class="risk-bar yellow" style="width: 20%;">
+                    <span>1-1.6</span>
+                    <small>اعلام حریق</small>
+                </div>
+                <div class="risk-bar orange" style="width: 20%;">
+                    <span>1.6-2.7</span>
+                    <small>اسپرینکلر</small>
+                </div>
+                <div class="risk-bar red" style="width: 20%;">
+                    <span>2.7-4.5</span>
+                    <small>اسپرینکلر+</small>
+                </div>
+                <div class="risk-bar dark-red" style="width: 20%;">
+                    <span>> 4.5</span>
+                    <small>کاهش ریسک</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+                <!-- بخش محاسبه نهایی ریسک -->
+                <section id="final-risk" class="section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <div class="card-icon">📊</div>
+                                محاسبه نهایی ریسک
+                            </h2>
+                        </div>
+                        <!-- Progress Bar برای نمایش میزان تکمیل -->
+                          <div class="validation-progress">
+                           <div class="validation-progress-bar form-progress"></div>
+                           </div>
+                        
+                        <div class="formula-card">
+                            <div class="formula-title">فرمول محاسبه ریسک نهایی</div>
+                            <div class="formula-content">
+                                \[ R = \frac{P}{A \times D} \]
+                            </div>
+                        </div>
+                        
+                        <div class="help-card">
+                            <div class="help-title">تفسیر نتایج</div>
+                            <div class="help-content">
+                                <ul style="list-style: none; padding: 0;">
+                                    <li>✅ R ≤ 1: ریسک قابل قبول</li>
+                                    <li>⚠️ 1 < R ≤ 1.6: ریسک متوسط - نیاز به بهبود</li>
+                                    <li>❌ R > 1.6: ریسک غیرقابل قبول - اقدام فوری</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="results-grid">
+                            <div class="result-card">
+                                <h3>ریسک نهایی ساختمان</h3>
+                                <div class="result-value" id="final-risk-building">-</div>
+                                <div class="result-status" id="status-building">-</div>
+                            </div>
+                            <div class="result-card">
+                                <h3>ریسک نهایی افراد</h3>
+                                <div class="result-value" id="final-risk-people">-</div>
+                                <div class="result-status" id="status-people">-</div>
+                            </div>
+                            <div class="result-card">
+                                <h3>ریسک نهایی فعالیت‌ها</h3>
+                                <div class="result-value" id="final-risk-activities">-</div>
+                                <div class="result-status" id="status-activities">-</div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button class="btn btn-primary" onclick="calculateFinalRisk()">
+                                محاسبه ریسک نهایی
+                            </button>
+                        </div>
+                    </div>
+                     <!-- در section با id="final-risk" بعد از نمایش نتایج -->
+<div style="text-align: center; margin-top: 30px; padding: 20px; background: #e8f4f8; border-radius: 8px;">
+    <p style="color: #2c3e50; margin-bottom: 15px;">
+        ✅ محاسبات تکمیل شد! برای ذخیره‌سازی و تولید گزارش به بخش بعد بروید.
+    </p>
+    <button onclick="showSection('report')" class="btn" style="background: #27ae60; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+        ادامه به گزارش نهایی و ذخیره‌سازی ←
+    </button>
+</div>
+
+                 </section>
+
+                  <!-- بخش گزارش نهایی -->
+<section id="report" class="section">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <div class="card-icon">📄</div>
+                گزارش نهایی ارزیابی ریسک
+            </h2>
+        </div>
+        
+        <!-- بخش اطلاعات پروژه -->
+        <div class="project-info-section" style="background: #f0f7ff; padding: 20px; border-radius: 8px; margin: 20px; border: 1px solid #4C84C6;">
+            <h3 style="color: #4C84C6; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.3em;">📋</span> اطلاعات پروژه و ذخیره‌سازی
+            </h3>
+            
+            <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label for="project-name" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                        نام پروژه: <span style="color: red;">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="project-name" 
+                        placeholder="مثال: ساختمان اداری شرکت گاز"
+                        style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-family: Vazir, sans-serif;"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="project-address" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                        آدرس محل:
+                    </label>
+                    <input 
+                        type="text" 
+                        id="project-address" 
+                        placeholder="آدرس کامل پروژه"
+                        style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-family: Vazir, sans-serif;"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-name" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                        نام کارشناس:
+                    </label>
+                    <input 
+                        type="text" 
+                        id="expert-name" 
+                        placeholder="نام و نام خانوادگی کارشناس"
+                        style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-family: Vazir, sans-serif;"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="floor-name" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                        طبقه/بخش ارزیابی شده:
+                    </label>
+                    <input 
+                        type="text" 
+                        id="floor-name" 
+                        placeholder="مثال: طبقه دوم - بخش اداری"
+                        style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-family: Vazir, sans-serif;"
+                    >
+                </div>
+            </div>
+            
+            <!-- دکمه‌های ذخیره‌سازی و خروجی -->
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                
+                <button onclick="exportToExcel()" class="btn" style="background: #107C41; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: Vazir, sans-serif;">
+                    <span>📊</span> دانلود گزارش Excel
+                </button>
+
+
+                <!-- در بخش final-report اضافه کنید -->
+<div class="button-group" style="margin-top: 20px;">
+    <button onclick="saveToAccumulativeExcel()" class="btn btn-success">
+        💾 ذخیره در Excel تجمیعی
+    </button>
+    
+    <button onclick="viewAllRecords()" class="btn btn-primary">
+        📊 مشاهده همه رکوردها (<span id="record-count">0</span>)
+    </button>
+    
+    <button onclick="downloadAccumulativeExcel()" class="btn btn-info">
+        📥 دانلود Excel کامل
+    </button>
+</div>
+
+
+            </div>
+        </div>
+        
+        <!-- بخش نتایج -->
+        <div class="report-section">
+            <h3>خلاصه نتایج</h3>
+            <div id="report-summary" class="report-content">
+                <!-- محتوا با JavaScript پر می‌شود -->
+            </div>
+        </div>
+        
+        <div class="report-section">
+            <h3>توصیه‌های بهبود</h3>
+            <div id="report-recommendations" class="report-content">
+                <!-- محتوا با JavaScript پر می‌شود -->
+            </div>
+        </div>
+        
+        <!-- دکمه‌های پایین صفحه -->
+        <div class="btn-group" style="text-align: center; margin-top: 2rem; padding: 20px;">
+            <button class="btn btn-primary" onclick="generateReport()">
+                تولید گزارش
+            </button>
+            <button class="btn btn-secondary" onclick="printReport()">
+                چاپ گزارش
+            </button>
+            <button class="btn btn-info" onclick="exportPDF()">
+                دانلود PDF
+            </button>
+        </div>
+    </div>
+</section>
+</main>
+</div>
+</div>
+    <!-- لودینگ -->
+    <div class="loading" id="loading">
+        <div>
+            <div class="loading-spinner"></div>
+            <div class="loading-text">در حال محاسبه...</div>
+        </div>
+    </div>
+
+    <!-- اسکریپت‌های JavaScript -->
+    <script src="script.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</body>
+</html>
