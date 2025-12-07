@@ -34,7 +34,7 @@ export default function Header() {
             disabled={loading}
             variant="ghost"
             size="sm"
-            className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm"
+            className="bg-white/10 hover:bg-white/20 hover:dark:bg-primary text-white border border-white/20 backdrop-blur-sm"
           >
             {loading ? "در حال خروج..." : "خروج"}
           </Button>
