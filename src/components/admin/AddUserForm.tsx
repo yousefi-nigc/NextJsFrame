@@ -34,24 +34,24 @@ export default function AddUserForm() {
       try {
         data = await response.json();
       } catch (jsonError) {
-        setError("Invalid response from server. Please try again.");
+        setError("پاسخ نامعتبر از سرور. لطفاً دوباره تلاش کنید.");
         return;
       }
 
       if (response.ok) {
-        setSuccess(`User "${data.user?.name || email}" created successfully!`);
+        setSuccess(`کاربر "${data.user?.name || email}" با موفقیت ایجاد شد!`);
         setName("");
         setEmail("");
         setPassword("");
       } else {
-        setError(data.error || "Failed to create user");
+        setError(data.error || "خطا در ایجاد کاربر");
       }
     } catch (err) {
       // Handle network errors
       if (err instanceof TypeError && err.message.includes("fetch")) {
-        setError("Network error. Please check your connection and try again.");
+        setError("خطای شبکه. لطفاً اتصال خود را بررسی کرده و دوباره تلاش کنید.");
       } else {
-        setError("An unexpected error occurred. Please try again.");
+        setError("خطای غیرمنتظره‌ای رخ داد. لطفاً دوباره تلاش کنید.");
       }
     } finally {
       setLoading(false);
@@ -61,7 +61,7 @@ export default function AddUserForm() {
   return (
     <div>
       <h3 className="mb-6 text-lg font-semibold text-black dark:text-zinc-50">
-        Add New User
+        افزودن کاربر جدید
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -82,7 +82,7 @@ export default function AddUserForm() {
             htmlFor="name"
             className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
-            Full Name
+            نام کامل
           </label>
           <input
             id="name"
@@ -92,7 +92,7 @@ export default function AddUserForm() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="mt-1 block w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:focus:border-zinc-500"
-            placeholder="John Doe"
+            placeholder="نام و نام خانوادگی"
           />
         </div>
 
@@ -101,7 +101,7 @@ export default function AddUserForm() {
             htmlFor="email"
             className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
-            Email Address
+            آدرس ایمیل
           </label>
           <input
             id="email"
@@ -120,7 +120,7 @@ export default function AddUserForm() {
             htmlFor="password"
             className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
-            Password
+            رمز عبور
           </label>
           <input
             id="password"
@@ -134,13 +134,13 @@ export default function AddUserForm() {
             minLength={6}
           />
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            Minimum 6 characters
+            حداقل ۶ کاراکتر
           </p>
         </div>
 
         <div>
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Creating user..." : "Create User"}
+            {loading ? "در حال ایجاد کاربر..." : "ایجاد کاربر"}
           </Button>
         </div>
       </form>

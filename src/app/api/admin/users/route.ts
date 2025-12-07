@@ -7,14 +7,14 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
 
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "دسترسی غیرمجاز" }, { status: 401 });
     }
 
     // Check if user is admin
     const admin = await isAdmin(session.user.id);
     if (!admin) {
       return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
+        { error: "ممنوع: دسترسی ادمین مورد نیاز است" },
         { status: 403 }
       );
     }
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       body = await request.json();
     } catch (error) {
       return NextResponse.json(
-        { error: "Invalid JSON in request body" },
+        { error: "JSON نامعتبر در بدنه درخواست" },
         { status: 400 }
       );
     }
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!email || !password || !name) {
       return NextResponse.json(
-        { error: "Email, password, and name are required" },
+        { error: "ایمیل، رمز عبور و نام الزامی است" },
         { status: 400 }
       );
     }
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: "Invalid email format" },
+        { error: "فرمت ایمیل نامعتبر است" },
         { status: 400 }
       );
     }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Validate password length
     if (password.length < 6) {
       return NextResponse.json(
-        { error: "Password must be at least 6 characters long" },
+        { error: "رمز عبور باید حداقل ۶ کاراکتر باشد" },
         { status: 400 }
       );
     }
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: true,
-          message: "User created successfully",
+          message: "کاربر با موفقیت ایجاد شد",
           user: {
             id: result.user?.id,
             email: result.user?.email,
@@ -73,12 +73,17 @@ export async function POST(request: NextRequest) {
         { status: 201 }
       );
     } else {
-      return NextResponse.json({ error: result.error }, { status: 400 });
+      // Translate common errors
+      let translatedError = result.error;
+      if (result.error === "User with this email already exists") {
+        translatedError = "کاربری با این ایمیل از قبل وجود دارد";
+      }
+      return NextResponse.json({ error: translatedError }, { status: 400 });
     }
   } catch (error: any) {
     console.error("Error creating user:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: error.message || "خطای داخلی سرور" },
       { status: 500 }
     );
   }

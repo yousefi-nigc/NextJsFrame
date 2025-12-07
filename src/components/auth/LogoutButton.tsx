@@ -29,7 +29,7 @@ export default function LogoutButton() {
       variant="outline"
       size="sm"
     >
-      {loading ? "Signing out..." : "Sign out"}
+      {loading ? "در حال خروج..." : "خروج"}
     </Button>
   );
 }

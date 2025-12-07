@@ -16,19 +16,19 @@ export default async function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div dir="rtl" className="min-h-screen bg-zinc-50 dark:bg-black">
       <nav className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <h1 className="text-xl font-semibold text-black dark:text-zinc-50">
-              Admin Dashboard
+              پنل مدیریت
             </h1>
             <div className="flex items-center gap-4">
               <a
                 href="/dashboard"
                 className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
               >
-                Dashboard
+                داشبورد
               </a>
             </div>
           </div>
@@ -38,10 +38,10 @@ export default async function AdminPage() {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-black dark:text-zinc-50">
-            User Management
+            مدیریت کاربران
           </h2>
           <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-            Create and manage user accounts
+            ایجاد و مدیریت حساب‌های کاربری
           </p>
         </div>
 

@@ -13,12 +13,12 @@ export default async function DashboardPage() {
   const admin = await isAdmin(session.user.id);
 
   return (
-    <div dir="ltr" className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div dir="rtl" className="min-h-screen bg-zinc-50 dark:bg-black">
       <nav className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <h1 className="text-xl font-semibold text-black dark:text-zinc-50">
-              Dashboard
+              داشبورد
             </h1>
             <div className="flex items-center gap-4">
               {admin && (
@@ -26,7 +26,7 @@ export default async function DashboardPage() {
                   href="/admin"
                   className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                 >
-                  Admin
+                  پنل مدیریت
                 </a>
               )}
               <LogoutButton />
@@ -39,17 +39,17 @@ export default async function DashboardPage() {
         <div className="rounded-2xl bg-white dark:bg-zinc-900 p-8 shadow-lg">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-black dark:text-zinc-50">
-              Welcome back, {session.user.name || session.user.email}!
+              خوش آمدید، {session.user.name || session.user.email}!
             </h2>
             <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-              You&apos;re successfully signed in to your account.
+              شما با موفقیت به حساب کاربری خود وارد شده‌اید.
             </p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
               <h3 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                Email
+                ایمیل
               </h3>
               <p className="mt-2 text-lg font-semibold text-black dark:text-zinc-50">
                 {session.user.email}
@@ -58,16 +58,16 @@ export default async function DashboardPage() {
 
             <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
               <h3 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                Email Verified
+                تأیید ایمیل
               </h3>
               <p className="mt-2 text-lg font-semibold text-black dark:text-zinc-50">
-                {session.user.emailVerified ? "Yes" : "No"}
+                {session.user.emailVerified ? "بله" : "خیر"}
               </p>
             </div>
 
             <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
               <h3 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                User ID
+                شناسه کاربری
               </h3>
               <p className="mt-2 truncate text-sm font-mono text-black dark:text-zinc-50">
                 {session.user.id}
@@ -77,12 +77,12 @@ export default async function DashboardPage() {
 
           <div className="mt-8 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 p-6">
             <h3 className="text-lg font-semibold text-black dark:text-zinc-50 mb-4">
-              Session Information
+              اطلاعات نشست
             </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-zinc-600 dark:text-zinc-400">
-                  Session ID:
+                  شناسه نشست:
                 </span>
                 <span className="font-mono text-black dark:text-zinc-50">
                   {session.session.id.slice(0, 8)}...
@@ -90,18 +90,18 @@ export default async function DashboardPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-600 dark:text-zinc-400">
-                  Created:
+                  تاریخ ایجاد:
                 </span>
                 <span className="text-black dark:text-zinc-50">
-                  {new Date(session.session.createdAt).toLocaleDateString()}
+                  {new Date(session.session.createdAt).toLocaleDateString("fa-IR")}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-600 dark:text-zinc-400">
-                  Expires:
+                  تاریخ انقضا:
                 </span>
                 <span className="text-black dark:text-zinc-50">
-                  {new Date(session.session.expiresAt).toLocaleDateString()}
+                  {new Date(session.session.expiresAt).toLocaleDateString("fa-IR")}
                 </span>
               </div>
             </div>
