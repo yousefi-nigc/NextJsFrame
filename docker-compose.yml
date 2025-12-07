@@ -22,16 +22,25 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runner
+      args:
+        DATABASE_URL: postgresql://gastop:gastop123@postgres:5432/gastop?schema=public
     container_name: gastop-app
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
-    env_file:
-      - .env
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://gastop:gastop123@postgres:5432/gastop?schema=public
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-nXR5o8GxxnP5nESHyLIa8BjzucgOIE3d}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3000}
     ports:
       - "3000:3000"
-    command: ["npm", "run", "start"]
+    command: >
+      sh -c "
+        npx prisma migrate deploy || true;
+        npm run start
+      "
 
 volumes:
   postgres_data:
