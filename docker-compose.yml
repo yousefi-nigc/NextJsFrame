@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,7 +23,9 @@ services:
       dockerfile: Dockerfile
       target: runner
       args:
-        DATABASE_URL: postgresql://gastop:gastop123@postgres:5432/gastop?schema=public
+        DATABASE_URL: ${DATABASE_URL:-postgresql://gastop:gastop123@postgres:5432/gastop?schema=public}
+        BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-nXR5o8GxxnP5nESHyLIa8BjzucgOIE3d}
+        BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
     container_name: gastop-app
     restart: unless-stopped
     depends_on:
@@ -38,7 +40,9 @@ services:
       - "3000:3000"
     command: >
       sh -c "
-        npx prisma migrate deploy || true;
+        npx prisma generate &&
+        npx prisma migrate deploy || true &&
+        npm run seed &&
         npm run start
       "
 
