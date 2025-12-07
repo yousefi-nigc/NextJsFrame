@@ -1,29 +1,25 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getSession } from "@/lib/auth-server";
-import { isAdmin } from "@/lib/admin";
+import { getSessionCookie } from "better-auth/cookies";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protect admin routes
   if (pathname.startsWith("/admin") || pathname.startsWith("/dashboard/admin")) {
-    const session = await getSession();
+    // Check for session cookie (lightweight check without Prisma)
+    const sessionCookie = getSessionCookie(request);
 
-    // If no session, redirect to login
-    if (!session) {
+    // If no session cookie, redirect to login
+    if (!sessionCookie) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
 
-    // Check if user is admin
-    const admin = await isAdmin(session.user.id);
-    
-    // If not admin, redirect to dashboard
-    if (!admin) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
+    // Note: Full session validation and admin check is done in the API routes and pages
+    // to avoid Prisma edge runtime issues in middleware
+    // The actual admin verification happens server-side in API routes
   }
 
   return NextResponse.next();
