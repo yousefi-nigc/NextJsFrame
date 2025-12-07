@@ -2,66 +2,73 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
-interface WFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function WFactorTab({
-  results,
-  updateResults,
-}: WFactorTabProps) {
+export default function WFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [showW1Guide, setShowW1Guide] = useState(false);
   const [showW2Guide, setShowW2Guide] = useState(false);
   const [showW3Guide, setShowW3Guide] = useState(false);
   const [showW4Guide, setShowW4Guide] = useState(false);
   const [waterStorageType, setWaterStorageType] = useState("auto");
-  const [waterCapacity, setWaterCapacity] = useState(0);
-  const [distributionNetwork, setDistributionNetwork] = useState("adequate");
-  const [hydrant25, setHydrant25] = useState(0);
-  const [hydrant3, setHydrant3] = useState(0);
-  const [hydrant4, setHydrant4] = useState(0);
+  const [waterCapacity, setWaterCapacity] = useState<number>(0);
+  const [distributionNetwork, setDistributionNetwork] = useState<"adequate" | "limited" | "none">("adequate");
+  const [hydrant25, setHydrant25] = useState<number>(0);
+  const [hydrant3, setHydrant3] = useState<number>(0);
+  const [hydrant4, setHydrant4] = useState<number>(0);
 
-  const calculateW = () => {
-    // Calculate w1
-    let w1 = 0;
-    if (waterStorageType === "manual") w1 = 4;
-    else if (waterStorageType === "none") w1 = 10;
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    // Calculate w2 (simplified - would need fire load to calculate properly)
-    // For now, assuming 100% capacity = 0 penalty
-    const w2 = 0; // This should be calculated based on required vs available
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
 
-    // Calculate w3
-    let w3 = 0;
-    if (distributionNetwork === "limited") w3 = 2;
-    else if (distributionNetwork === "none") w3 = 6;
+      const response = data as AssessmentGetApiResponse;
+      console.log(response.assessment);
 
-    // Calculate w4 (simplified - would need perimeter to calculate properly)
-    const equivalentConnections = hydrant25 + hydrant3 * 2 + hydrant4 * 3;
-    const w4 = equivalentConnections > 0 ? 0 : 4; // Simplified
+      setWaterStorageType(response.assessment.waterStorageType ?? "auto");
+      setWaterCapacity(response.assessment.waterCapacity ?? 0);
+      setDistributionNetwork((response.assessment.distributionNetwork as "adequate" | "limited" | "none") ?? "adequate");
+      setHydrant25(response.assessment.hydrantCount25 ?? 0);
+      setHydrant3(response.assessment.hydrantCount3 ?? 0);
+      setHydrant4(response.assessment.hydrantCount4 ?? 0);
 
-    const w = w1 + w2 + w3 + w4;
-    const W = Math.pow(0.95, w);
-    updateResults({ W });
+      return response;
+    },
+  });
 
-    // Recalculate D, D1, D2 if other factors are available
-    const { N, S, F, U, Y } = results;
-    if (N !== null && S !== null && F !== null) {
-      const D = W * N * S * F;
-      updateResults({ D });
-    }
-    if (N !== null && U !== null) {
-      const D1 = N * U;
-      updateResults({ D1 });
-    }
-    if (W !== null && N !== null && S !== null && Y !== null) {
-      const D2 = W * N * S * Y;
-      updateResults({ D2 });
-    }
-  };
+  const handleCalculateW = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          waterStorageType,
+          waterCapacity,
+          distributionNetwork,
+          hydrantCount25: hydrant25,
+          hydrantCount3: hydrant3,
+          hydrantCount4: hydrant4,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("W محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه W");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="w-water" className="tab-content">
@@ -166,9 +173,9 @@ export default function WFactorTab({
         )}
       </div>
 
-      <div className="input-group">
+      <div className="input-group relative">
         <label className="input-label">
-          ظرفیت شبکه توزیع آب
+          شبکه توزیع آب
           <button
             type="button"
             onClick={() => setShowW3Guide((prev) => !prev)}
@@ -180,11 +187,11 @@ export default function WFactorTab({
         <select
           id="distribution-network"
           value={distributionNetwork}
-          onChange={(e) => setDistributionNetwork(e.target.value)}
+          onChange={(e) => setDistributionNetwork(e.target.value as "adequate" | "limited" | "none")}
         >
-          <option value="adequate">شبکه مناسب (w₃=0)</option>
+          <option value="adequate">کافی (w₃=0)</option>
           <option value="limited">محدود (w₃=2)</option>
-          <option value="none">بدون شبکه (w₃=6)</option>
+          <option value="none">فاقد شبکه (w₃=6)</option>
         </select>
         {showW3Guide && (
           <ul className="relative text-gray-600 dark:text-gray-300 left-0 mt-2 p-4 bg-[#e0f7fa] dark:bg-[#0f3460] text-sm rounded-lg shadow-md border border-[#00bfae30] dark:border-[#2196f380] w-full z-20">
@@ -194,10 +201,9 @@ export default function WFactorTab({
             <li className="mb-1.5">
               <b>شبکه توزیع آب (w₃)</b>
             </li>
-            <li>شبکه مناسب: جریمه 0</li>
-            <li>محدود: جریمه 2</li>
-            <li>بدون شبکه: جریمه 6</li>
-            <li>ملاک: توان تأمین آب به مدت ۲ ساعت بدون افت فشار</li>
+            <li>کافی: شبکه توزیع مناسب و قابل اعتماد — جریمه 0</li>
+            <li>محدود: شبکه توزیع محدود یا ناکافی — جریمه 2</li>
+            <li>فاقد شبکه: بدون شبکه توزیع مناسب — جریمه 6</li>
           </ul>
         )}
       </div>
@@ -270,15 +276,13 @@ export default function WFactorTab({
         )}
       </div>
 
-      <button className="btn btn-primary" onClick={calculateW}>
+      <button className="btn btn-primary" onClick={() => handleCalculateW.mutate()}>
         محاسبه W (FRAME 2015)
       </button>
 
-      {results.W !== null && (
-        <div id="W-result" className="result-display mt-4">
-          <div className="result-value">{results.W.toFixed(3)}</div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_W ? assessment?.assessment.factor_W.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }

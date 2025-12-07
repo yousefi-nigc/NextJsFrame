@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { CalculationResults } from "@/types";
 import { BlockMath } from "react-katex";
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { AssessmentGetApiResponse } from "@/lib/APIResponseInterfaces";
 import ProtectionLevelTabs from "@/components/protection-level/ProtectionLevelTabs";
-import ProtectionLevelResults from "@/components/protection-level/ProtectionLevelResults";
+import ProtectionLevelResultsWrapper from "@/components/protection-level/ProtectionLevelResults";
 import WFactorTab from "@/components/protection-level/WFactorTab";
 import NFactorTab from "@/components/protection-level/NFactorTab";
 import SFactorTab from "@/components/protection-level/SFactorTab";
@@ -12,43 +14,9 @@ import FFactorTab from "@/components/protection-level/FFactorTab";
 import UFactorTab from "@/components/protection-level/UFactorTab";
 import YFactorTab from "@/components/protection-level/YFactorTab";
 
-interface ProtectionLevelSectionProps {
-  results?: CalculationResults;
-  updateResults?: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function ProtectionLevel({
-  results: externalResults,
-  updateResults: externalUpdateResults,
-}: ProtectionLevelSectionProps = {}) {
+export default function ProtectionLevel() {
   const [activeTab, setActiveTab] = useState("w-water");
-
-  // Internal state management if props not provided
-  const [internalResults, setInternalResults] = useState<CalculationResults>({
-    q: null, i: null, g: null, e: null, v: null, z: null,
-    a: null, t: null, c: null, r: null, d: null,
-    W: null, N: null, S: null, F: null, U: null, Y: null,
-    P: null, P1: null, P2: null,
-    A: null, A1: null, A2: null,
-    D: null, D1: null, D2: null,
-    R: null, R1: null, R2: null,
-  });
-
-  const results = externalResults || internalResults;
-  const updateResults = externalUpdateResults || ((updates: Partial<CalculationResults>) => {
-    setInternalResults((prev) => ({ ...prev, ...updates }));
-  });
-
-  // Ensure results is always defined
-  const safeResults = results || {
-    q: null, i: null, g: null, e: null, v: null, z: null,
-    a: null, t: null, c: null, r: null, d: null,
-    W: null, N: null, S: null, F: null, U: null, Y: null,
-    P: null, P1: null, P2: null,
-    A: null, A1: null, A2: null,
-    D: null, D1: null, D2: null,
-    R: null, R1: null, R2: null,
-  };
+  const { projectId, floorId } = useParams();
 
   const tabs = [
     { id: "w-water", label: "سیستم‌های آب (W)" },
@@ -93,30 +61,30 @@ export default function ProtectionLevel({
         />
 
         {activeTab === "w-water" && (
-          <WFactorTab results={safeResults} updateResults={updateResults} />
+          <WFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "n-normal" && (
-          <NFactorTab results={safeResults} updateResults={updateResults} />
+          <NFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "s-special" && (
-          <SFactorTab results={safeResults} updateResults={updateResults} />
+          <SFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "f-resistance" && (
-          <FFactorTab results={safeResults} updateResults={updateResults} />
+          <FFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "u-escape" && (
-          <UFactorTab results={safeResults} updateResults={updateResults} />
+          <UFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "y-salvage" && (
-          <YFactorTab results={safeResults} updateResults={updateResults} />
+          <YFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
-        <ProtectionLevelResults results={safeResults} />
+        <ProtectionLevelResultsWrapper projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
       </div>
     </section>
   );

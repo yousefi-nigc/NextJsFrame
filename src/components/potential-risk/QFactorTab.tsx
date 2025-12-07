@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { da } from "zod/v4/locales";
-import { AssessmentUpdateApiResponse } from "@/lib/assessment/model/Assessment";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
 export default function QFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
   const queryClient = useQueryClient();
@@ -16,6 +14,27 @@ export default function QFactorTab({ projectId, floorId }: { projectId: string, 
   const [qi, setQi] = useState(800);
   const [qm, setQm] = useState(500);
   const [q, setQ] = useState<number | null>(null);
+
+
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
+
+      if (!res.ok) throw new Error("Failed to fetch the floor");
+
+      const response = data as AssessmentGetApiResponse;
+
+      setQi(response.assessment.qi ?? 800);
+      setQm(response.assessment.qm ?? 500);
+
+      return response;
+    },
+  });
 
 
   // Mutation logic
@@ -196,9 +215,9 @@ export default function QFactorTab({ projectId, floorId }: { projectId: string, 
 
       {/* {results.q !== null && ( */}
       <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{q ? q.toFixed(3) : "-"}</div>
+        <div className="result-value">{assessment?.assessment.factor_q ? assessment?.assessment.factor_q.toFixed(3) : "-"}</div>
         <div className="text-sm text-gray-600 text-center">
-          (Q = {q ? q.toLocaleString() : "-"} MJ/m²)
+          (Q = {assessment?.assessment.factor_q ? assessment?.assessment.factor_q.toFixed(3) : "-"} MJ/m²)
         </div>
       </div>
       {/* )} */}

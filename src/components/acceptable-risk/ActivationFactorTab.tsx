@@ -1,17 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { CalculationResults } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
-interface ActivationFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function ActivationFactorTab({
-  results,
-  updateResults,
-}: ActivationFactorTabProps) {
+export default function ActivationFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [mainActivity, setMainActivity] = useState("0");
   const [energySource, setEnergySource] = useState("0");
   const [heatTransferType, setHeatTransferType] = useState("0");
@@ -21,39 +16,59 @@ export default function ActivationFactorTab({
   const [combustibleDust, setCombustibleDust] = useState("0");
   const [paintingSpraying, setPaintingSpraying] = useState("0");
 
-  const calculateA = () => {
-    if (!results) return;
-    
-    const a =
-      parseFloat(mainActivity) +
-      parseFloat(energySource) +
-      parseFloat(heatTransferType) +
-      parseFloat(generatorLocation) +
-      parseFloat(electricalSystem) +
-      parseFloat(flammableLiquids) +
-      parseFloat(combustibleDust) +
-      parseFloat(paintingSpraying);
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    updateResults({ a });
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
 
-    // Calculate A, A1, A2
-    const t = results.t ?? null;
-    const c = results.c ?? null;
-    const r = results.r ?? null;
-    const d = results.d ?? null;
+      const response = data as AssessmentGetApiResponse;
 
-    const A = t !== null && c !== null 
-      ? Math.max(0.1, 1.6 - a - t - c) 
-      : null;
-    const A1 = t !== null && r !== null 
-      ? Math.max(0.1, 1.6 - a - t - r) 
-      : null;
-    const A2 = c !== null && d !== null 
-      ? Math.max(0.1, 1.6 - a - c - d) 
-      : null;
+      setMainActivity(response.assessment.mainActivity?.toString() ?? "0");
+      setEnergySource(response.assessment.energySource?.toString() ?? "0");
+      setHeatTransferType(response.assessment.heatTransferType?.toString() ?? "0");
+      setGeneratorLocation(response.assessment.generatorLocation?.toString() ?? "0");
+      setElectricalSystem(response.assessment.electricalSystem?.toString() ?? "0");
+      setFlammableLiquids(response.assessment.flammableLiquids?.toString() ?? "0");
+      setCombustibleDust(response.assessment.combustibleDust?.toString() ?? "0");
+      setPaintingSpraying(response.assessment.secondaryActivity?.toString() ?? "0");
 
-    updateResults({ A, A1, A2 });
-  };
+      return response;
+    },
+  });
+
+  const handleCalculateA = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          mainActivity: parseFloat(mainActivity),
+          energySource: parseFloat(energySource),
+          heatTransferType: parseFloat(heatTransferType),
+          generatorLocation: parseFloat(generatorLocation),
+          electricalSystem: parseFloat(electricalSystem),
+          flammableLiquids: parseFloat(flammableLiquids),
+          combustibleDust: parseFloat(combustibleDust),
+          secondaryActivity: parseFloat(paintingSpraying),
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("a محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه a");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="a-activation" className="tab-content active">
@@ -181,17 +196,13 @@ export default function ActivationFactorTab({
         </select>
       </div>
 
-      <button className="btn btn-primary" onClick={calculateA}>
+      <button className="btn btn-primary" onClick={() => handleCalculateA.mutate()}>
         محاسبه ضریب a
       </button>
 
-      {results && results.a !== null && results.a !== undefined && (
-        <div className="result-display" style={{ marginTop: "1rem" }}>
-          <div className="text-success font-semibold">
-            ضریب a = {results.a.toFixed(2)}
-          </div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_a ? assessment?.assessment.factor_a.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }

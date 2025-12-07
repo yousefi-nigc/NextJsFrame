@@ -3,45 +3,58 @@
 import { useState } from "react";
 import { BlockMath } from "react-katex";
 import Image from "next/image";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 import mezzIntExit from "../../../public/assets/mezz_int_exit.png";
 import mezzDirExit from "../../../public/assets/mezz_dir_exit.png";
 import atriumLevels from "../../../public/assets/atrium_levels.png";
 import loftDuplex from "../../../public/assets/loft_duplex.png";
-import { CalculationResults } from "@/types";
 
-interface EFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function EFactorTab({
-  results,
-  updateResults,
-}: EFactorTabProps) {
+export default function EFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [showAteruimodal, setShowAteruimodal] = useState(false);
   const [floorNumber, setFloorNumber] = useState<number | "">(0);
 
-  const calculateE = () => {
-    const E = typeof floorNumber === "number" ? floorNumber : 0;
-    const absE = Math.abs(E);
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    if (absE === 0) {
-      updateResults({ e: 1 });
-      return;
-    }
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
 
-    const e = Math.pow((absE + 3) / (absE + 2), 0.7 * absE);
-    updateResults({ e });
+      const response = data as AssessmentGetApiResponse;
 
-    // Recalculate P, P1, P2 if other factors are available
-    const { q, i, g, v, z } = results;
-    if (q !== null && i !== null && g !== null && v !== null && z !== null) {
-      const P = q * i * g * e * v * z;
-      const P1 = q * i * e * v * z;
-      const P2 = i * g * e * v * z;
-      updateResults({ P, P1, P2 });
-    }
-  };
+      setFloorNumber(response.assessment.floorLevel ?? 0);
+
+      return response;
+    },
+  });
+
+  const handleCalculateE = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          floorLevel: typeof floorNumber === "number" ? floorNumber : 0,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("e محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه e");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="e-factor" className="tab-content">
@@ -241,16 +254,13 @@ export default function EFactorTab({
         </select>
       </div>
 
-      <button className="btn btn-primary" onClick={calculateE}>
+      <button className="btn btn-primary" onClick={() => handleCalculateE.mutate()}>
         محاسبه ضریب e
       </button>
 
-      {results.e !== null && (
-        <div id="e-result" className="result-display mt-[1.2em]">
-          <div className="result-value">{results.e.toFixed(3)}</div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_e ? assessment?.assessment.factor_e.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }
-

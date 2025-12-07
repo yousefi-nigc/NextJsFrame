@@ -2,47 +2,63 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
-interface ZFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function ZFactorTab({
-  results,
-  updateResults,
-}: ZFactorTabProps) {
+export default function ZFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [showZGuide, setShowZGuide] = useState(false);
   const [sectionWidth, setSectionWidth] = useState(20);
   const [accessDirections, setAccessDirections] = useState(1);
   const [heightAbove, setHeightAbove] = useState(0);
   const [heightBelow, setHeightBelow] = useState(0);
 
-  const calculateZ = () => {
-    const b = sectionWidth;
-    const Z = accessDirections;
-    const HPlus = heightAbove;
-    const HMinus = heightBelow;
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    if (b <= 0 || Z < 1 || Z > 4) {
-      alert("مقادیر ورودی نامعتبر است");
-      return;
-    }
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
 
-    const heightComponent = HPlus > 0 ? HPlus / 25 : HMinus / 3;
-    const z = 1 + 0.05 * Math.floor(b / (20 * Z) + heightComponent);
-    updateResults({ z });
+      const response = data as AssessmentGetApiResponse;
 
-    // Recalculate P, P1, P2 if other factors are available
-    const { q, i, g, e, v } = results;
-    if (q !== null && i !== null && g !== null && e !== null && v !== null) {
-      const P = q * i * g * e * v * z;
-      const P1 = q * i * e * v * z;
-      const P2 = i * g * e * v * z;
-      updateResults({ P, P1, P2 });
-    }
-  };
+      setSectionWidth(response.assessment.width ?? 20);
+      setAccessDirections(response.assessment.accessSides ?? 1);
+      setHeightAbove(response.assessment.heightAbove ?? 0);
+      setHeightBelow(response.assessment.depthBelow ?? 0);
+
+      return response;
+    },
+  });
+
+  const handleCalculateZ = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          width: sectionWidth,
+          accessSides: accessDirections,
+          heightAbove,
+          depthBelow: heightBelow,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("z محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه z");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="z-factor" className="tab-content mt-6">
@@ -243,16 +259,13 @@ export default function ZFactorTab({
         </div>
       </div>
 
-      <button className="btn btn-primary" onClick={calculateZ}>
+      <button className="btn btn-primary" onClick={() => handleCalculateZ.mutate()}>
         محاسبه ضریب z
       </button>
 
-      {results.z !== null && (
-        <div className="result-display mt-4">
-          <div className="result-value">{results.z.toFixed(3)}</div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_z ? assessment?.assessment.factor_z.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }
-

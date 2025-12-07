@@ -2,17 +2,12 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
-interface VFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function VFactorTab({
-  results,
-  updateResults,
-}: VFactorTabProps) {
+export default function VFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [windowArea, setWindowArea] = useState<number | "">(0);
   const [staticVentArea, setStaticVentArea] = useState<number | "">(0);
   const [ventMode, setVentMode] = useState<"manual" | "advanced">("manual");
@@ -26,6 +21,31 @@ export default function VFactorTab({
   const [qmVentilation, setQmVentilation] = useState<number | "">(500);
   const [ceilingHeight, setCeilingHeight] = useState<number | "">(3);
 
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
+
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
+
+      const response = data as AssessmentGetApiResponse;
+
+      setWindowArea(response.assessment.windowArea ?? 0);
+      setStaticVentArea(response.assessment.staticVentArea ?? 0);
+      setMechanicalVentFlow(response.assessment.mechVentFlow ?? 0);
+      setVentingRatio(response.assessment.ventingRatio_k ?? 0.01);
+      setCompartmentArea(response.assessment.area ?? 100);
+      setQmVentilation(response.assessment.qm ?? 500);
+      setCeilingHeight(response.assessment.height ?? 3);
+
+      return response;
+    },
+  });
+
   const calculateAutoK = () => {
     const window = typeof windowArea === "number" ? windowArea : 0;
     const staticVent = typeof staticVentArea === "number" ? staticVentArea : 0;
@@ -37,28 +57,39 @@ export default function VFactorTab({
     }
   };
 
-  const calculateV = () => {
-    const qm = typeof qmVentilation === "number" ? qmVentilation : 500;
-    const k = typeof ventingRatio === "number" ? ventingRatio : 0.01;
-    const h = typeof ceilingHeight === "number" ? ceilingHeight : 3;
+  const handleCalculateV = useMutation({
+    mutationFn: async () => {
+      const qm = typeof qmVentilation === "number" ? qmVentilation : 500;
+      const k = typeof ventingRatio === "number" ? ventingRatio : 0.01;
+      const h = typeof ceilingHeight === "number" ? ceilingHeight : 3;
 
-    if (qm <= 0) {
-      alert("Qm باید بزرگتر از صفر باشد");
-      return;
-    }
+      if (qm <= 0) {
+        throw new Error("Qm باید بزرگتر از صفر باشد");
+      }
 
-    const v = 0.84 + 0.1 * Math.log10(qm) - Math.sqrt(k * Math.sqrt(h));
-    updateResults({ v });
-
-    // Recalculate P, P1, P2 if other factors are available
-    const { q, i, g, e, z } = results;
-    if (q !== null && i !== null && g !== null && e !== null && z !== null) {
-      const P = q * i * g * e * v * z;
-      const P1 = q * i * e * v * z;
-      const P2 = i * g * e * v * z;
-      updateResults({ P, P1, P2 });
-    }
-  };
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          windowArea: typeof windowArea === "number" ? windowArea : 0,
+          staticVentArea: typeof staticVentArea === "number" ? staticVentArea : 0,
+          mechVentFlow: typeof mechanicalVentFlow === "number" ? mechanicalVentFlow : 0,
+          ventingRatio_k: k,
+          height: h,
+          qm: qm,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("v محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "خطا در محاسبه v");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="v-factor" className="tab-content">
@@ -365,15 +396,13 @@ export default function VFactorTab({
         </div>
       </div>
 
-      <button className="btn btn-primary" onClick={calculateV}>
+      <button className="btn btn-primary" onClick={() => handleCalculateV.mutate()}>
         محاسبه ضریب v
       </button>
 
-      {results.v !== null && (
-        <div className="result-display" style={{ marginTop: "1rem" }}>
-          <div className="result-value">{results.v.toFixed(3)}</div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_v ? assessment?.assessment.factor_v.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }

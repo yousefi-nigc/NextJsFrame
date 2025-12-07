@@ -670,6 +670,7 @@ function calculateW(
   qm: number | undefined,
   waterStorageType: string | undefined,
   waterCapacity: number | undefined,
+  distributionNetwork: string | undefined,
   hydrantCount25: number | undefined,
   hydrantCount3: number | undefined,
   hydrantCount4: number | undefined,
@@ -699,12 +700,18 @@ function calculateW(
     else w += 4;
   }
 
-  // w3 - Distribution network (simplified - would need more inputs)
-  // Default to adequate (0) if not specified
-  w += 0;
+  // w3 - Distribution network
+  if (distributionNetwork === "adequate") {
+    w += 0;
+  } else if (distributionNetwork === "limited") {
+    w += 2;
+  } else if (distributionNetwork === "none") {
+    w += 6;
+  }
+  // If not specified, default to 0 (adequate)
 
-  // w4 - Hydrants
-  if (length !== undefined && width !== undefined) {
+  // w4 - Hydrants (only calculate if length and width are available)
+  if (length !== undefined && width !== undefined && length > 0 && width > 0) {
     const perimeter = 2 * (length + width);
     const hydr25 = hydrantCount25 || 0;
     const hydr3 = hydrantCount3 || 0;
@@ -718,8 +725,12 @@ function calculateW(
       else if (totalHydr25Eq >= requiredHydrants * 0.75) w += 1;
       else if (totalHydr25Eq >= requiredHydrants * 0.5) w += 2;
       else w += 3;
+    } else {
+      // Small perimeter → no hydrants needed
+      w += 0;
     }
   }
+  // If length/width are not available, w4 is skipped (w += 0 implicitly)
 
   return Math.pow(0.95, w);
 }
@@ -727,12 +738,20 @@ function calculateW(
 /**
  * Calculate factor N (Normal Protection Factor)
  * Formula: N = 0.95^n, where n = n1 + n2 + n3 + n4 + n5
- * Simplified - would need individual n values
  */
-function calculateN(): number | null {
-  // This would need individual n1-n5 values from inputs
-  // For now, return null if not calculable
+function calculateN(
+  n1: number | undefined,
+  n2: number | undefined,
+  n3: number | undefined,
+  n4: number | undefined,
+  n5: number | undefined
+): number | null {
+  if (n1 === undefined && n2 === undefined && n3 === undefined && n4 === undefined && n5 === undefined) {
   return null;
+  }
+  
+  const n = (n1 ?? 0) + (n2 ?? 0) + (n3 ?? 0) + (n4 ?? 0) + (n5 ?? 0);
+  return Math.pow(0.95, n);
 }
 
 /**
@@ -741,14 +760,20 @@ function calculateN(): number | null {
  */
 function calculateS(
   detectionType: number | undefined,
+  waterSupplyType: number | undefined,
   sprinklerType: number | undefined,
-  fireStationType: number | undefined
+  fireStationType: number | undefined,
+  industrialBrigade: number | undefined
 ): number | null {
-  const s1 = detectionType || 0;
-  const s2 = 0; // Would need water supply input
-  const s3 = sprinklerType || 0;
-  const s4 = fireStationType || 0;
-  const s5 = 0; // Would need industrial brigade input
+  if (detectionType === undefined && waterSupplyType === undefined && sprinklerType === undefined && fireStationType === undefined && industrialBrigade === undefined) {
+    return null;
+  }
+  
+  const s1 = detectionType ?? 0;
+  const s2 = waterSupplyType ?? 0;
+  const s3 = sprinklerType ?? 0;
+  const s4 = fireStationType ?? 0;
+  const s5 = industrialBrigade ?? 0;
 
   const s = s1 + s2 + s3 + s4 + s5;
   return Math.pow(1.05, s);
@@ -764,7 +789,10 @@ function calculateF(
   facadeResist: number | undefined,
   roofResist: number | undefined,
   wallResist: number | undefined,
-  factor_S: number | undefined
+  factor_S: number | undefined,
+  hasManyWindows: boolean | undefined,
+  noInternalSeparation: boolean | undefined,
+  combustibleInsulation: boolean | undefined
 ): number | null {
   if (structureResist === undefined) return null;
 
@@ -772,6 +800,11 @@ function calculateF(
   let ff = Math.min(facadeResist || 0, 120);
   let fd = Math.min(roofResist || 0, 120);
   let fw = Math.min(wallResist || 0, 120);
+
+  // Apply special conditions
+  if (hasManyWindows) ff = 0;
+  if (noInternalSeparation) fw = 0;
+  if (combustibleInsulation) fd = 0;
 
   // No component can exceed structural resistance
   ff = Math.min(ff, fs);
@@ -794,44 +827,62 @@ function calculateF(
 
 /**
  * Calculate factor U (Escape and Rescue Factor)
- * Formula: U = 1.05^u
- * Simplified - would need individual u values
+ * Formula: U = 1.05^u, where u = subcompartment + stairways + horizontalExit + sprinklers
  */
 function calculateU(
   subcompartment: number | undefined,
-  stairType: number | undefined,
+  stairways: number | undefined,
   horizontalExit: number | undefined,
-  sprinkler: number | undefined
-): { value: number | null; error?: string } {
-  // Would need individual u values from inputs
-  const uValues: (number | undefined)[] = [
-    subcompartment,
-    stairType,
-    horizontalExit,
-    sprinkler,
-  ];
-
-  if (uValues.every((v) => v === undefined || isNaN(v))) {
-    return { value: null, error: "لطفاً امتیازهای U را وارد کنید" };
+  sprinklers: number | undefined
+): number | null {
+  if (subcompartment === undefined && stairways === undefined && horizontalExit === undefined && sprinklers === undefined) {
+    return null;
   }
 
-  // Reduce with explicit type for accumulator and value
-  const u = uValues.reduce<number>((sum, v) => sum + (v ?? 0), 0);
-
-  // 🔹 Final U formula
-  const U = Math.pow(1.05, u);
-
-  return { value: U };
+  const u = (subcompartment ?? 0) + (stairways ?? 0) + (horizontalExit ?? 0) + (sprinklers ?? 0);
+  return Math.pow(1.05, u);
 }
 
 /**
  * Calculate factor Y (Property Rescue Factor)
- * Formula: Y = 1.05^y
- * Simplified - would need checkbox values
+ * Formula: Y = 1.05^y, where y is sum of boolean flags
  */
-function calculateY(): number | null {
-  // Would need checkbox values from inputs
+function calculateY(
+  subCompartmentEI30: boolean | undefined,
+  subCompartmentEI60: boolean | undefined,
+  partialDetection: boolean | undefined,
+  partialSprinkler: boolean | undefined,
+  otherAutoExtinguish: boolean | undefined,
+  financialDataBackup: boolean | undefined,
+  sparePartsAccess: boolean | undefined,
+  selfRepairCapability: boolean | undefined,
+  relocationAgreements: boolean | undefined,
+  multipleProduction: boolean | undefined
+): number | null {
+  if (subCompartmentEI30 === undefined && subCompartmentEI60 === undefined && partialDetection === undefined && 
+      partialSprinkler === undefined && otherAutoExtinguish === undefined && financialDataBackup === undefined &&
+      sparePartsAccess === undefined && selfRepairCapability === undefined && relocationAgreements === undefined &&
+      multipleProduction === undefined) {
   return null;
+  }
+  
+  let y = 0;
+  
+  // Physical protection
+  if (subCompartmentEI30) y += 2;
+  if (subCompartmentEI60) y += 4;
+  if (partialDetection) y += 3;
+  if (partialSprinkler) y += 5;
+  if (otherAutoExtinguish) y += 4;
+  
+  // Crisis planning
+  if (financialDataBackup) y += 2;
+  if (sparePartsAccess) y += 4;
+  if (selfRepairCapability) y += 2;
+  if (relocationAgreements) y += 3;
+  if (multipleProduction) y += 4;
+  
+  return Math.pow(1.05, y);
 }
 
 /**
@@ -935,8 +986,8 @@ export function calculateAssessment(inputs: CreateAssessmentValidationSchema): A
     }
 
     // Calculate Acceptance Factors
-    if (inputs.mainActivity && inputs.occupantCount && inputs.occupantFactor && inputs.exitWidthTotal && inputs.mobilityFactor && inputs.heightAbove && inputs.depthBelow) {
-        factor_a = calculateA(inputs.mainActivity);
+    if (inputs.mainActivity && inputs.secondaryActivity && inputs.heatTransferType && inputs.generatorLocation && inputs.energySource && inputs.electricalSystem && inputs.flammableLiquids && inputs.combustibleDust) {    
+        factor_a = calculateA(inputs.mainActivity, inputs.secondaryActivity, inputs.heatTransferType, inputs.generatorLocation, inputs.energySource, inputs.electricalSystem, inputs.flammableLiquids, inputs.combustibleDust);
     }
     if (inputs.length && inputs.width && inputs.area && inputs.occupantCount && inputs.occupantFactor && inputs.exitWidthTotal && inputs.mobilityFactor && inputs.heightAbove && inputs.depthBelow) {
         factor_t = calculateT(inputs.length, inputs.width, inputs.area, inputs.occupantCount, inputs.occupantFactor, inputs.exitWidthTotal, inputs.mobilityFactor, inputs.heightAbove, inputs.depthBelow);
@@ -951,56 +1002,75 @@ export function calculateAssessment(inputs: CreateAssessmentValidationSchema): A
         factor_d = calculateD(inputs.dependencyType, inputs.dependencyManual);
     }
 
-    // if (factor_a !== null && factor_t !== null && factor_c !== null && factor_r !== null && factor_d !== null) {
-    //     level_A = Math.max(0.1, 1.6 - factor_a - factor_t - factor_c);
-    //     level_A1 = Math.max(0.1, 1.6 - factor_a - factor_t - factor_r);
-    //     level_A2 = Math.max(0.1, 1.6 - factor_a - factor_c - factor_d);
-    // }
+    // Calculate Protection Factors
+    // W can be calculated with just w1, w2, w3 (w4 requires length/width which may not be available yet)
+    if (inputs.waterStorageType ) {
+        factor_W = calculateW(inputs.qi, inputs.qm, inputs.waterStorageType, inputs.waterCapacity, inputs.distributionNetwork, inputs.hydrantCount25, inputs.hydrantCount3, inputs.hydrantCount4, inputs.length, inputs.width);
+    }
+    if (inputs.detectionType !== undefined || inputs.waterSupplyType !== undefined || inputs.sprinklerType !== undefined || inputs.fireStationType !== undefined || inputs.industrialBrigade !== undefined) {
+        factor_S = calculateS(inputs.detectionType, inputs.waterSupplyType, inputs.sprinklerType, inputs.fireStationType, inputs.industrialBrigade);
+    }
+    if (inputs.structureResist && factor_S !== null) {
+        factor_F = calculateF(inputs.structureResist, inputs.facadeResist, inputs.roofResist, inputs.wallResist, factor_S, inputs.hasManyWindows, inputs.noInternalSeparation, inputs.combustibleInsulation);
+    }
+    if (inputs.n1 !== undefined || inputs.n2 !== undefined || inputs.n3 !== undefined || inputs.n4 !== undefined || inputs.n5 !== undefined) {
+        factor_N = calculateN(inputs.n1, inputs.n2, inputs.n3, inputs.n4, inputs.n5);
+    }
+    if (inputs.subcompartment !== undefined || inputs.stairways !== undefined || inputs.horizontalExit !== undefined || inputs.sprinklers !== undefined) {
+        factor_U = calculateU(inputs.subcompartment, inputs.stairways, inputs.horizontalExit, inputs.sprinklers);
+    }
+    if (inputs.subCompartmentEI30 !== undefined || inputs.subCompartmentEI60 !== undefined || inputs.partialDetection !== undefined || inputs.partialSprinkler !== undefined || inputs.otherAutoExtinguish !== undefined || inputs.financialDataBackup !== undefined || inputs.sparePartsAccess !== undefined || inputs.selfRepairCapability !== undefined || inputs.relocationAgreements !== undefined || inputs.multipleProduction !== undefined) {
+        factor_Y = calculateY(inputs.subCompartmentEI30, inputs.subCompartmentEI60, inputs.partialDetection, inputs.partialSprinkler, inputs.otherAutoExtinguish, inputs.financialDataBackup, inputs.sparePartsAccess, inputs.selfRepairCapability, inputs.relocationAgreements, inputs.multipleProduction);
+    }
 
-    // // Calculate Protection Factors
-    // factor_W = calculateW(
-    //     inputs.qi,
-    //     inputs.qm,
-    //     inputs.waterStorageType,
-    //     inputs.waterCapacity,
-    //     inputs.hydrantCount25,
-    //     inputs.hydrantCount3,
-    //     inputs.hydrantCount4,
-    //     inputs.length,
-    //     inputs.width
-    // );
-    // factor_N = calculateN();
-    // factor_S = calculateS(inputs.detectionType, inputs.sprinklerType, inputs.fireStationType);
-    // factor_F = calculateF(
-    //     inputs.structureResist,
-    //     inputs.facadeResist,
-    //     inputs.roofResist,
-    //     inputs.wallResist,
-    //     factor_S || undefined
-    // );
-    // factor_U = calculateU();
-    // factor_Y = calculateY();
+    // Calculate Potential Risks (P, P1, P2)
+    if (factor_q !== null && factor_i !== null && factor_g !== null && factor_e !== null && factor_v !== null && factor_z !== null) {
+        risk_P = factor_q * factor_i * factor_g * factor_e * factor_v * factor_z;
+        risk_P1 = factor_q * factor_i * factor_e * factor_v * factor_z;
+        risk_P2 = factor_i * factor_g * factor_e * factor_v * factor_z;
+    }
 
-    // // Calculate Protection Levels
-    // let level_D: number | null = null;
-    // let level_D1: number | null = null;
-    // let level_D2: number | null = null;
+    // Calculate Acceptable Levels (A, A1, A2)
+    if (factor_a !== null && factor_t !== null && factor_c !== null && factor_r !== null && factor_d !== null) {
+        level_A = Math.max(0.1, 1.6 - factor_a - factor_t - factor_c);
+        level_A1 = Math.max(0.1, 1.6 - factor_a - factor_t - factor_r);
+        level_A2 = Math.max(0.1, 1.6 - factor_a - factor_c - factor_d);
+    }
 
-    // if (factor_W && factor_N && factor_S && factor_F) {
-    //     level_D = factor_W * factor_N * factor_S * factor_F;
-    // }
-    // if (factor_N && factor_U) {
-    //     level_D1 = factor_N * factor_U;
-    // }
-    // if (factor_W && factor_N && factor_S && factor_Y) {
-    //     level_D2 = factor_W * factor_N * factor_S * factor_Y;
-    // }
+    // Calculate Protection Levels (D, D1, D2)
+    if (factor_W !== null && factor_N !== null && factor_S !== null && factor_F !== null) {
+        level_D = factor_W * factor_N * factor_S * factor_F;
+    }
+    if (factor_N !== null && factor_U !== null) {
+        level_D1 = factor_N * factor_U;
+    }
+    if (factor_W !== null && factor_N !== null && factor_S !== null && factor_Y !== null) {
+        level_D2 = factor_W * factor_N * factor_S * factor_Y;
+    }
 
-    // // Calculate Initial Risk (Ro)
-    // factor_Fo = calculateFo(inputs.structureResist);
-    // if (risk_P && level_A && factor_Fo) {
-    //     risk_Ro = risk_P / (level_A * factor_Fo);
-    // }
+    // Calculate Initial Risk (Ro) and Fo
+    if (inputs.structureResist) {
+        factor_Fo = calculateFo(inputs.structureResist);
+    }
+    if (risk_P !== null && level_A !== null && factor_Fo !== null) {
+        risk_Ro = risk_P / (level_A * factor_Fo);
+    }
+
+    // Calculate Final Risks (R, R1, R2)
+    if (risk_P !== null && level_A !== null && level_D !== null) {
+        final_R = risk_P / (level_A * level_D);
+    }
+    if (risk_P1 !== null && level_A1 !== null && level_D1 !== null) {
+        final_R1 = risk_P1 / (level_A1 * level_D1);
+    }
+    if (risk_P2 !== null && level_A2 !== null && level_D2 !== null) {
+        final_R2 = risk_P2 / (level_A2 * level_D2);
+    }
+
+    // Calculate Status
+    status_R = getRiskStatus(final_R);
+    status_R1 = getRiskStatus(final_R1);
+    status_R2 = getRiskStatus(final_R2);
 
   return {
     factor_q,

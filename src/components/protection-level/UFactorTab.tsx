@@ -2,34 +2,62 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
-interface UFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function UFactorTab({
-  results,
-  updateResults,
-}: UFactorTabProps) {
+export default function UFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [subcompartment, setSubcompartment] = useState(0);
   const [stairways, setStairways] = useState(0);
   const [horizontalExit, setHorizontalExit] = useState(0);
   const [sprinklers, setSprinklers] = useState(0);
 
-  const calculateU = () => {
-    const u = subcompartment + stairways + horizontalExit + sprinklers;
-    const U = Math.pow(1.05, u);
-    updateResults({ U });
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    // Recalculate D1 if N is available
-    const { N } = results;
-    if (N !== null) {
-      const D1 = N * U;
-      updateResults({ D1 });
-    }
-  };
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
+
+      const response = data as AssessmentGetApiResponse;
+
+      setSubcompartment(response.assessment.subcompartment ?? 0);
+      setStairways(response.assessment.stairways ?? 0);
+      setHorizontalExit(response.assessment.horizontalExit ?? 0);
+      setSprinklers(response.assessment.sprinklers ?? 0);
+
+      return response;
+    },
+  });
+
+  const handleCalculateU = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          subcompartment,
+          stairways,
+          horizontalExit,
+          sprinklers,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("U محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه U");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="u-escape" className="tab-content">
@@ -150,16 +178,13 @@ export default function UFactorTab({
         </select>
       </div>
 
-      <button className="btn btn-primary mt-4" onClick={calculateU}>
+      <button className="btn btn-primary mt-4" onClick={() => handleCalculateU.mutate()}>
         محاسبه ضریب U
       </button>
 
-      {results.U !== null && (
-        <div id="u-result" className="result-display mt-4">
-          <div className="result-value">{results.U.toFixed(3)}</div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_U ? assessment?.assessment.factor_U.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }
-

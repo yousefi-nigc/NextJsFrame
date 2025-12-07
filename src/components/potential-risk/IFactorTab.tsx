@@ -2,17 +2,12 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
-interface IFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function IFactorTab({
-  results,
-  updateResults,
-}: IFactorTabProps) {
+export default function IFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [showTWeightedTable, setShowTWeightedTable] = useState(false);
   const [showDimsModal, setShowDimsModal] = useState(false);
   const [showITable, setShowITable] = useState(false);
@@ -20,23 +15,49 @@ export default function IFactorTab({
   const [avgDimension, setAvgDimension] = useState("0.3");
   const [fireClass, setFireClass] = useState("5");
 
-  const calculateI = () => {
-    const T = parseFloat(tempDestruction);
-    const m = parseFloat(avgDimension) || 0.3;
-    const M = parseFloat(fireClass);
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    const i = 1 - T / 1000 - 0.1 * Math.log10(m) + M / 10;
-    updateResults({ i });
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
 
-    // Recalculate P, P1, P2 if other factors are available
-    const { q, g, e, v, z } = results;
-    if (q !== null && g !== null && e !== null && v !== null && z !== null) {
-      const P = q * i * g * e * v * z;
-      const P1 = q * i * e * v * z;
-      const P2 = i * g * e * v * z;
-      updateResults({ P, P1, P2 });
-    }
-  };
+      const response = data as AssessmentGetApiResponse;
+
+      setTempDestruction(response.assessment.tempDestruction?.toString() ?? "250");
+      setAvgDimension(response.assessment.avgDimension?.toString() ?? "0.3");
+      setFireClass(response.assessment.materialClass?.toString() ?? "5");
+
+      return response;
+    },
+  });
+
+  const handleCalculateI = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          tempDestruction: parseFloat(tempDestruction),
+          avgDimension: parseFloat(avgDimension) || 0.3,
+          materialClass: parseFloat(fireClass),
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("i محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه i");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="i-factor" className="tab-content">
@@ -418,16 +439,14 @@ export default function IFactorTab({
       </div>
 
       <div className="mt-4">
-        <button className="btn btn-primary" onClick={calculateI}>
+        <button className="btn btn-primary" onClick={() => handleCalculateI.mutate()}>
           محاسبه ضریب i
         </button>
       </div>
 
-      {results.i !== null && (
-        <div className="result-display mt-4">
-          <div className="result-value">{results.i.toFixed(3)}</div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_i ? assessment?.assessment.factor_i.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }

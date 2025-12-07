@@ -4,6 +4,12 @@ import { useState } from "react";
 import { BlockMath } from "react-katex";
 import PotentialRiskTabs from "@/components/potential-risk/PotentialRiskTabs";
 import QFactorTab from "@/components/potential-risk/QFactorTab";
+import IFactorTab from "@/components/potential-risk/IFactorTab";
+import VFactorTab from "@/components/potential-risk/VFactorTab";
+import GFactorTab from "@/components/potential-risk/GFactorTab";
+import EFactorTab from "@/components/potential-risk/EFactorTab";
+import ZFactorTab from "@/components/potential-risk/ZFactorTab";
+import PotentialRiskResultsWrapper from "@/components/potential-risk/PotentialRiskResults";
 import { useParams } from "next/navigation";
 
 export default function PotentialRisk({ }) {
@@ -67,28 +73,28 @@ export default function PotentialRisk({ }) {
         {activeTab === "q-factor" && (
           <QFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
-        {/* 
+
         {activeTab === "i-factor" && (
-          <IFactorTab />
+          <IFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "v-factor" && (
-          <VFactorTab />
+          <VFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "g-factor" && (
-          <GFactorTab />
+          <GFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "e-factor" && (
-          <EFactorTab />
+          <EFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "z-factor" && (
-          <ZFactorTab />
+          <ZFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
-        <PotentialRiskResults /> */}
+        <PotentialRiskResultsWrapper projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
       </div>
     </section>
   );

@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
-
-interface SFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
 interface SectionProps {
   title: string;
@@ -42,32 +39,61 @@ function Select({ value, onChange, children }: SelectProps) {
   );
 }
 
-export default function SFactorTab({
-  results,
-  updateResults,
-}: SFactorTabProps) {
+export default function SFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [s1, setS1] = useState(0);
   const [s2, setS2] = useState(0);
   const [s3, setS3] = useState(0);
   const [s4, setS4] = useState(8);
   const [s5, setS5] = useState(0);
 
-  const calculateS = () => {
-    const s = s1 + s2 + s3 + s4 + s5;
-    const S = Math.pow(1.05, s);
-    updateResults({ S });
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    // Recalculate D, D1, D2 if other factors are available
-    const { W, N, F, Y } = results;
-    if (W !== null && N !== null && F !== null) {
-      const D = W * N * S * F;
-      updateResults({ D });
-    }
-    if (W !== null && N !== null && Y !== null) {
-      const D2 = W * N * S * Y;
-      updateResults({ D2 });
-    }
-  };
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
+
+      const response = data as AssessmentGetApiResponse;
+
+      setS1(response.assessment.detectionType ?? 0);
+      setS2(response.assessment.waterSupplyType ?? 0);
+      setS3(response.assessment.sprinklerType ?? 0);
+      setS4(response.assessment.fireStationType ?? 8);
+      setS5(response.assessment.industrialBrigade ?? 0);
+
+      return response;
+    },
+  });
+
+  const handleCalculateS = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          detectionType: s1,
+          waterSupplyType: s2,
+          sprinklerType: s3,
+          fireStationType: s4,
+          industrialBrigade: s5,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("S محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه S");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="s-special" className="w-full space-y-6">
@@ -139,17 +165,14 @@ export default function SFactorTab({
       </Section>
 
       <div>
-        <button className="btn btn-primary" onClick={calculateS}>
+        <button className="btn btn-primary" onClick={() => handleCalculateS.mutate()}>
           محاسبه ضریب S
         </button>
       </div>
 
-      {results.S !== null && (
-        <div className="result-display mt-4">
-          <div className="result-value">{results.S.toFixed(3)}</div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_S ? assessment?.assessment.factor_S.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }
-

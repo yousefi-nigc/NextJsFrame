@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
-
-interface NFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
 interface SectionProps {
   title: string;
@@ -42,36 +39,61 @@ function Select({ value, onChange, children }: SelectProps) {
   );
 }
 
-export default function NFactorTab({
-  results,
-  updateResults,
-}: NFactorTabProps) {
+export default function NFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [n1, setN1] = useState(0);
   const [n2, setN2] = useState(0);
   const [n3, setN3] = useState(0);
   const [n4, setN4] = useState(0);
   const [n5, setN5] = useState(0);
 
-  const calculateN = () => {
-    const n = n1 + n2 + n3 + n4 + n5;
-    const N = Math.pow(0.95, n);
-    updateResults({ N });
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    // Recalculate D, D1, D2 if other factors are available
-    const { W, S, F, U, Y } = results;
-    if (W !== null && S !== null && F !== null) {
-      const D = W * N * S * F;
-      updateResults({ D });
-    }
-    if (U !== null) {
-      const D1 = N * U;
-      updateResults({ D1 });
-    }
-    if (W !== null && S !== null && Y !== null) {
-      const D2 = W * N * S * Y;
-      updateResults({ D2 });
-    }
-  };
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
+
+      const response = data as AssessmentGetApiResponse;
+
+      setN1(response.assessment.n1 ?? 0);
+      setN2(response.assessment.n2 ?? 0);
+      setN3(response.assessment.n3 ?? 0);
+      setN4(response.assessment.n4 ?? 0);
+      setN5(response.assessment.n5 ?? 0);
+
+      return response;
+    },
+  });
+
+  const handleCalculateN = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          n1,
+          n2,
+          n3,
+          n4,
+          n5,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("N محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه N");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="n-normal" className="tab-content">
@@ -134,16 +156,13 @@ export default function NFactorTab({
         </Select>
       </Section>
 
-      <button className="btn btn-primary" onClick={calculateN}>
+      <button className="btn btn-primary" onClick={() => handleCalculateN.mutate()}>
         محاسبه ضریب N
       </button>
 
-      {results.N !== null && (
-        <div className="mt-4 text-primary font-semibold text-lg">
-          <div className="result-value">{results.N.toFixed(3)}</div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_N ? assessment?.assessment.factor_N.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }
-

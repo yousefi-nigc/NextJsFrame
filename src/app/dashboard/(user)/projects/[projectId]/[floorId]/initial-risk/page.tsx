@@ -1,14 +1,66 @@
 "use client";
 
-import { CalculationResults } from "@/types";
+import { useState } from "react";
+import { useParams } from "next/navigation";
 import { BlockMath } from "react-katex";
-
-interface InitialRiskSectionProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
 export default function InitialRisk() {
+  const queryClient = useQueryClient();
+  const { projectId, floorId } = useParams();
+  const [structureResist, setStructureResist] = useState("60");
+
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
+
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
+
+      const response = data as AssessmentGetApiResponse;
+
+      setStructureResist(response.assessment.structureResist?.toString() ?? "60");
+
+      return response;
+    },
+  });
+
+  const handleCalculate = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          structureResist: parseFloat(structureResist),
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("ریسک اولیه محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه ریسک اولیه");
+      console.log(error);
+    },
+  });
+
+  const getRecommendation = (ro: number | null): string => {
+    if (ro === null || ro === undefined) return "";
+    if (ro < 1) return "سیستم دستی (Manual)";
+    if (ro >= 1 && ro < 1.6) return "سیستم اعلام حریق (Fire Alarm)";
+    if (ro >= 1.6 && ro < 2.7) return "سیستم اسپرینکلر (Sprinkler)";
+    if (ro >= 2.7 && ro < 4.5) return "سیستم اسپرینکلر پیشرفته (Sprinkler+)";
+    return "نیاز به کاهش ریسک (Risk Reduction Required)";
+  };
+
   return (
     <section id="initial-risk" className="section">
       <div className="card">
@@ -21,7 +73,6 @@ export default function InitialRisk() {
           </h2>
         </div>
 
-        {/*  */}
         <div>
           <div className="validation-progress">
             <div className="validation-progress-bar form-progress"></div>
@@ -52,12 +103,12 @@ export default function InitialRisk() {
             <label className="input-label">مقاومت آتش سازه (fs)</label>
             <select
               id="fire-resistance-initial"
+              value={structureResist}
+              onChange={(e) => setStructureResist(e.target.value)}
               className="border px-2 py-1 rounded"
             >
               <option value="15">سازه فولادی بدون محافظ (R15)</option>
-              <option value="60" selected>
-                سازه بتنی و بنایی (R60)
-              </option>
+              <option value="60">سازه بتنی و بنایی (R60)</option>
               <option value="90">سازه با پوشش ضد حریق (R90)</option>
               <option value="120">سازه با پوشش ضد حریق پیشرفته (R120)</option>
               <option value="0">سازه چوبی سبک (R0)</option>
@@ -70,7 +121,7 @@ export default function InitialRisk() {
 
           <button
             className="btn btn-primary"
-            // onClick={() => calculateInitialRisk()}
+            onClick={() => handleCalculate.mutate()}
           >
             محاسبه ریسک اولیه و دریافت توصیه
           </button>
@@ -78,20 +129,31 @@ export default function InitialRisk() {
           <div className="results-grid mt-6">
             <div className="result-card">
               <h3>ضریب مقاومت سازه (F₀)</h3>
-              <div className="result-value" id="fo-result">
-                -
+              <div className="result-value">
+                {assessment?.assessment.factor_Fo !== null && assessment?.assessment.factor_Fo !== undefined 
+                  ? assessment.assessment.factor_Fo.toFixed(3) 
+                  : "-"}
               </div>
             </div>
 
             <div className="result-card">
               <h3>ریسک اولیه (R₀)</h3>
-              <div className="result-value" id="ro-result">
-                -
+              <div className="result-value">
+                {assessment?.assessment.risk_Ro !== null && assessment?.assessment.risk_Ro !== undefined 
+                  ? assessment.assessment.risk_Ro.toFixed(3) 
+                  : "-"}
               </div>
             </div>
           </div>
 
-          <div id="protection-recommendation" className="mt-8"></div>
+          {assessment?.assessment.risk_Ro !== null && assessment?.assessment.risk_Ro !== undefined && (
+            <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-primary">
+              <h4 className="font-semibold text-lg mb-2">توصیه سیستم حفاظت:</h4>
+              <p className="text-primary font-bold text-xl">
+                {getRecommendation(assessment.assessment.risk_Ro)}
+              </p>
+            </div>
+          )}
 
           <div className="risk-scale mt-8 text-center font-semibold text-base">
             <h4>مقیاس سطوح ریسک و سیستم‌های توصیه شده</h4>

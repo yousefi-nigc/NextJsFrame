@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CalculationResults } from "@/types";
 import { BlockMath } from "react-katex";
+import { useParams } from "next/navigation";
 import AcceptableRiskTabs from "@/components/acceptable-risk/AcceptableRiskTabs";
 import AcceptableRiskResults from "@/components/acceptable-risk/AcceptableRiskResults";
 import ActivationFactorTab from "@/components/acceptable-risk/ActivationFactorTab";
@@ -11,15 +11,10 @@ import ValueFactorTab from "@/components/acceptable-risk/ValueFactorTab";
 import EnvironmentFactorTab from "@/components/acceptable-risk/EnvironmentFactorTab";
 import DependencyFactorTab from "@/components/acceptable-risk/DependencyFactorTab";
 
-interface AcceptableRiskSectionProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
+export default function AcceptableRisk() {
+  const [activeTab, setActiveTab] = useState("a-activation");
+  const { projectId, floorId } = useParams();
 
-export default function AcceptableRisk({
-  results,
-  updateResults,
-}: AcceptableRiskSectionProps) {
   const tabs = [
     { id: "a-activation", label: "ضریب فعال‌سازی (a)" },
     { id: "t-evacuation", label: "زمان تخلیه (t)" },
@@ -27,19 +22,6 @@ export default function AcceptableRisk({
     { id: "r-environment", label: "ضریب محیطی (r)" },
     { id: "d-dependency", label: "ضریب وابستگی (d)" },
   ];
-
-  const [activeTab, setActiveTab] = useState("a-activation");
-
-  // Ensure results is always defined
-  const safeResults = results || {
-    q: null, i: null, g: null, e: null, v: null, z: null,
-    a: null, t: null, c: null, r: null, d: null,
-    W: null, N: null, S: null, F: null, U: null, Y: null,
-    P: null, P1: null, P2: null,
-    A: null, A1: null, A2: null,
-    D: null, D1: null, D2: null,
-    R: null, R1: null, R2: null,
-  };
 
   return (
     <section id="acceptable-risk" className="section">
@@ -77,26 +59,26 @@ export default function AcceptableRisk({
         />
 
         {activeTab === "a-activation" && (
-          <ActivationFactorTab results={safeResults} updateResults={updateResults} />
+          <ActivationFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "t-evacuation" && (
-          <EvacuationTimeTab results={safeResults} updateResults={updateResults} />
+          <EvacuationTimeTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "c-value" && (
-          <ValueFactorTab results={safeResults} updateResults={updateResults} />
+          <ValueFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "r-environment" && (
-          <EnvironmentFactorTab results={safeResults} updateResults={updateResults} />
+          <EnvironmentFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "d-dependency" && (
-          <DependencyFactorTab results={safeResults} updateResults={updateResults} />
+          <DependencyFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
-        <AcceptableRiskResults results={safeResults} />
+        <AcceptableRiskResults projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
       </div>
     </section>
   );

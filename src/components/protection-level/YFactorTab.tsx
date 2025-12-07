@@ -2,17 +2,12 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
-interface YFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function YFactorTab({
-  results,
-  updateResults,
-}: YFactorTabProps) {
+export default function YFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [subCompartmentEI30, setSubCompartmentEI30] = useState(false);
   const [subCompartmentEI60, setSubCompartmentEI60] = useState(false);
   const [partialDetection, setPartialDetection] = useState(false);
@@ -24,33 +19,63 @@ export default function YFactorTab({
   const [relocationAgreements, setRelocationAgreements] = useState(false);
   const [multipleProduction, setMultipleProduction] = useState(false);
 
-  const calculateY = () => {
-    let y = 0;
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    // Physical protection
-    if (subCompartmentEI30) y += 2;
-    if (subCompartmentEI60) y += 4;
-    if (partialDetection) y += 3;
-    if (partialSprinkler) y += 5;
-    if (otherAutoExtinguish) y += 4;
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
 
-    // Crisis planning
-    if (financialDataBackup) y += 2;
-    if (sparePartsAccess) y += 4;
-    if (selfRepairCapability) y += 2;
-    if (relocationAgreements) y += 3;
-    if (multipleProduction) y += 4;
+      const response = data as AssessmentGetApiResponse;
 
-    const Y = Math.pow(1.05, y);
-    updateResults({ Y });
+      setSubCompartmentEI30(response.assessment.subCompartmentEI30 ?? false);
+      setSubCompartmentEI60(response.assessment.subCompartmentEI60 ?? false);
+      setPartialDetection(response.assessment.partialDetection ?? false);
+      setPartialSprinkler(response.assessment.partialSprinkler ?? false);
+      setOtherAutoExtinguish(response.assessment.otherAutoExtinguish ?? false);
+      setFinancialDataBackup(response.assessment.financialDataBackup ?? false);
+      setSparePartsAccess(response.assessment.sparePartsAccess ?? false);
+      setSelfRepairCapability(response.assessment.selfRepairCapability ?? false);
+      setRelocationAgreements(response.assessment.relocationAgreements ?? false);
+      setMultipleProduction(response.assessment.multipleProduction ?? false);
 
-    // Recalculate D2 if other factors are available
-    const { W, N, S } = results;
-    if (W !== null && N !== null && S !== null) {
-      const D2 = W * N * S * Y;
-      updateResults({ D2 });
-    }
-  };
+      return response;
+    },
+  });
+
+  const handleCalculateY = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          subCompartmentEI30,
+          subCompartmentEI60,
+          partialDetection,
+          partialSprinkler,
+          otherAutoExtinguish,
+          financialDataBackup,
+          sparePartsAccess,
+          selfRepairCapability,
+          relocationAgreements,
+          multipleProduction,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("Y محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه Y");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="y-salvage" className="tab-content">
@@ -194,15 +219,13 @@ export default function YFactorTab({
         </div>
       </div>
 
-      <button className="btn btn-primary mt-4" onClick={calculateY}>
+      <button className="btn btn-primary mt-4" onClick={() => handleCalculateY.mutate()}>
         محاسبه ضریب Y
       </button>
 
-      {results.Y !== null && (
-        <div id="y-result" className="result-display mt-4">
-          <div className="result-value">{results.Y.toFixed(3)}</div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_Y ? assessment?.assessment.factor_Y.toFixed(3) : "-"}</div>
+      </div>
 
       <div className="summary-table mt-8">
         <h4>خلاصه امتیازات بر اساس FRAME 2015</h4>
@@ -296,4 +319,3 @@ export default function YFactorTab({
     </div>
   );
 }
-

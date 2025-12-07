@@ -2,58 +2,67 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
-interface GFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
-
-export default function GFactorTab({
-  results,
-  updateResults,
-}: GFactorTabProps) {
+export default function GFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [showG1Guide, setShowG1Guide] = useState(false);
   const [showG2Guide, setShowG2Guide] = useState(false);
   const [showG3Guide, setShowG3Guide] = useState(false);
   const [showG4Guide, setShowG4Guide] = useState(false);
   const [showgGuide, setShowgGuide] = useState(false);
-  const [accessType, setAccessType] = useState("wide");
+  const [accessType, setAccessType] = useState<"wide" | "narrow">("wide");
   const [sectionLength, setSectionLength] = useState(30);
   const [sectionWidth, setSectionWidth] = useState(20);
   const [sectionArea, setSectionArea] = useState<number | "">("");
 
-  const calculateG = () => {
-    let l = sectionLength;
-    let b = sectionWidth;
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    // If area is provided and width is not, calculate width
-    if (typeof sectionArea === "number" && sectionArea > 0 && !b) {
-      b = sectionArea / l;
-    }
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
 
-    // Swap if narrow access
-    if (accessType === "narrow") {
-      [l, b] = [b, l];
-    }
+      const response = data as AssessmentGetApiResponse;
 
-    if (l <= 0 || b <= 0) {
-      alert("طول و عرض باید بزرگتر از صفر باشند");
-      return;
-    }
+      setAccessType((response.assessment.accessType as "wide" | "narrow") ?? "wide");
+      setSectionLength(response.assessment.length ?? 30);
+      setSectionWidth(response.assessment.width ?? 20);
+      setSectionArea(response.assessment.area ?? "");
 
-    const g = (b + 5 * Math.cbrt(b * b * l)) / 200;
-    updateResults({ g });
+      return response;
+    },
+  });
 
-    // Recalculate P, P1, P2 if other factors are available
-    const { q, i, e, v, z } = results;
-    if (q !== null && i !== null && e !== null && v !== null && z !== null) {
-      const P = q * i * g * e * v * z;
-      const P1 = q * i * e * v * z;
-      const P2 = i * g * e * v * z;
-      updateResults({ P, P1, P2 });
-    }
-  };
+  const handleCalculateG = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          length: sectionLength,
+          width: sectionWidth,
+          area: typeof sectionArea === "number" ? sectionArea : undefined,
+          accessType,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("g محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه g");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="g-factor" className="tab-content">
@@ -127,7 +136,7 @@ export default function GFactorTab({
         <select
           id="access-type"
           value={accessType}
-          onChange={(e) => setAccessType(e.target.value)}
+          onChange={(e) => setAccessType(e.target.value as "wide" | "narrow")}
           className="border p-2 rounded w-full"
         >
           <option value="wide">دسترسی از ضلع عریض (wide)</option>
@@ -306,16 +315,13 @@ export default function GFactorTab({
         )}
       </div>
 
-      <button className="btn btn-primary" onClick={calculateG}>
+      <button className="btn btn-primary" onClick={() => handleCalculateG.mutate()}>
         محاسبه ضریب g
       </button>
 
-      {results.g !== null && (
-        <div className="result-display mt-4">
-          <div className="result-value">{results.g.toFixed(3)}</div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_g ? assessment?.assessment.factor_g.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }
-

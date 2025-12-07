@@ -1,12 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CalculationResults } from "@/types";
-
-interface ValueFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
 // Helper function to convert Iranian Rial to EUR 2000
 function convertIranValueTo2000EUR(valueRial: number, year: number): number | null {
@@ -48,44 +45,56 @@ function calculateC(
   return c1 + c2;
 }
 
-export default function ValueFactorTab({
-  results,
-  updateResults,
-}: ValueFactorTabProps) {
+export default function ValueFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [replaceability, setReplaceability] = useState("0");
   const [valueTotal, setValueTotal] = useState<string>("");
   const [valueYear, setValueYear] = useState<string>("");
   const [showCalcDescription, setShowCalcDescription] = useState(false);
 
-  const handleCalculate = () => {
-    if (!results) return;
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    const c = calculateC(
-      parseFloat(replaceability),
-      valueTotal ? parseFloat(valueTotal) : null,
-      valueYear ? parseInt(valueYear) : null
-    );
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
 
-    updateResults({ c });
+      const response = data as AssessmentGetApiResponse;
 
-    // Calculate A, A1, A2
-    const a = results.a ?? null;
-    const t = results.t ?? null;
-    const r = results.r ?? null;
-    const d = results.d ?? null;
+      setReplaceability(response.assessment.replaceability?.toString() ?? "0");
+      setValueTotal(response.assessment.valueTotal?.toString() ?? "");
+      setValueYear(response.assessment.valueYear?.toString() ?? "");
 
-    const A = a !== null && t !== null
-      ? Math.max(0.1, 1.6 - a - t - c)
-      : null;
-    const A1 = a !== null && t !== null && r !== null
-      ? Math.max(0.1, 1.6 - a - t - r)
-      : null;
-    const A2 = a !== null && d !== null
-      ? Math.max(0.1, 1.6 - a - c - d)
-      : null;
+      return response;
+    },
+  });
 
-    updateResults({ A, A1, A2 });
-  };
+  const handleCalculate = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          replaceability: parseFloat(replaceability),
+          valueTotal: valueTotal ? parseFloat(valueTotal) : undefined,
+          valueYear: valueYear ? parseInt(valueYear) : undefined,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("c محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه c");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="c-value" className="tab-content">
@@ -156,17 +165,13 @@ export default function ValueFactorTab({
         </select>
       </div>
 
-      <button className="btn btn-primary" onClick={handleCalculate}>
+      <button className="btn btn-primary" onClick={() => handleCalculate.mutate()}>
         محاسبه ضریب c
       </button>
 
-      {results && results.c !== null && results.c !== undefined && (
-        <div className="result-display" style={{ marginTop: "1rem" }}>
-          <div className="text-success font-semibold">
-            ضریب c = {results.c.toFixed(2)}
-          </div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_c ? assessment?.assessment.factor_c.toFixed(3) : "-"}</div>
+      </div>
 
       <button
         type="button"

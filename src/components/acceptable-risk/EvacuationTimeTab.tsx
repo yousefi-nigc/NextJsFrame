@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
-
-interface EvacuationTimeTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
 // Helper function to calculate t factor (simplified version)
 function calculateTFactor(
@@ -75,10 +72,8 @@ function calculateTFactor(
   return { tValue, timeMinutes, status };
 }
 
-export default function EvacuationTimeTab({
-  results,
-  updateResults,
-}: EvacuationTimeTabProps) {
+export default function EvacuationTimeTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [occupantFactor, setOccupantFactor] = useState<string>("");
   const [occupantCount, setOccupantCount] = useState<string>("");
   const [area, setArea] = useState<string>("");
@@ -96,54 +91,86 @@ export default function EvacuationTimeTab({
     status: string;
   } | null>(null);
 
-  const handleCalculate = () => {
-    const exitWidthsArray = exitWidths
-      .split(",")
-      .map((w) => parseFloat(w.trim()))
-      .filter((w) => !isNaN(w) && w > 0);
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    const calculatedK =
-      exitWidthTotal && parseFloat(exitWidthTotal) > 0
-        ? parseFloat(exitWidthTotal)
-        : exitWidthsArray.reduce((sum, w) => sum + w, 0);
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
 
-    const result = calculateTFactor(
-      length ? parseFloat(length) : undefined,
-      width ? parseFloat(width) : undefined,
-      area ? parseFloat(area) : undefined,
-      occupantCount ? parseFloat(occupantCount) : undefined,
-      occupantFactor ? parseFloat(occupantFactor) : undefined,
-      calculatedK > 0 ? calculatedK : undefined,
-      mobilityFactor ? parseFloat(mobilityFactor) : undefined,
-      heightAbove ? parseFloat(heightAbove) : undefined,
-      depthBelow ? parseFloat(depthBelow) : undefined
-    );
+      const response = data as AssessmentGetApiResponse;
 
-    setCalcResult(result);
-    setShowIntermediate(true);
+      setOccupantFactor(response.assessment.occupantFactor?.toString() ?? "");
+      setOccupantCount(response.assessment.occupantCount?.toString() ?? "");
+      setArea(response.assessment.area?.toString() ?? "");
+      setExitWidthTotal(response.assessment.exitWidthTotal?.toString() ?? "");
+      setMobilityFactor(response.assessment.mobilityFactor?.toString() ?? "1");
+      setLength(response.assessment.length?.toString() ?? "");
+      setWidth(response.assessment.width?.toString() ?? "");
+      setHeightAbove(response.assessment.heightAbove?.toString() ?? "");
+      setDepthBelow(response.assessment.depthBelow?.toString() ?? "");
 
-    if (result.tValue !== null && results) {
-      updateResults({ t: result.tValue });
+      return response;
+    },
+  });
 
-      // Calculate A, A1, A2
-      const a = results.a ?? null;
-      const c = results.c ?? null;
-      const r = results.r ?? null;
-      const d = results.d ?? null;
+  const handleCalculate = useMutation({
+    mutationFn: async () => {
+      const exitWidthsArray = exitWidths
+        .split(",")
+        .map((w) => parseFloat(w.trim()))
+        .filter((w) => !isNaN(w) && w > 0);
 
-      const A = a !== null && c !== null
-        ? Math.max(0.1, 1.6 - a - result.tValue - c)
-        : null;
-      const A1 = a !== null && r !== null
-        ? Math.max(0.1, 1.6 - a - result.tValue - r)
-        : null;
-      const A2 = a !== null && c !== null && d !== null
-        ? Math.max(0.1, 1.6 - a - c - d)
-        : null;
+      const calculatedK =
+        exitWidthTotal && parseFloat(exitWidthTotal) > 0
+          ? parseFloat(exitWidthTotal)
+          : exitWidthsArray.reduce((sum, w) => sum + w, 0);
 
-      updateResults({ A, A1, A2 });
-    }
-  };
+      const result = calculateTFactor(
+        length ? parseFloat(length) : undefined,
+        width ? parseFloat(width) : undefined,
+        area ? parseFloat(area) : undefined,
+        occupantCount ? parseFloat(occupantCount) : undefined,
+        occupantFactor ? parseFloat(occupantFactor) : undefined,
+        calculatedK > 0 ? calculatedK : undefined,
+        mobilityFactor ? parseFloat(mobilityFactor) : undefined,
+        heightAbove ? parseFloat(heightAbove) : undefined,
+        depthBelow ? parseFloat(depthBelow) : undefined
+      );
+
+      setCalcResult(result);
+      setShowIntermediate(true);
+
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          length: length ? parseFloat(length) : undefined,
+          width: width ? parseFloat(width) : undefined,
+          area: area ? parseFloat(area) : undefined,
+          occupantCount: occupantCount ? parseInt(occupantCount) : undefined,
+          occupantFactor: occupantFactor ? parseFloat(occupantFactor) : undefined,
+          exitWidthTotal: calculatedK > 0 ? calculatedK : undefined,
+          mobilityFactor: mobilityFactor ? parseFloat(mobilityFactor) : undefined,
+          heightAbove: heightAbove ? parseFloat(heightAbove) : undefined,
+          depthBelow: depthBelow ? parseFloat(depthBelow) : undefined,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("t محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه t");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="t-evacuation" className="tab-content">
@@ -313,17 +340,13 @@ t = \\frac{p \\times \\left[(b + l) + \\frac{X}{x} + 1.25\\,H^{+} + 2\\,H^{-} \\
         </div>
       )}
 
-      <button className="btn btn-primary" onClick={handleCalculate}>
+      <button className="btn btn-primary" onClick={() => handleCalculate.mutate()}>
         محاسبه ضریب t
       </button>
 
-      {(calcResult?.tValue !== null && calcResult?.tValue !== undefined) || (results && results.t !== null && results.t !== undefined) ? (
-        <div className="result-display" style={{ marginTop: "1rem" }}>
-          <div className="text-success font-semibold">
-            ضریب t = {(calcResult?.tValue ?? results?.t ?? 0).toFixed(2)}
-          </div>
-        </div>
-      ) : null}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_t ? assessment?.assessment.factor_t.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }

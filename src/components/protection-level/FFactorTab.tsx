@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
-
-interface FFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
 interface SectionProps {
   title: string;
@@ -175,10 +172,8 @@ function FireResistanceTable({
   );
 }
 
-export default function FFactorTab({
-  results,
-  updateResults,
-}: FFactorTabProps) {
+export default function FFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [showFTable, setShowFTable] = useState(false);
   const [fs, setFs] = useState(60);
   const [ff, setFf] = useState(0);
@@ -187,47 +182,73 @@ export default function FFactorTab({
   const [hasManyWindows, setHasManyWindows] = useState(false);
   const [noInternalSeparation, setNoInternalSeparation] = useState(false);
   const [combustibleInsulation, setCombustibleInsulation] = useState(false);
-  const [sValue, setSValue] = useState(1);
 
-  const calculateF = () => {
-    // Apply special conditions
-    let effectiveFf = hasManyWindows ? 0 : ff;
-    let effectiveFd = combustibleInsulation ? 0 : fd;
-    let effectiveFw = noInternalSeparation ? 0 : fw;
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    // Clamp values to max 120
-    const clampedFs = Math.min(fs, 120);
-    const clampedFf = Math.min(effectiveFf, 120);
-    const clampedFd = Math.min(effectiveFd, 120);
-    const clampedFw = Math.min(effectiveFw, 120);
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
 
-    // Calculate weighted average
-    const f = 0.5 * clampedFs + 0.25 * clampedFf + 0.125 * clampedFd + 0.125 * clampedFw;
+      const response = data as AssessmentGetApiResponse;
 
-    // Calculate term1: [1 + f/100 - f^2.5/10^6]
-    const term1 = 1 + f / 100 - Math.pow(f, 2.5) / 1000000;
+      setFs(response.assessment.structureResist ?? 60);
+      setFf(response.assessment.facadeResist ?? 0);
+      setFd(response.assessment.roofResist ?? 0);
+      setFw(response.assessment.wallResist ?? 0);
+      setHasManyWindows(response.assessment.hasManyWindows ?? false);
+      setNoInternalSeparation(response.assessment.noInternalSeparation ?? false);
+      setCombustibleInsulation(response.assessment.combustibleInsulation ?? false);
 
-    // Calculate term2: [1 - (S-1)/40]
-    const S = results.S || sValue;
-    const term2 = 1 - (S - 1) / 40;
+      return response;
+    },
+  });
 
-    // Calculate F
-    const F = term1 * term2;
-    updateResults({ F });
+  const handleCalculateF = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          structureResist: fs,
+          facadeResist: ff,
+          roofResist: fd,
+          wallResist: fw,
+          hasManyWindows,
+          noInternalSeparation,
+          combustibleInsulation,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("F محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+      setShowFTable(true);
+    },
+    onError: (error) => {
+      toast.error("خطا در محاسبه F");
+      console.log(error);
+    },
+  });
 
-    // Recalculate D, D1, D2 if other factors are available
-    const { W, N, S: SValue } = results;
-    if (W !== null && N !== null && SValue !== null) {
-      const D = W * N * SValue * F;
-      updateResults({ D });
-    }
-    if (W !== null && N !== null && results.Y !== null && SValue !== null) {
-      const D2 = W * N * SValue * results.Y;
-      updateResults({ D2 });
-    }
-
-    setShowFTable(true);
-  };
+  // Calculate values for display table
+  const effectiveFf = hasManyWindows ? 0 : ff;
+  const effectiveFd = combustibleInsulation ? 0 : fd;
+  const effectiveFw = noInternalSeparation ? 0 : fw;
+  const clampedFs = Math.min(fs, 120);
+  const clampedFf = Math.min(effectiveFf, 120);
+  const clampedFd = Math.min(effectiveFd, 120);
+  const clampedFw = Math.min(effectiveFw, 120);
+  const calculatedF = 0.5 * clampedFs + 0.25 * clampedFf + 0.125 * clampedFd + 0.125 * clampedFw;
+  const calculatedTerm1 = 1 + calculatedF / 100 - Math.pow(calculatedF, 2.5) / 1000000;
+  const S = assessment?.assessment.factor_S ?? 1;
+  const calculatedTerm2 = 1 - (S - 1) / 40;
+  const calculatedFValue = calculatedTerm1 * calculatedTerm2;
 
   return (
     <div id="f-resistance" className="tab-content">
@@ -376,60 +397,34 @@ export default function FFactorTab({
 
         <div>
           <label className="block mb-1 text-sm">
-            S - ضریب حفاظت ویژه (محاسبه شده قبلی)
+            S - ضریب حفاظت ویژه (از محاسبه S)
           </label>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              className="w-full border rounded-lg p-2 dark:bg-slate-900 dark:border-slate-600"
-              value={sValue}
-              onChange={(e) => setSValue(parseFloat(e.target.value) || 1)}
-            />
-            <button
-              onClick={() => {
-                if (results.S !== null) {
-                  setSValue(results.S);
-                }
-              }}
-              className="px-3 py-1 bg-blue-600 text-white rounded-lg text-nowrap cursor-pointer"
-            >
-              بروزرسانی از محاسبه S
-            </button>
+          <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            {assessment?.assessment.factor_S ? assessment.assessment.factor_S.toFixed(3) : "محاسبه نشده"}
           </div>
         </div>
       </Section>
 
-      <button onClick={calculateF} className="btn btn-primary">
+      <button onClick={() => handleCalculateF.mutate()} className="btn btn-primary">
         محاسبه ضریب F
       </button>
 
-      {showFTable && results.F !== null && (() => {
-        const effectiveFf = hasManyWindows ? 0 : ff;
-        const effectiveFd = combustibleInsulation ? 0 : fd;
-        const effectiveFw = noInternalSeparation ? 0 : fw;
-        const clampedFs = Math.min(fs, 120);
-        const clampedFf = Math.min(effectiveFf, 120);
-        const clampedFd = Math.min(effectiveFd, 120);
-        const clampedFw = Math.min(effectiveFw, 120);
-        const calculatedF = 0.5 * clampedFs + 0.25 * clampedFf + 0.125 * clampedFd + 0.125 * clampedFw;
-        const calculatedTerm1 = 1 + calculatedF / 100 - Math.pow(calculatedF, 2.5) / 1000000;
-        const S = results.S || sValue;
-        const calculatedTerm2 = 1 - (S - 1) / 40;
-        
-        return (
-          <FireResistanceTable
-            fs={clampedFs}
-            ff={clampedFf}
-            fd={clampedFd}
-            fw={clampedFw}
-            f={calculatedF}
-            term1={calculatedTerm1}
-            term2={calculatedTerm2}
-            F={results.F}
-          />
-        );
-      })()}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_F ? assessment?.assessment.factor_F.toFixed(3) : "-"}</div>
+      </div>
+
+      {showFTable && assessment?.assessment.factor_F !== null && assessment?.assessment.factor_F !== undefined && (
+        <FireResistanceTable
+          fs={clampedFs}
+          ff={clampedFf}
+          fd={clampedFd}
+          fw={clampedFw}
+          f={calculatedF}
+          term1={calculatedTerm1}
+          term2={calculatedTerm2}
+          F={assessment.assessment.factor_F}
+        />
+      )}
     </div>
   );
 }
-

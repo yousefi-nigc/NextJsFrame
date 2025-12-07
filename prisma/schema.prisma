@@ -2,6 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 generator client {
   provider = "prisma-client-js"
+  output   = "../prisma/generated"
 }
 
 datasource db {
@@ -25,12 +26,12 @@ model User {
   banned        Boolean?  @default(false)
   banReason     String?
   banExpires    DateTime?
-  
-  sessions      Session[]
-  accounts      Account[]
-  
+
+  sessions Session[]
+  accounts Account[]
+
   // --- NEW: Relation to Engineering Projects ---
-  projects      Project[]
+  projects Project[]
 
   @@unique([email])
   @@map("user")
@@ -95,154 +96,192 @@ model Project {
   updatedAt   DateTime @updatedAt
 
   // Relation to User
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  floors      Floor[]
+  floors Floor[]
 
   @@map("project")
 }
 
 model Floor {
-  id          String   @id @default(uuid())
-  name        String   // e.g., "2nd Floor", "Basement"
-  level       Float    // Corresponds to input 'E' (e.g., 0, 1, 1.5)
+  id          String  @id @default(uuid())
+  name        String // e.g., "2nd Floor", "Basement"
+  level       Float // Corresponds to input 'E' (e.g., 0, 1, 1.5)
   description String?
-  
-  projectId   String
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   // One-to-One relation with the calculation data
-  assessment  Assessment?
+  assessment Assessment?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("floor")
 }
 
 model Assessment {
-  id        String   @id @default(uuid())
-  floorId   String   @unique
-  floor     Floor    @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  id      String @id @default(uuid())
+  floorId String @unique
+  floor   Floor  @relation(fields: [floorId], references: [id], onDelete: Cascade)
 
   // --- SECTION 1: INPUTS (Mapped from script.js) ---
-  
+
   // Potential Risk Inputs
-  qi                Float?   // Fire Load Fixed (MJ/m2)
-  qm                Float?   // Fire Load Mobile (MJ/m2)
-  tempDestruction   Float?   // T (Degrees C)
-  avgDimension      Float?   // m (Meters)
-  materialClass     Float?   // M (0 to 5)
-  
+  qi              Float? // Fire Load Fixed (MJ/m2)
+  qm              Float? // Fire Load Mobile (MJ/m2)
+  tempDestruction Float? // T (Degrees C)
+  avgDimension    Float? // m (Meters)
+  materialClass   Float? // M (0 to 5)
+
   // Geometry
-  length            Float?   // l
-  width             Float?   // b
-  area              Float?   // A (Can be calc or input)
-  height            Float?   // h
-  accessType        String?  // "wide" or "narrow"
-  
+  length     Float? // l
+  width      Float? // b
+  area       Float? // A (Can be calc or input)
+  height     Float? // h
+  accessType String? // "wide" or "narrow"
+
   // Venting
-  windowArea        Float?   // Aw
-  staticVentArea    Float?   // As
-  mechVentFlow      Float?   // Nm3/h
-  ventingRatio_k    Float?   // k
-  
+  windowArea     Float? // Aw
+  staticVentArea Float? // As
+  mechVentFlow   Float? // Nm3/h
+  ventingRatio_k Float? // k
+
   // Access Factors
-  accessSides       Int?     // Z (1-4)
-  heightAbove       Float?   // H+
-  depthBelow        Float?   // H-
+  accessSides Int? // Z (1-4)
+  heightAbove Float? // H+
+  depthBelow  Float? // H-
 
   // Acceptable Risk Inputs
-  mainActivity      String?  // Code for Activity Type
-  occupantCount     Int?     // X
-  occupantFactor    Float?   // Factor used to calc X
-  exitWidthTotal    Float?   // K
-  mobilityFactor    Float?   // p
-  
+  mainActivity      Float? // Activation factor - main activity
+  secondaryActivity Float? // Activation factor - secondary activity
+  heatTransferType  Float? // Activation factor - heat transfer type
+  generatorLocation Float? // Activation factor - generator location
+  energySource      Float? // Activation factor - energy source
+  electricalSystem  Float? // Activation factor - electrical system
+  flammableLiquids  Float? // Activation factor - flammable liquids
+  combustibleDust   Float? // Activation factor - combustible dust
+  occupantCount     Int? // X
+  occupantFactor    Float? // Factor used to calc X
+  exitWidthTotal    Float? // K
+  mobilityFactor    Float? // p
+
   // Economic / C-Factor Inputs
-  valueTotal        Float?   // In Rials
-  valueYear         Int?
-  replaceability    Float?   // c1
-  dependencyType    String?  // Category code
-  dependencyManual  Float?   // d (manual override)
-  
+  valueTotal       Float? // In Rials
+  valueYear        Int?
+  replaceability   Float? // c1
+  dependencyType   String? // Category code
+  dependencyManual Float? // d (manual override)
+
   // Floor level for e calculation
-  floorLevel        Float?   // E (can be negative for basements)
-  
+  floorLevel Float? // E (can be negative for basements)
+
   // Protection Inputs (W, N, S, F, U, Y)
-  waterStorageType  String?  // w1 logic ("auto", "manual", "none")
-  waterCapacity     Float?   // w2 logic (m³)
-  hydrantCount25    Int?
-  hydrantCount3     Int?
-  hydrantCount4     Int?
-  
-  detectionType     Float?   // s1
-  sprinklerType     Float?   // s3
-  fireStationType   Float?   // s4
-  
-  structureResist   Float?   // fs (minutes)
-  facadeResist      Float?   // ff (minutes)
-  roofResist        Float?   // fd (minutes)
-  wallResist        Float?   // fw (minutes)
-  
+  waterStorageType String? // w1 logic ("auto", "manual", "none")
+  waterCapacity    Float? // w2 logic (m³)
+  distributionNetwork String? // w3 logic ("adequate", "limited", "none")
+  hydrantCount25   Int?
+  hydrantCount3    Int?
+  hydrantCount4    Int?
+
+  detectionType   Float? // s1
+  sprinklerType   Float? // s3
+  fireStationType Float? // s4
+  waterSupplyType Float? // s2
+  industrialBrigade Float? // s5
+
+  structureResist Float? // fs (minutes)
+  facadeResist    Float? // ff (minutes)
+  roofResist      Float? // fd (minutes)
+  wallResist      Float? // fw (minutes)
+  hasManyWindows  Boolean? // Special condition for ff
+  noInternalSeparation Boolean? // Special condition for fw
+  combustibleInsulation Boolean? // Special condition for fd
+
+  // N factor inputs
+  n1 Float? // Detection and alarm
+  n2 Float? // Manual extinguishers
+  n3 Float? // Fire hydrant boxes
+  n4 Float? // Fire station arrival time
+  n5 Float? // Occupant training
+
+  // U factor inputs
+  subcompartment  Float? // Subcompartment type (0, 2, 4)
+  stairways       Float? // Stairway type (0-8)
+  horizontalExit  Float? // Horizontal exit (0, 2, 8)
+  sprinklers      Float? // Sprinkler protection (0, 5, 10)
+
+  // Y factor inputs (all boolean)
+  subCompartmentEI30    Boolean? // EI30 subcompartment
+  subCompartmentEI60    Boolean? // EI60 subcompartment
+  partialDetection      Boolean? // Partial detection system
+  partialSprinkler      Boolean? // Partial sprinkler system
+  otherAutoExtinguish   Boolean? // Other auto extinguishing systems
+  financialDataBackup   Boolean? // Financial data backup
+  sparePartsAccess      Boolean? // Spare parts access
+  selfRepairCapability  Boolean? // Self repair capability
+  relocationAgreements  Boolean? // Relocation agreements
+  multipleProduction   Boolean? // Multiple production sites
+
   // --- SECTION 2: CALCULATED FACTORS ---
-  
+
   // Risk Factors
-  factor_q          Float?
-  factor_i          Float?
-  factor_g          Float?
-  factor_e          Float?
-  factor_v          Float?
-  factor_z          Float?
+  factor_q Float?
+  factor_i Float?
+  factor_g Float?
+  factor_e Float?
+  factor_v Float?
+  factor_z Float?
 
   // Acceptance Factors
-  factor_a          Float?
-  factor_t          Float?
-  factor_c          Float?
-  factor_r          Float?
-  factor_d          Float?
+  factor_a Float?
+  factor_t Float?
+  factor_c Float?
+  factor_r Float?
+  factor_d Float?
 
   // Protection Factors
-  factor_W          Float?
-  factor_N          Float?
-  factor_S          Float?
-  factor_F          Float?
-  factor_U          Float?
-  factor_Y          Float?
+  factor_W Float?
+  factor_N Float?
+  factor_S Float?
+  factor_F Float?
+  factor_U Float?
+  factor_Y Float?
 
   // --- SECTION 3: FINAL SCORES ---
 
   // Potential Risks
-  risk_P            Float?   // Building
-  risk_P1           Float?   // People
-  risk_P2           Float?   // Activities
+  risk_P  Float? // Building
+  risk_P1 Float? // People
+  risk_P2 Float? // Activities
 
   // Acceptable Levels
-  level_A           Float?
-  level_A1          Float?
-  level_A2          Float?
+  level_A  Float?
+  level_A1 Float?
+  level_A2 Float?
 
   // Protection Levels
-  level_D           Float?
-  level_D1          Float?
-  level_D2          Float?
+  level_D  Float?
+  level_D1 Float?
+  level_D2 Float?
 
   // Initial Risk (Ro)
-  factor_Fo         Float?
-  risk_Ro           Float?
+  factor_Fo Float?
+  risk_Ro   Float?
 
   // Final Risks (R = P / (A * D))
-  final_R           Float?   // Building Risk
-  final_R1          Float?   // People Risk
-  final_R2          Float?   // Activities Risk
+  final_R  Float? // Building Risk
+  final_R1 Float? // People Risk
+  final_R2 Float? // Activities Risk
 
   // Status Strings (e.g., "Acceptable", "Critical")
-  status_R          String?
-  status_R1         String?
-  status_R2         String?
+  status_R  String?
+  status_R1 String?
+  status_R2 String?
 
-  updatedAt         DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
   @@map("assessment")
 }

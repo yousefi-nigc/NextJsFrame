@@ -1,12 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CalculationResults } from "@/types";
-
-interface DependencyFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
 function calculateD(
   dependencyType: string,
@@ -25,43 +22,61 @@ function calculateD(
   return null;
 }
 
-export default function DependencyFactorTab({
-  results,
-  updateResults,
-}: DependencyFactorTabProps) {
+export default function DependencyFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [dependencyType, setDependencyType] = useState<string>("");
   const [dependencyManual, setDependencyManual] = useState<string>("");
 
-  const handleCalculate = () => {
-    if (!results) return;
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    const d = calculateD(
-      dependencyType,
-      dependencyManual ? parseFloat(dependencyManual) : null
-    );
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
 
-    if (d !== null) {
-      updateResults({ d });
+      const response = data as AssessmentGetApiResponse;
 
-      // Calculate A, A1, A2
-      const a = results.a ?? null;
-      const t = results.t ?? null;
-      const c = results.c ?? null;
-      const r = results.r ?? null;
+      setDependencyType(response.assessment.dependencyType ?? "");
+      setDependencyManual(response.assessment.dependencyManual?.toString() ?? "");
 
-      const A = a !== null && t !== null && c !== null
-        ? Math.max(0.1, 1.6 - a - t - c)
-        : null;
-      const A1 = a !== null && t !== null && r !== null
-        ? Math.max(0.1, 1.6 - a - t - r)
-        : null;
-      const A2 = a !== null && c !== null
-        ? Math.max(0.1, 1.6 - a - c - d)
-        : null;
+      return response;
+    },
+  });
 
-      updateResults({ A, A1, A2 });
-    }
-  };
+  const handleCalculate = useMutation({
+    mutationFn: async () => {
+      const d = calculateD(
+        dependencyType,
+        dependencyManual ? parseFloat(dependencyManual) : null
+      );
+
+      if (d === null) {
+        throw new Error("لطفاً مقدار d را وارد کنید");
+      }
+
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          dependencyType: dependencyType !== "manual" ? dependencyType : undefined,
+          dependencyManual: dependencyType === "manual" ? d : undefined,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("d محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "خطا در محاسبه d");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="d-dependency" className="tab-content">
@@ -120,17 +135,13 @@ export default function DependencyFactorTab({
         />
       </div>
 
-      <button className="btn btn-primary" onClick={handleCalculate}>
+      <button className="btn btn-primary" onClick={() => handleCalculate.mutate()}>
         محاسبه ضریب d
       </button>
 
-      {results && results.d !== null && results.d !== undefined && (
-        <div className="result-display mt-4">
-          <div className="text-success font-semibold">
-            ضریب d = {results.d.toFixed(2)}
-          </div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_d ? assessment?.assessment.factor_d.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }

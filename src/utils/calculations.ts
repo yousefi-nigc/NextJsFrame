@@ -199,16 +199,31 @@ export function calculateT(
 }
 
 // Calculate a - Activity factor
-export function calculateA(activityType: string): number {
-  const activityMap: Record<string, number> = {
-    residential: 0.5,
-    office: 0.7,
-    commercial: 1.0,
-    industrial: 1.5,
-    storage: 2.0,
-  };
-
-  return activityMap[activityType] || 1.0;
+// Sums all activation factor values
+export function calculateA(
+  mainActivity: number | null,
+  secondaryActivity: number | null,
+  heatTransferType: number | null,
+  generatorLocation: number | null,
+  energySource: number | null,
+  electricalSystem: number | null,
+  flammableLiquids: number | null,
+  combustibleDust: number | null
+): number | null {
+  let a = 0;
+  
+  // Sum all provided values, treating null/undefined as 0
+  a += mainActivity ?? 0;
+  a += secondaryActivity ?? 0;
+  a += heatTransferType ?? 0;
+  a += generatorLocation ?? 0;
+  a += energySource ?? 0;
+  a += electricalSystem ?? 0;
+  a += flammableLiquids ?? 0;
+  a += combustibleDust ?? 0;
+  
+  // Return rounded to 2 decimal places
+  return parseFloat(a.toFixed(2));
 }
 
 // Calculate c - Value factor

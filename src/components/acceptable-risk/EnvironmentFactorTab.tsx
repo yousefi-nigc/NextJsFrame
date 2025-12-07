@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import { BlockMath } from "react-katex";
-import { CalculationResults } from "@/types";
-
-interface EnvironmentFactorTabProps {
-  results: CalculationResults;
-  updateResults: (updates: Partial<CalculationResults>) => void;
-}
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
 
 function calculateR(qi: number, materialClass: number): number {
   const qi_clamped = Math.max(0, Math.min(qi, 20000));
@@ -19,38 +16,56 @@ function calculateR(qi: number, materialClass: number): number {
   return rValue;
 }
 
-export default function EnvironmentFactorTab({
-  results,
-  updateResults,
-}: EnvironmentFactorTabProps) {
+export default function EnvironmentFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+  const queryClient = useQueryClient();
   const [qi, setQi] = useState<string>("");
   const [materialClass, setMaterialClass] = useState<string>("0");
 
-  const handleCalculate = () => {
-    if (!results || !qi || parseFloat(qi) <= 0) return;
+  const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
+    queryKey: ["assessment", floorId],
+    enabled: !!floorId,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+      );
+      const data = await res.json();
 
-    const r = calculateR(parseFloat(qi), parseFloat(materialClass));
+      if (!res.ok) throw new Error("Failed to fetch the assessment");
 
-    updateResults({ r });
+      const response = data as AssessmentGetApiResponse;
 
-    // Calculate A, A1, A2
-    const a = results.a ?? null;
-    const t = results.t ?? null;
-    const c = results.c ?? null;
-    const d = results.d ?? null;
+      setQi(response.assessment.qi?.toString() ?? "");
+      setMaterialClass(response.assessment.materialClass?.toString() ?? "0");
 
-    const A = a !== null && t !== null && c !== null
-      ? Math.max(0.1, 1.6 - a - t - c)
-      : null;
-    const A1 = a !== null && t !== null
-      ? Math.max(0.1, 1.6 - a - t - r)
-      : null;
-    const A2 = a !== null && c !== null && d !== null
-      ? Math.max(0.1, 1.6 - a - c - d)
-      : null;
+      return response;
+    },
+  });
 
-    updateResults({ A, A1, A2 });
-  };
+  const handleCalculate = useMutation({
+    mutationFn: async () => {
+      if (!qi || parseFloat(qi) <= 0) {
+        throw new Error("Qi باید بزرگتر از صفر باشد");
+      }
+
+      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
+        method: "PUT",
+        body: JSON.stringify({
+          qi: parseFloat(qi),
+          materialClass: parseFloat(materialClass),
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success("r محاسبه شد");
+      queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "خطا در محاسبه r");
+      console.log(error);
+    },
+  });
 
   return (
     <div id="r-environment" className="tab-content">
@@ -110,17 +125,13 @@ export default function EnvironmentFactorTab({
         </select>
       </div>
 
-      <button className="btn btn-primary" onClick={handleCalculate}>
+      <button className="btn btn-primary" onClick={() => handleCalculate.mutate()}>
         محاسبه ضریب r
       </button>
 
-      {results && results.r !== null && results.r !== undefined && (
-        <div className="result-display mt-4">
-          <div className="text-success font-semibold">
-            ضریب r = {results.r.toFixed(2)}
-          </div>
-        </div>
-      )}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
+        <div className="result-value">{assessment?.assessment.factor_r ? assessment?.assessment.factor_r.toFixed(3) : "-"}</div>
+      </div>
     </div>
   );
 }
