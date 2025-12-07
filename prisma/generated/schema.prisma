@@ -155,18 +155,21 @@ model Assessment {
   depthBelow  Float? // H-
 
   // Acceptable Risk Inputs
-  mainActivity      Float? // Activation factor - main activity
-  secondaryActivity Float? // Activation factor - secondary activity
-  heatTransferType  Float? // Activation factor - heat transfer type
-  generatorLocation Float? // Activation factor - generator location
-  energySource      Float? // Activation factor - energy source
-  electricalSystem  Float? // Activation factor - electrical system
-  flammableLiquids  Float? // Activation factor - flammable liquids
-  combustibleDust   Float? // Activation factor - combustible dust
-  occupantCount     Int? // X
-  occupantFactor    Float? // Factor used to calc X
-  exitWidthTotal    Float? // K
-  mobilityFactor    Float? // p
+  mainActivity         Float? // Activation factor - main activity
+  secondaryActivity    Float? // Activation factor - secondary activity
+  heatTransferType     Float? // Activation factor - heat transfer type
+  generatorLocation    Float? // Activation factor - generator location
+  energySource         Float? // Activation factor - energy source
+  electricalSystem     Float? // Activation factor - electrical system
+  flammableLiquids     Float? // Activation factor - flammable liquids
+  combustibleDust      Float? // Activation factor - combustible dust
+  occupantCount        Int? // X
+  occupantFactor       Float? // Factor used to calc X
+  occupantFactorKey    String? // Key for select display (e.g., "office", "medical") to handle duplicate values
+  exitWidths           String? // Comma-separated exit widths (e.g., "1.2, 0.9, 2.0")
+  exitWidthTotal       Float? // K (calculated from exitWidths if not provided)
+  mobilityFactor       Float? // p
+  exitCountToOpenSpace Int? // Number of exits leading to open space
 
   // Economic / C-Factor Inputs
   valueTotal       Float? // In Rials

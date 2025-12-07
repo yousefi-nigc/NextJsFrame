@@ -8266,6 +8266,7 @@ export namespace Prisma {
     occupantFactor: number | null
     exitWidthTotal: number | null
     mobilityFactor: number | null
+    exitCountToOpenSpace: number | null
     valueTotal: number | null
     valueYear: number | null
     replaceability: number | null
@@ -8355,6 +8356,7 @@ export namespace Prisma {
     occupantFactor: number | null
     exitWidthTotal: number | null
     mobilityFactor: number | null
+    exitCountToOpenSpace: number | null
     valueTotal: number | null
     valueYear: number | null
     replaceability: number | null
@@ -8445,8 +8447,11 @@ export namespace Prisma {
     combustibleDust: number | null
     occupantCount: number | null
     occupantFactor: number | null
+    occupantFactorKey: string | null
+    exitWidths: string | null
     exitWidthTotal: number | null
     mobilityFactor: number | null
+    exitCountToOpenSpace: number | null
     valueTotal: number | null
     valueYear: number | null
     replaceability: number | null
@@ -8557,8 +8562,11 @@ export namespace Prisma {
     combustibleDust: number | null
     occupantCount: number | null
     occupantFactor: number | null
+    occupantFactorKey: string | null
+    exitWidths: string | null
     exitWidthTotal: number | null
     mobilityFactor: number | null
+    exitCountToOpenSpace: number | null
     valueTotal: number | null
     valueYear: number | null
     replaceability: number | null
@@ -8669,8 +8677,11 @@ export namespace Prisma {
     combustibleDust: number
     occupantCount: number
     occupantFactor: number
+    occupantFactorKey: number
+    exitWidths: number
     exitWidthTotal: number
     mobilityFactor: number
+    exitCountToOpenSpace: number
     valueTotal: number
     valueYear: number
     replaceability: number
@@ -8782,6 +8793,7 @@ export namespace Prisma {
     occupantFactor?: true
     exitWidthTotal?: true
     mobilityFactor?: true
+    exitCountToOpenSpace?: true
     valueTotal?: true
     valueYear?: true
     replaceability?: true
@@ -8871,6 +8883,7 @@ export namespace Prisma {
     occupantFactor?: true
     exitWidthTotal?: true
     mobilityFactor?: true
+    exitCountToOpenSpace?: true
     valueTotal?: true
     valueYear?: true
     replaceability?: true
@@ -8961,8 +8974,11 @@ export namespace Prisma {
     combustibleDust?: true
     occupantCount?: true
     occupantFactor?: true
+    occupantFactorKey?: true
+    exitWidths?: true
     exitWidthTotal?: true
     mobilityFactor?: true
+    exitCountToOpenSpace?: true
     valueTotal?: true
     valueYear?: true
     replaceability?: true
@@ -9073,8 +9089,11 @@ export namespace Prisma {
     combustibleDust?: true
     occupantCount?: true
     occupantFactor?: true
+    occupantFactorKey?: true
+    exitWidths?: true
     exitWidthTotal?: true
     mobilityFactor?: true
+    exitCountToOpenSpace?: true
     valueTotal?: true
     valueYear?: true
     replaceability?: true
@@ -9185,8 +9204,11 @@ export namespace Prisma {
     combustibleDust?: true
     occupantCount?: true
     occupantFactor?: true
+    occupantFactorKey?: true
+    exitWidths?: true
     exitWidthTotal?: true
     mobilityFactor?: true
+    exitCountToOpenSpace?: true
     valueTotal?: true
     valueYear?: true
     replaceability?: true
@@ -9384,8 +9406,11 @@ export namespace Prisma {
     combustibleDust: number | null
     occupantCount: number | null
     occupantFactor: number | null
+    occupantFactorKey: string | null
+    exitWidths: string | null
     exitWidthTotal: number | null
     mobilityFactor: number | null
+    exitCountToOpenSpace: number | null
     valueTotal: number | null
     valueYear: number | null
     replaceability: number | null
@@ -9515,8 +9540,11 @@ export namespace Prisma {
     combustibleDust?: boolean
     occupantCount?: boolean
     occupantFactor?: boolean
+    occupantFactorKey?: boolean
+    exitWidths?: boolean
     exitWidthTotal?: boolean
     mobilityFactor?: boolean
+    exitCountToOpenSpace?: boolean
     valueTotal?: boolean
     valueYear?: boolean
     replaceability?: boolean
@@ -9628,8 +9656,11 @@ export namespace Prisma {
     combustibleDust?: boolean
     occupantCount?: boolean
     occupantFactor?: boolean
+    occupantFactorKey?: boolean
+    exitWidths?: boolean
     exitWidthTotal?: boolean
     mobilityFactor?: boolean
+    exitCountToOpenSpace?: boolean
     valueTotal?: boolean
     valueYear?: boolean
     replaceability?: boolean
@@ -9741,8 +9772,11 @@ export namespace Prisma {
     combustibleDust?: boolean
     occupantCount?: boolean
     occupantFactor?: boolean
+    occupantFactorKey?: boolean
+    exitWidths?: boolean
     exitWidthTotal?: boolean
     mobilityFactor?: boolean
+    exitCountToOpenSpace?: boolean
     valueTotal?: boolean
     valueYear?: boolean
     replaceability?: boolean
@@ -9854,8 +9888,11 @@ export namespace Prisma {
     combustibleDust?: boolean
     occupantCount?: boolean
     occupantFactor?: boolean
+    occupantFactorKey?: boolean
+    exitWidths?: boolean
     exitWidthTotal?: boolean
     mobilityFactor?: boolean
+    exitCountToOpenSpace?: boolean
     valueTotal?: boolean
     valueYear?: boolean
     replaceability?: boolean
@@ -9936,7 +9973,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type AssessmentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "floorId" | "qi" | "qm" | "tempDestruction" | "avgDimension" | "materialClass" | "length" | "width" | "area" | "height" | "accessType" | "windowArea" | "staticVentArea" | "mechVentFlow" | "ventingRatio_k" | "accessSides" | "heightAbove" | "depthBelow" | "mainActivity" | "secondaryActivity" | "heatTransferType" | "generatorLocation" | "energySource" | "electricalSystem" | "flammableLiquids" | "combustibleDust" | "occupantCount" | "occupantFactor" | "exitWidthTotal" | "mobilityFactor" | "valueTotal" | "valueYear" | "replaceability" | "dependencyType" | "dependencyManual" | "floorLevel" | "waterStorageType" | "waterCapacity" | "distributionNetwork" | "hydrantCount25" | "hydrantCount3" | "hydrantCount4" | "detectionType" | "sprinklerType" | "fireStationType" | "waterSupplyType" | "industrialBrigade" | "structureResist" | "facadeResist" | "roofResist" | "wallResist" | "hasManyWindows" | "noInternalSeparation" | "combustibleInsulation" | "n1" | "n2" | "n3" | "n4" | "n5" | "subcompartment" | "stairways" | "horizontalExit" | "sprinklers" | "subCompartmentEI30" | "subCompartmentEI60" | "partialDetection" | "partialSprinkler" | "otherAutoExtinguish" | "financialDataBackup" | "sparePartsAccess" | "selfRepairCapability" | "relocationAgreements" | "multipleProduction" | "factor_q" | "factor_i" | "factor_g" | "factor_e" | "factor_v" | "factor_z" | "factor_a" | "factor_t" | "factor_c" | "factor_r" | "factor_d" | "factor_W" | "factor_N" | "factor_S" | "factor_F" | "factor_U" | "factor_Y" | "risk_P" | "risk_P1" | "risk_P2" | "level_A" | "level_A1" | "level_A2" | "level_D" | "level_D1" | "level_D2" | "factor_Fo" | "risk_Ro" | "final_R" | "final_R1" | "final_R2" | "status_R" | "status_R1" | "status_R2" | "updatedAt", ExtArgs["result"]["assessment"]>
+  export type AssessmentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "floorId" | "qi" | "qm" | "tempDestruction" | "avgDimension" | "materialClass" | "length" | "width" | "area" | "height" | "accessType" | "windowArea" | "staticVentArea" | "mechVentFlow" | "ventingRatio_k" | "accessSides" | "heightAbove" | "depthBelow" | "mainActivity" | "secondaryActivity" | "heatTransferType" | "generatorLocation" | "energySource" | "electricalSystem" | "flammableLiquids" | "combustibleDust" | "occupantCount" | "occupantFactor" | "occupantFactorKey" | "exitWidths" | "exitWidthTotal" | "mobilityFactor" | "exitCountToOpenSpace" | "valueTotal" | "valueYear" | "replaceability" | "dependencyType" | "dependencyManual" | "floorLevel" | "waterStorageType" | "waterCapacity" | "distributionNetwork" | "hydrantCount25" | "hydrantCount3" | "hydrantCount4" | "detectionType" | "sprinklerType" | "fireStationType" | "waterSupplyType" | "industrialBrigade" | "structureResist" | "facadeResist" | "roofResist" | "wallResist" | "hasManyWindows" | "noInternalSeparation" | "combustibleInsulation" | "n1" | "n2" | "n3" | "n4" | "n5" | "subcompartment" | "stairways" | "horizontalExit" | "sprinklers" | "subCompartmentEI30" | "subCompartmentEI60" | "partialDetection" | "partialSprinkler" | "otherAutoExtinguish" | "financialDataBackup" | "sparePartsAccess" | "selfRepairCapability" | "relocationAgreements" | "multipleProduction" | "factor_q" | "factor_i" | "factor_g" | "factor_e" | "factor_v" | "factor_z" | "factor_a" | "factor_t" | "factor_c" | "factor_r" | "factor_d" | "factor_W" | "factor_N" | "factor_S" | "factor_F" | "factor_U" | "factor_Y" | "risk_P" | "risk_P1" | "risk_P2" | "level_A" | "level_A1" | "level_A2" | "level_D" | "level_D1" | "level_D2" | "factor_Fo" | "risk_Ro" | "final_R" | "final_R1" | "final_R2" | "status_R" | "status_R1" | "status_R2" | "updatedAt", ExtArgs["result"]["assessment"]>
   export type AssessmentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     floor?: boolean | FloorDefaultArgs<ExtArgs>
   }
@@ -9982,8 +10019,11 @@ export namespace Prisma {
       combustibleDust: number | null
       occupantCount: number | null
       occupantFactor: number | null
+      occupantFactorKey: string | null
+      exitWidths: string | null
       exitWidthTotal: number | null
       mobilityFactor: number | null
+      exitCountToOpenSpace: number | null
       valueTotal: number | null
       valueYear: number | null
       replaceability: number | null
@@ -10515,8 +10555,11 @@ export namespace Prisma {
     readonly combustibleDust: FieldRef<"Assessment", 'Float'>
     readonly occupantCount: FieldRef<"Assessment", 'Int'>
     readonly occupantFactor: FieldRef<"Assessment", 'Float'>
+    readonly occupantFactorKey: FieldRef<"Assessment", 'String'>
+    readonly exitWidths: FieldRef<"Assessment", 'String'>
     readonly exitWidthTotal: FieldRef<"Assessment", 'Float'>
     readonly mobilityFactor: FieldRef<"Assessment", 'Float'>
+    readonly exitCountToOpenSpace: FieldRef<"Assessment", 'Int'>
     readonly valueTotal: FieldRef<"Assessment", 'Float'>
     readonly valueYear: FieldRef<"Assessment", 'Int'>
     readonly replaceability: FieldRef<"Assessment", 'Float'>
@@ -11142,8 +11185,11 @@ export namespace Prisma {
     combustibleDust: 'combustibleDust',
     occupantCount: 'occupantCount',
     occupantFactor: 'occupantFactor',
+    occupantFactorKey: 'occupantFactorKey',
+    exitWidths: 'exitWidths',
     exitWidthTotal: 'exitWidthTotal',
     mobilityFactor: 'mobilityFactor',
+    exitCountToOpenSpace: 'exitCountToOpenSpace',
     valueTotal: 'valueTotal',
     valueYear: 'valueYear',
     replaceability: 'replaceability',
@@ -11811,8 +11857,11 @@ export namespace Prisma {
     combustibleDust?: FloatNullableFilter<"Assessment"> | number | null
     occupantCount?: IntNullableFilter<"Assessment"> | number | null
     occupantFactor?: FloatNullableFilter<"Assessment"> | number | null
+    occupantFactorKey?: StringNullableFilter<"Assessment"> | string | null
+    exitWidths?: StringNullableFilter<"Assessment"> | string | null
     exitWidthTotal?: FloatNullableFilter<"Assessment"> | number | null
     mobilityFactor?: FloatNullableFilter<"Assessment"> | number | null
+    exitCountToOpenSpace?: IntNullableFilter<"Assessment"> | number | null
     valueTotal?: FloatNullableFilter<"Assessment"> | number | null
     valueYear?: IntNullableFilter<"Assessment"> | number | null
     replaceability?: FloatNullableFilter<"Assessment"> | number | null
@@ -11924,8 +11973,11 @@ export namespace Prisma {
     combustibleDust?: SortOrderInput | SortOrder
     occupantCount?: SortOrderInput | SortOrder
     occupantFactor?: SortOrderInput | SortOrder
+    occupantFactorKey?: SortOrderInput | SortOrder
+    exitWidths?: SortOrderInput | SortOrder
     exitWidthTotal?: SortOrderInput | SortOrder
     mobilityFactor?: SortOrderInput | SortOrder
+    exitCountToOpenSpace?: SortOrderInput | SortOrder
     valueTotal?: SortOrderInput | SortOrder
     valueYear?: SortOrderInput | SortOrder
     replaceability?: SortOrderInput | SortOrder
@@ -12040,8 +12092,11 @@ export namespace Prisma {
     combustibleDust?: FloatNullableFilter<"Assessment"> | number | null
     occupantCount?: IntNullableFilter<"Assessment"> | number | null
     occupantFactor?: FloatNullableFilter<"Assessment"> | number | null
+    occupantFactorKey?: StringNullableFilter<"Assessment"> | string | null
+    exitWidths?: StringNullableFilter<"Assessment"> | string | null
     exitWidthTotal?: FloatNullableFilter<"Assessment"> | number | null
     mobilityFactor?: FloatNullableFilter<"Assessment"> | number | null
+    exitCountToOpenSpace?: IntNullableFilter<"Assessment"> | number | null
     valueTotal?: FloatNullableFilter<"Assessment"> | number | null
     valueYear?: IntNullableFilter<"Assessment"> | number | null
     replaceability?: FloatNullableFilter<"Assessment"> | number | null
@@ -12153,8 +12208,11 @@ export namespace Prisma {
     combustibleDust?: SortOrderInput | SortOrder
     occupantCount?: SortOrderInput | SortOrder
     occupantFactor?: SortOrderInput | SortOrder
+    occupantFactorKey?: SortOrderInput | SortOrder
+    exitWidths?: SortOrderInput | SortOrder
     exitWidthTotal?: SortOrderInput | SortOrder
     mobilityFactor?: SortOrderInput | SortOrder
+    exitCountToOpenSpace?: SortOrderInput | SortOrder
     valueTotal?: SortOrderInput | SortOrder
     valueYear?: SortOrderInput | SortOrder
     replaceability?: SortOrderInput | SortOrder
@@ -12273,8 +12331,11 @@ export namespace Prisma {
     combustibleDust?: FloatNullableWithAggregatesFilter<"Assessment"> | number | null
     occupantCount?: IntNullableWithAggregatesFilter<"Assessment"> | number | null
     occupantFactor?: FloatNullableWithAggregatesFilter<"Assessment"> | number | null
+    occupantFactorKey?: StringNullableWithAggregatesFilter<"Assessment"> | string | null
+    exitWidths?: StringNullableWithAggregatesFilter<"Assessment"> | string | null
     exitWidthTotal?: FloatNullableWithAggregatesFilter<"Assessment"> | number | null
     mobilityFactor?: FloatNullableWithAggregatesFilter<"Assessment"> | number | null
+    exitCountToOpenSpace?: IntNullableWithAggregatesFilter<"Assessment"> | number | null
     valueTotal?: FloatNullableWithAggregatesFilter<"Assessment"> | number | null
     valueYear?: IntNullableWithAggregatesFilter<"Assessment"> | number | null
     replaceability?: FloatNullableWithAggregatesFilter<"Assessment"> | number | null
@@ -12897,8 +12958,11 @@ export namespace Prisma {
     combustibleDust?: number | null
     occupantCount?: number | null
     occupantFactor?: number | null
+    occupantFactorKey?: string | null
+    exitWidths?: string | null
     exitWidthTotal?: number | null
     mobilityFactor?: number | null
+    exitCountToOpenSpace?: number | null
     valueTotal?: number | null
     valueYear?: number | null
     replaceability?: number | null
@@ -13010,8 +13074,11 @@ export namespace Prisma {
     combustibleDust?: number | null
     occupantCount?: number | null
     occupantFactor?: number | null
+    occupantFactorKey?: string | null
+    exitWidths?: string | null
     exitWidthTotal?: number | null
     mobilityFactor?: number | null
+    exitCountToOpenSpace?: number | null
     valueTotal?: number | null
     valueYear?: number | null
     replaceability?: number | null
@@ -13121,8 +13188,11 @@ export namespace Prisma {
     combustibleDust?: NullableFloatFieldUpdateOperationsInput | number | null
     occupantCount?: NullableIntFieldUpdateOperationsInput | number | null
     occupantFactor?: NullableFloatFieldUpdateOperationsInput | number | null
+    occupantFactorKey?: NullableStringFieldUpdateOperationsInput | string | null
+    exitWidths?: NullableStringFieldUpdateOperationsInput | string | null
     exitWidthTotal?: NullableFloatFieldUpdateOperationsInput | number | null
     mobilityFactor?: NullableFloatFieldUpdateOperationsInput | number | null
+    exitCountToOpenSpace?: NullableIntFieldUpdateOperationsInput | number | null
     valueTotal?: NullableFloatFieldUpdateOperationsInput | number | null
     valueYear?: NullableIntFieldUpdateOperationsInput | number | null
     replaceability?: NullableFloatFieldUpdateOperationsInput | number | null
@@ -13234,8 +13304,11 @@ export namespace Prisma {
     combustibleDust?: NullableFloatFieldUpdateOperationsInput | number | null
     occupantCount?: NullableIntFieldUpdateOperationsInput | number | null
     occupantFactor?: NullableFloatFieldUpdateOperationsInput | number | null
+    occupantFactorKey?: NullableStringFieldUpdateOperationsInput | string | null
+    exitWidths?: NullableStringFieldUpdateOperationsInput | string | null
     exitWidthTotal?: NullableFloatFieldUpdateOperationsInput | number | null
     mobilityFactor?: NullableFloatFieldUpdateOperationsInput | number | null
+    exitCountToOpenSpace?: NullableIntFieldUpdateOperationsInput | number | null
     valueTotal?: NullableFloatFieldUpdateOperationsInput | number | null
     valueYear?: NullableIntFieldUpdateOperationsInput | number | null
     replaceability?: NullableFloatFieldUpdateOperationsInput | number | null
@@ -13346,8 +13419,11 @@ export namespace Prisma {
     combustibleDust?: number | null
     occupantCount?: number | null
     occupantFactor?: number | null
+    occupantFactorKey?: string | null
+    exitWidths?: string | null
     exitWidthTotal?: number | null
     mobilityFactor?: number | null
+    exitCountToOpenSpace?: number | null
     valueTotal?: number | null
     valueYear?: number | null
     replaceability?: number | null
@@ -13457,8 +13533,11 @@ export namespace Prisma {
     combustibleDust?: NullableFloatFieldUpdateOperationsInput | number | null
     occupantCount?: NullableIntFieldUpdateOperationsInput | number | null
     occupantFactor?: NullableFloatFieldUpdateOperationsInput | number | null
+    occupantFactorKey?: NullableStringFieldUpdateOperationsInput | string | null
+    exitWidths?: NullableStringFieldUpdateOperationsInput | string | null
     exitWidthTotal?: NullableFloatFieldUpdateOperationsInput | number | null
     mobilityFactor?: NullableFloatFieldUpdateOperationsInput | number | null
+    exitCountToOpenSpace?: NullableIntFieldUpdateOperationsInput | number | null
     valueTotal?: NullableFloatFieldUpdateOperationsInput | number | null
     valueYear?: NullableIntFieldUpdateOperationsInput | number | null
     replaceability?: NullableFloatFieldUpdateOperationsInput | number | null
@@ -13569,8 +13648,11 @@ export namespace Prisma {
     combustibleDust?: NullableFloatFieldUpdateOperationsInput | number | null
     occupantCount?: NullableIntFieldUpdateOperationsInput | number | null
     occupantFactor?: NullableFloatFieldUpdateOperationsInput | number | null
+    occupantFactorKey?: NullableStringFieldUpdateOperationsInput | string | null
+    exitWidths?: NullableStringFieldUpdateOperationsInput | string | null
     exitWidthTotal?: NullableFloatFieldUpdateOperationsInput | number | null
     mobilityFactor?: NullableFloatFieldUpdateOperationsInput | number | null
+    exitCountToOpenSpace?: NullableIntFieldUpdateOperationsInput | number | null
     valueTotal?: NullableFloatFieldUpdateOperationsInput | number | null
     valueYear?: NullableIntFieldUpdateOperationsInput | number | null
     replaceability?: NullableFloatFieldUpdateOperationsInput | number | null
@@ -14158,8 +14240,11 @@ export namespace Prisma {
     combustibleDust?: SortOrder
     occupantCount?: SortOrder
     occupantFactor?: SortOrder
+    occupantFactorKey?: SortOrder
+    exitWidths?: SortOrder
     exitWidthTotal?: SortOrder
     mobilityFactor?: SortOrder
+    exitCountToOpenSpace?: SortOrder
     valueTotal?: SortOrder
     valueYear?: SortOrder
     replaceability?: SortOrder
@@ -14269,6 +14354,7 @@ export namespace Prisma {
     occupantFactor?: SortOrder
     exitWidthTotal?: SortOrder
     mobilityFactor?: SortOrder
+    exitCountToOpenSpace?: SortOrder
     valueTotal?: SortOrder
     valueYear?: SortOrder
     replaceability?: SortOrder
@@ -14359,8 +14445,11 @@ export namespace Prisma {
     combustibleDust?: SortOrder
     occupantCount?: SortOrder
     occupantFactor?: SortOrder
+    occupantFactorKey?: SortOrder
+    exitWidths?: SortOrder
     exitWidthTotal?: SortOrder
     mobilityFactor?: SortOrder
+    exitCountToOpenSpace?: SortOrder
     valueTotal?: SortOrder
     valueYear?: SortOrder
     replaceability?: SortOrder
@@ -14471,8 +14560,11 @@ export namespace Prisma {
     combustibleDust?: SortOrder
     occupantCount?: SortOrder
     occupantFactor?: SortOrder
+    occupantFactorKey?: SortOrder
+    exitWidths?: SortOrder
     exitWidthTotal?: SortOrder
     mobilityFactor?: SortOrder
+    exitCountToOpenSpace?: SortOrder
     valueTotal?: SortOrder
     valueYear?: SortOrder
     replaceability?: SortOrder
@@ -14582,6 +14674,7 @@ export namespace Prisma {
     occupantFactor?: SortOrder
     exitWidthTotal?: SortOrder
     mobilityFactor?: SortOrder
+    exitCountToOpenSpace?: SortOrder
     valueTotal?: SortOrder
     valueYear?: SortOrder
     replaceability?: SortOrder
@@ -15772,8 +15865,11 @@ export namespace Prisma {
     combustibleDust?: number | null
     occupantCount?: number | null
     occupantFactor?: number | null
+    occupantFactorKey?: string | null
+    exitWidths?: string | null
     exitWidthTotal?: number | null
     mobilityFactor?: number | null
+    exitCountToOpenSpace?: number | null
     valueTotal?: number | null
     valueYear?: number | null
     replaceability?: number | null
@@ -15883,8 +15979,11 @@ export namespace Prisma {
     combustibleDust?: number | null
     occupantCount?: number | null
     occupantFactor?: number | null
+    occupantFactorKey?: string | null
+    exitWidths?: string | null
     exitWidthTotal?: number | null
     mobilityFactor?: number | null
+    exitCountToOpenSpace?: number | null
     valueTotal?: number | null
     valueYear?: number | null
     replaceability?: number | null
@@ -16041,8 +16140,11 @@ export namespace Prisma {
     combustibleDust?: NullableFloatFieldUpdateOperationsInput | number | null
     occupantCount?: NullableIntFieldUpdateOperationsInput | number | null
     occupantFactor?: NullableFloatFieldUpdateOperationsInput | number | null
+    occupantFactorKey?: NullableStringFieldUpdateOperationsInput | string | null
+    exitWidths?: NullableStringFieldUpdateOperationsInput | string | null
     exitWidthTotal?: NullableFloatFieldUpdateOperationsInput | number | null
     mobilityFactor?: NullableFloatFieldUpdateOperationsInput | number | null
+    exitCountToOpenSpace?: NullableIntFieldUpdateOperationsInput | number | null
     valueTotal?: NullableFloatFieldUpdateOperationsInput | number | null
     valueYear?: NullableIntFieldUpdateOperationsInput | number | null
     replaceability?: NullableFloatFieldUpdateOperationsInput | number | null
@@ -16152,8 +16254,11 @@ export namespace Prisma {
     combustibleDust?: NullableFloatFieldUpdateOperationsInput | number | null
     occupantCount?: NullableIntFieldUpdateOperationsInput | number | null
     occupantFactor?: NullableFloatFieldUpdateOperationsInput | number | null
+    occupantFactorKey?: NullableStringFieldUpdateOperationsInput | string | null
+    exitWidths?: NullableStringFieldUpdateOperationsInput | string | null
     exitWidthTotal?: NullableFloatFieldUpdateOperationsInput | number | null
     mobilityFactor?: NullableFloatFieldUpdateOperationsInput | number | null
+    exitCountToOpenSpace?: NullableIntFieldUpdateOperationsInput | number | null
     valueTotal?: NullableFloatFieldUpdateOperationsInput | number | null
     valueYear?: NullableIntFieldUpdateOperationsInput | number | null
     replaceability?: NullableFloatFieldUpdateOperationsInput | number | null

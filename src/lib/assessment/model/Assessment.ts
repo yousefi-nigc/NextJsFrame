@@ -55,8 +55,11 @@ export const createAssessmentValidationSchema = z.object({
     combustibleDust: z.number().min(0).optional(),
     occupantCount: z.number().int().min(0).optional(),
     occupantFactor: z.number().min(0).optional(),
+    occupantFactorKey: z.string().optional(), // Key for select display to handle duplicate values
+    exitWidths: z.string().optional(), // Comma-separated exit widths (e.g., "1.2, 0.9, 2.0")
     exitWidthTotal: z.number().min(0.6).optional(),
     mobilityFactor: z.number().min(0).optional(),
+    exitCountToOpenSpace: z.number().int().min(0).optional(),
     
     // Economic / C-Factor Inputs
     valueTotal: z.number().min(0).optional(),

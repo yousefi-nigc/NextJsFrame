@@ -60,8 +60,11 @@ export interface AssessmentResponse {
   combustibleDust: number | null;
   occupantCount: number | null;
   occupantFactor: number | null;
+  occupantFactorKey: string | null;
+  exitWidths: string | null;
   exitWidthTotal: number | null;
   mobilityFactor: number | null;
+  exitCountToOpenSpace: number | null;
   
   // Economic / C-Factor Inputs
   valueTotal: number | null;

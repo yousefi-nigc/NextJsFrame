@@ -265,11 +265,60 @@ export default function EFactorTab({
       </button>
 
       <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
-        <div className="result-value">
-          {assessment?.assessment.factor_e
-            ? assessment?.assessment.factor_e.toFixed(3)
-            : "-"}
-        </div>
+        {assessment?.assessment.factor_e ? (
+          <>
+            <div
+              className="result-value text-2xl font-bold mb-2"
+              style={{
+                color:
+                  assessment.assessment.factor_e <= 1.1
+                    ? "#43a047"
+                    : assessment.assessment.factor_e <= 1.4
+                    ? "#fbc02d"
+                    : assessment.assessment.factor_e <= 1.7
+                    ? "#f57c00"
+                    : assessment.assessment.factor_e <= 2
+                    ? "#d32f2f"
+                    : "#880e4f",
+              }}
+            >
+              e = {assessment.assessment.factor_e.toFixed(3)}
+            </div>
+            <div
+              className="mb-2"
+              style={{
+                color:
+                  assessment.assessment.factor_e <= 1.1
+                    ? "#43a047"
+                    : assessment.assessment.factor_e <= 1.4
+                    ? "#fbc02d"
+                    : assessment.assessment.factor_e <= 1.7
+                    ? "#f57c00"
+                    : assessment.assessment.factor_e <= 2
+                    ? "#d32f2f"
+                    : "#880e4f",
+              }}
+            >
+              {assessment.assessment.factor_e <= 1.1
+                ? "همکف/طبقات نزدیک زمین - ریسک معمولی"
+                : assessment.assessment.factor_e <= 1.4
+                ? "طبقات پایین (تا دوم) - ریسک کمی بیشتر"
+                : assessment.assessment.factor_e <= 1.7
+                ? "طبقات متوسط (۳ تا ۵ یا گالری بزرگ) - ریسک بالا"
+                : assessment.assessment.factor_e <= 2
+                ? "طبقات بسیار بلند/زیرزمین‌های عمیق - ریسک ویژه!"
+                : "عدد خیلی بالا! بررسی مدل لازم است."}
+            </div>
+            <div className="text-gray-600 text-sm dark:text-gray-400">
+              مقدار واردشده: E = {floorNumber}{" "}
+              {typeof floorNumber === "number" && floorNumber % 1 !== 0
+                ? "(اعشاری/گالری یا نیم‌طبقه)"
+                : "(شماره‌طبقه معمولی)"}
+            </div>
+          </>
+        ) : (
+          <div className="result-value">-</div>
+        )}
       </div>
     </div>
   );

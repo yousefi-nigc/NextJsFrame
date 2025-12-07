@@ -4,9 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { BlockMath } from "react-katex";
 import { useParams } from "next/navigation";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Floor, AssessmentGetApiResponse } from "@/lib/APIResponseInterfaces";
-import { toast } from "sonner";
 
 export default function FinalRisk() {
   const { projectId } = useParams();
@@ -39,36 +38,6 @@ export default function FinalRisk() {
     },
   });
 
-  // Mutation to recalculate final risk
-  const recalculateMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedFloorId || !assessment) return;
-
-      // Trigger recalculation by updating the assessment (this will recalculate all values)
-      const res = await fetch(
-        `/api/user/projects/${projectId}/floors/${selectedFloorId}/assessment`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(assessment.assessment),
-        }
-      );
-
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to recalculate");
-      }
-
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["assessment", selectedFloorId] });
-      toast.success("محاسبه ریسک نهایی با موفقیت انجام شد");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "خطا در محاسبه ریسک نهایی");
-    },
-  });
 
   const getRiskStatus = (r: number | null) => {
     if (r === null) return { label: "نامشخص", color: "gray" };
@@ -165,19 +134,6 @@ export default function FinalRisk() {
     R2: assessment?.assessment.final_R2 ?? null,
   };
 
-  const handleCalculate = () => {
-    if (!selectedFloorId) {
-      toast.error("لطفاً یک طبقه انتخاب کنید");
-      return;
-    }
-
-    if (!validation.canCalculate) {
-      toast.error(validation.message);
-      return;
-    }
-
-    recalculateMutation.mutate();
-  };
 
   return (
     <section id="final-risk" className="section">
@@ -250,8 +206,16 @@ export default function FinalRisk() {
                   <div className="text-5xl font-bold text-primary mb-2">
                     {finalR.R.toFixed(2)}
                   </div>
+                  {assessment?.assessment && 
+                   assessment.assessment.risk_P !== null && 
+                   assessment.assessment.level_A !== null && 
+                   assessment.assessment.level_D !== null && (
+                    <div style={{ fontSize: "0.9em", color: "#555", marginTop: "0.5em", direction: "ltr", textAlign: "center" }}>
+                      (P = {assessment.assessment.risk_P.toFixed(3)}, A = {assessment.assessment.level_A.toFixed(3)}, D = {assessment.assessment.level_D.toFixed(3)})
+                    </div>
+                  )}
                   <div
-                    className={`inline-block px-4 py-2 rounded-full font-bold text-white ${
+                    className={`inline-block px-4 py-2 rounded-full font-bold text-white mt-2 ${
                       getRiskStatus(finalR.R).color === "green"
                         ? "bg-green-500"
                         : getRiskStatus(finalR.R).color === "yellow"
@@ -278,8 +242,16 @@ export default function FinalRisk() {
                   <div className="text-5xl font-bold text-success mb-2">
                     {finalR.R1.toFixed(2)}
                   </div>
+                  {assessment?.assessment && 
+                   assessment.assessment.risk_P1 !== null && 
+                   assessment.assessment.level_A1 !== null && 
+                   assessment.assessment.level_D1 !== null && (
+                    <div style={{ fontSize: "0.9em", color: "#555", marginTop: "0.5em", direction: "ltr", textAlign: "center" }}>
+                      (P₁ = {assessment.assessment.risk_P1.toFixed(3)}, A₁ = {assessment.assessment.level_A1.toFixed(3)}, D₁ = {assessment.assessment.level_D1.toFixed(3)})
+                    </div>
+                  )}
                   <div
-                    className={`inline-block px-4 py-2 rounded-full font-bold text-white ${
+                    className={`inline-block px-4 py-2 rounded-full font-bold text-white mt-2 ${
                       getRiskStatus(finalR.R1).color === "green"
                         ? "bg-green-500"
                         : getRiskStatus(finalR.R1).color === "yellow"
@@ -306,8 +278,16 @@ export default function FinalRisk() {
                   <div className="text-5xl font-bold text-warning mb-2">
                     {finalR.R2.toFixed(2)}
                   </div>
+                  {assessment?.assessment && 
+                   assessment.assessment.risk_P2 !== null && 
+                   assessment.assessment.level_A2 !== null && 
+                   assessment.assessment.level_D2 !== null && (
+                    <div style={{ fontSize: "0.9em", color: "#555", marginTop: "0.5em", direction: "ltr", textAlign: "center" }}>
+                      (P₂ = {assessment.assessment.risk_P2.toFixed(3)}, A₂ = {assessment.assessment.level_A2.toFixed(3)}, D₂ = {assessment.assessment.level_D2.toFixed(3)})
+                    </div>
+                  )}
                   <div
-                    className={`inline-block px-4 py-2 rounded-full font-bold text-white ${
+                    className={`inline-block px-4 py-2 rounded-full font-bold text-white mt-2 ${
                       getRiskStatus(finalR.R2).color === "green"
                         ? "bg-green-500"
                         : getRiskStatus(finalR.R2).color === "yellow"
@@ -413,24 +393,6 @@ export default function FinalRisk() {
           </div>
         )}
 
-        <div style={{ textAlign: "center", marginTop: "1rem" }}>
-          <button
-            className="btn btn-primary"
-            onClick={handleCalculate}
-            disabled={
-              !selectedFloorId ||
-              recalculateMutation.isPending ||
-              isAssessmentLoading ||
-              !validation.canCalculate
-            }
-          >
-            {recalculateMutation.isPending
-              ? "در حال محاسبه..."
-              : validation.canCalculate
-              ? "محاسبه ریسک نهایی"
-              : "تکمیل بخش‌های لازم"}
-          </button>
-        </div>
       </div>
 
       <div className="text-center mt-[30px] p-5 bg-[#e8f4f8] rounded-lg">

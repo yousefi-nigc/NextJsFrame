@@ -182,8 +182,27 @@ export default function UFactorTab({ projectId, floorId }: { projectId: string, 
         محاسبه ضریب U
       </button>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_U ? assessment?.assessment.factor_U.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value" style={{ direction: "ltr", textAlign: "center" }}>
+          {assessment?.assessment.factor_U !== null && assessment?.assessment.factor_U !== undefined ? (
+            <>
+              <div style={{ fontSize: "1.2em", fontWeight: "bold", marginBottom: "0.5em" }}>
+                U = {assessment.assessment.factor_U.toFixed(3)}
+              </div>
+              {(() => {
+                // Calculate u value for display (matching old script.js)
+                const u = (subcompartment ?? 0) + (stairways ?? 0) + (horizontalExit ?? 0) + (sprinklers ?? 0);
+                return (
+                  <div style={{ fontSize: "0.95em", color: "#2196F3", fontWeight: "bold", lineHeight: "1.8" }}>
+                    u = {u.toFixed(1)}
+                  </div>
+                );
+              })()}
+            </>
+          ) : (
+            "-"
+          )}
+        </div>
       </div>
     </div>
   );

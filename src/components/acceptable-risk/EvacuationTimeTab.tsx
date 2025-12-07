@@ -9,78 +9,6 @@ import {
   AssessmentUpdateApiResponse,
 } from "@/lib/APIResponseInterfaces";
 
-// Helper function to calculate t factor (simplified version)
-function calculateTFactor(
-  length: number | undefined,
-  width: number | undefined,
-  area: number | undefined,
-  occupantCount: number | undefined,
-  occupantFactor: number | undefined,
-  exitWidthTotal: number | undefined,
-  mobilityFactor: number | undefined,
-  heightAbove: number | undefined,
-  depthBelow: number | undefined
-): { tValue: number | null; timeMinutes: number | null; status: string } {
-  let b = width || 0;
-  let l = length || 0;
-  let area_calc = area || 0;
-
-  if ((!area_calc || area_calc <= 0) && b > 0 && l > 0) {
-    area_calc = b * l;
-  }
-
-  let X = occupantCount || 0;
-  if (
-    (!X || X <= 0) &&
-    occupantFactor !== undefined &&
-    occupantFactor > 0 &&
-    area_calc > 0
-  ) {
-    X = Math.round(area_calc * occupantFactor);
-  }
-
-  if (!X || X <= 0) return { tValue: null, timeMinutes: null, status: "" };
-
-  let K = exitWidthTotal || 0;
-  if (!K || K <= 0) return { tValue: null, timeMinutes: null, status: "" };
-  if (K < 0.6) return { tValue: null, timeMinutes: null, status: "" };
-
-  const x = K / 0.6;
-  const p = mobilityFactor || 1;
-  const Hplus = heightAbove || 0;
-  const Hminus = depthBelow || 0;
-
-  if (b <= 0 || l <= 0) return { tValue: null, timeMinutes: null, status: "" };
-
-  const numerator =
-    p * (b + l + X / x + 1.25 * Hplus + 2 * Hminus) * (x * (b + l));
-  const denominator = 800 * K * (1.4 * x * (b + l) - 0.44 * X);
-
-  if (denominator <= 0) return { tValue: null, timeMinutes: null, status: "" };
-
-  const tHours = numerator / denominator;
-  const timeMinutes = tHours * 60;
-
-  // Convert time to t factor
-  let tValue = 0;
-  if (timeMinutes <= 1) tValue = 0;
-  else if (timeMinutes <= 2) tValue = 0.1;
-  else if (timeMinutes <= 3) tValue = 0.2;
-  else if (timeMinutes <= 4) tValue = 0.3;
-  else if (timeMinutes <= 5) tValue = 0.4;
-  else tValue = 0.5;
-
-  let status = "";
-  if (timeMinutes <= 1) status = "عالی";
-  else if (timeMinutes <= 2) status = "خوب";
-  else if (timeMinutes <= 3) status = "متوسط";
-  else if (timeMinutes <= 4) status = "نیاز به بهبود";
-  else if (timeMinutes <= 5) status = "بحرانی";
-  else status = "غیرقابل قبول";
-
-  return { tValue, timeMinutes, status };
-}
-
 export default function EvacuationTimeTab({
   projectId,
   floorId,
@@ -89,6 +17,7 @@ export default function EvacuationTimeTab({
   floorId: string;
 }) {
   const queryClient = useQueryClient();
+  const [occupantFactorKey, setOccupantFactorKey] = useState<string>("");
   const [occupantFactor, setOccupantFactor] = useState<string>("");
   const [occupantCount, setOccupantCount] = useState<string>("");
   const [area, setArea] = useState<string>("");
@@ -100,12 +29,6 @@ export default function EvacuationTimeTab({
   const [width, setWidth] = useState<string>("");
   const [heightAbove, setHeightAbove] = useState<string>("");
   const [depthBelow, setDepthBelow] = useState<string>("");
-  const [showIntermediate, setShowIntermediate] = useState(false);
-  const [calcResult, setCalcResult] = useState<{
-    tValue: number | null;
-    timeMinutes: number | null;
-    status: string;
-  } | null>(null);
 
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
     queryKey: ["assessment", floorId],
@@ -120,15 +43,47 @@ export default function EvacuationTimeTab({
 
       const response = data as AssessmentGetApiResponse;
 
-      setOccupantFactor(response.assessment.occupantFactor?.toString() ?? "");
+      // Use stored key if available, otherwise fall back to value mapping
+      const storedKey = response.assessment.occupantFactorKey ?? "";
+      const occFactorValue = response.assessment.occupantFactor?.toString() ?? "";
+      
+      if (storedKey) {
+        // Use the stored key directly (this preserves the exact selection)
+        setOccupantFactorKey(storedKey);
+        setOccupantFactor(occFactorValue);
+      } else if (occFactorValue) {
+        // Fallback: map value to key (for backward compatibility with old data)
+        const valueToKeyMap: Record<string, string> = {
+          "3": "waiting",
+          "1.5": "gathering-dense",
+          "0.6": "gathering-normal",
+          "0.5": "school",
+          "0.3": "kindergarten", // Default to first 0.3 (kindergarten)
+          "0.2": "technical", // Default to first 0.2 (technical)
+          "0.1": "medical", // Default to first 0.1 (medical)
+          "0.05": "residential",
+          "0.03": "factory",
+          "0.003": "warehouse",
+        };
+        const foundKey = valueToKeyMap[occFactorValue] || "";
+        setOccupantFactorKey(foundKey);
+        setOccupantFactor(occFactorValue);
+      } else {
+        setOccupantFactorKey("");
+        setOccupantFactor("");
+      }
       setOccupantCount(response.assessment.occupantCount?.toString() ?? "");
       setArea(response.assessment.area?.toString() ?? "");
+      setExitWidths(response.assessment.exitWidths ?? "");
       setExitWidthTotal(response.assessment.exitWidthTotal?.toString() ?? "");
       setMobilityFactor(response.assessment.mobilityFactor?.toString() ?? "1");
       setLength(response.assessment.length?.toString() ?? "");
       setWidth(response.assessment.width?.toString() ?? "");
       setHeightAbove(response.assessment.heightAbove?.toString() ?? "");
       setDepthBelow(response.assessment.depthBelow?.toString() ?? "");
+      setExitCountToOpenSpace(
+        response.assessment.exitCountToOpenSpace?.toString() ?? ""
+      );
 
       return response;
     },
@@ -136,62 +91,54 @@ export default function EvacuationTimeTab({
 
   const handleCalculate = useMutation({
     mutationFn: async () => {
-      const exitWidthsArray = exitWidths
-        .split(",")
-        .map((w) => parseFloat(w.trim()))
-        .filter((w) => !isNaN(w) && w > 0);
+      // Helper to parse number, allowing 0 as valid value
+      const parseNumber = (val: string | undefined): number | undefined => {
+        if (val === undefined || val === null || val === "") return undefined;
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? undefined : parsed;
+      };
 
-      const calculatedK =
-        exitWidthTotal && parseFloat(exitWidthTotal) > 0
-          ? parseFloat(exitWidthTotal)
-          : exitWidthsArray.reduce((sum, w) => sum + w, 0);
-
-      const result = calculateTFactor(
-        length ? parseFloat(length) : undefined,
-        width ? parseFloat(width) : undefined,
-        area ? parseFloat(area) : undefined,
-        occupantCount ? parseFloat(occupantCount) : undefined,
-        occupantFactor ? parseFloat(occupantFactor) : undefined,
-        calculatedK > 0 ? calculatedK : undefined,
-        mobilityFactor ? parseFloat(mobilityFactor) : undefined,
-        heightAbove ? parseFloat(heightAbove) : undefined,
-        depthBelow ? parseFloat(depthBelow) : undefined
-      );
-
-      setCalcResult(result);
-      setShowIntermediate(true);
+      const parseInteger = (val: string | undefined): number | undefined => {
+        if (val === undefined || val === null || val === "") return undefined;
+        const parsed = parseInt(val);
+        return isNaN(parsed) ? undefined : parsed;
+      };
 
       const res = await fetch(
         `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
         {
           method: "PUT",
           body: JSON.stringify({
-            length: length ? parseFloat(length) : undefined,
-            width: width ? parseFloat(width) : undefined,
-            area: area ? parseFloat(area) : undefined,
-            occupantCount: occupantCount ? parseInt(occupantCount) : undefined,
-            occupantFactor: occupantFactor
-              ? parseFloat(occupantFactor)
-              : undefined,
-            exitWidthTotal: calculatedK > 0 ? calculatedK : undefined,
-            mobilityFactor: mobilityFactor
-              ? parseFloat(mobilityFactor)
-              : undefined,
-            heightAbove: heightAbove ? parseFloat(heightAbove) : undefined,
-            depthBelow: depthBelow ? parseFloat(depthBelow) : undefined,
+            length: parseNumber(length),
+            width: parseNumber(width),
+            area: parseNumber(area),
+            occupantCount: parseInteger(occupantCount),
+            occupantFactor: parseNumber(occupantFactor),
+            exitWidths: exitWidths || undefined, // Send as string or undefined
+            exitWidthTotal: parseNumber(exitWidthTotal),
+            mobilityFactor: parseNumber(mobilityFactor),
+            heightAbove: parseNumber(heightAbove),
+            depthBelow: parseNumber(depthBelow),
+            occupantFactorKey: occupantFactorKey || undefined,
+            exitCountToOpenSpace: parseInteger(exitCountToOpenSpace),
           }),
         }
       );
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to calculate t factor");
+      }
+      
       return res.json();
     },
     onSuccess: (data) => {
-      console.log(data);
       toast.success("t محاسبه شد");
       queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
     },
     onError: (error) => {
       toast.error("خطا در محاسبه t");
-      console.log(error);
+      console.error(error);
     },
   });
 
@@ -215,23 +162,44 @@ t = \\frac{p \\times \\left[(b + l) + \\frac{X}{x} + 1.25\\,H^{+} + 2\\,H^{-} \\
       <div className="input-group">
         <label>کاربری و ضریب بار اشغال</label>
         <select
-          value={occupantFactor}
-          onChange={(e) => setOccupantFactor(e.target.value)}
+          value={occupantFactorKey}
+          onChange={(e) => {
+            const key = e.target.value;
+            setOccupantFactorKey(key);
+            // Map key to actual value for calculation
+            const valueMap: Record<string, string> = {
+              "": "",
+              "waiting": "3",
+              "gathering-dense": "1.5",
+              "gathering-normal": "0.6",
+              "school": "0.5",
+              "kindergarten": "0.3",
+              "technical": "0.2",
+              "medical": "0.1",
+              "residential": "0.05",
+              "sales-level": "0.3",
+              "sales-upper": "0.2",
+              "office": "0.1",
+              "factory": "0.03",
+              "warehouse": "0.003",
+            };
+            setOccupantFactor(valueMap[key] || "");
+          }}
         >
           <option value="">-- انتخاب کنید --</option>
-          <option value="3">فضاهای انتظار</option>
-          <option value="1.5">محل تجمع – فشرده</option>
-          <option value="0.6">محل تجمع – معمولی</option>
-          <option value="0.5">کلاس مدارس</option>
-          <option value="0.3">مهدکودک</option>
-          <option value="0.2">آموزش فنی/کارگاه</option>
-          <option value="0.1">مرکز درمانی/زندان</option>
-          <option value="0.05">ساختمان مسکونی/هتل</option>
-          <option value="0.3">فضای فروش (هم‌سطح)</option>
-          <option value="0.2">فضای فروش (بالا)</option>
-          <option value="0.1">دفتر اداری</option>
-          <option value="0.03">کارخانه</option>
-          <option value="0.003">انبار</option>
+          <option value="waiting">فضاهای انتظار</option>
+          <option value="gathering-dense">محل تجمع – فشرده</option>
+          <option value="gathering-normal">محل تجمع – معمولی</option>
+          <option value="school">کلاس مدارس</option>
+          <option value="kindergarten">مهدکودک</option>
+          <option value="technical">آموزش فنی/کارگاه</option>
+          <option value="medical">مرکز درمانی/زندان</option>
+          <option value="residential">ساختمان مسکونی/هتل</option>
+          <option value="sales-level">فضای فروش (هم‌سطح)</option>
+          <option value="sales-upper">فضای فروش (بالا)</option>
+          <option value="office">دفتر اداری</option>
+          <option value="factory">کارخانه</option>
+          <option value="warehouse">انبار</option>
         </select>
       </div>
 
@@ -289,7 +257,7 @@ t = \\frac{p \\times \\left[(b + l) + \\frac{X}{x} + 1.25\\,H^{+} + 2\\,H^{-} \\
           type="number"
           value={exitCountToOpenSpace}
           onChange={(e) => setExitCountToOpenSpace(e.target.value)}
-          min="1"
+          min="0"
           placeholder="خروجی مستقیم به بیرون"
         />
       </div>
@@ -358,27 +326,12 @@ t = \\frac{p \\times \\left[(b + l) + \\frac{X}{x} + 1.25\\,H^{+} + 2\\,H^{-} \\
         </div>
       </div>
 
-      {showIntermediate && calcResult && (
-        <div className="intermediate-results">
-          <h4>محاسبات میانی:</h4>
-          <div className="calc-detail">
-            <span className="calc-label">زمان تخلیه:</span>
-            <span className="calc-value">
-              {calcResult.timeMinutes?.toFixed(2)} دقیقه
-            </span>
-          </div>
-          <div className="calc-detail">
-            <span className="calc-label">وضعیت:</span>
-            <span className="calc-value">{calcResult.status}</span>
-          </div>
-        </div>
-      )}
-
       <button
         className="btn btn-primary"
         onClick={() => handleCalculate.mutate()}
+        disabled={handleCalculate.isPending}
       >
-        محاسبه ضریب t
+        {handleCalculate.isPending ? "در حال محاسبه..." : "محاسبه ضریب t"}
       </button>
 
       <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">

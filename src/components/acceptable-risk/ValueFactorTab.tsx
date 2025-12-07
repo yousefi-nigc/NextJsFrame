@@ -8,11 +8,11 @@ import {
   AssessmentUpdateApiResponse,
 } from "@/lib/APIResponseInterfaces";
 
-// Helper function to convert Iranian Rial to EUR 2000
+// Helper function to convert Iranian Rial to EUR 2000 (matching backend function)
 function convertIranValueTo2000EUR(
   valueRial: number,
   year: number
-): number | null {
+): { eur2000: number; eurThisYear: number } | null {
   const iranConstructionIndex: Record<number, number> = {
     2000: 100,
     2005: 212.5,
@@ -44,30 +44,7 @@ function convertIranValueTo2000EUR(
 
   const eurThisYear = valueRial / rate;
   const eur2000 = eurThisYear / (idx / 100);
-  return eur2000;
-}
-
-function calculateC(
-  replaceability: number,
-  valueTotal: number | null,
-  valueYear: number | null
-): number {
-  const c1 = replaceability;
-  let c2 = 0;
-
-  if (
-    valueTotal !== null &&
-    valueYear !== null &&
-    valueTotal > 0 &&
-    valueYear > 0
-  ) {
-    const eur2000 = convertIranValueTo2000EUR(valueTotal, valueYear);
-    if (eur2000 && eur2000 > 7100000) {
-      c2 = 0.25 * Math.log10(eur2000 / 7100000);
-    }
-  }
-
-  return c1 + c2;
+  return { eur2000, eurThisYear };
 }
 
 export default function ValueFactorTab({
@@ -82,6 +59,27 @@ export default function ValueFactorTab({
   const [valueTotal, setValueTotal] = useState<string>("");
   const [valueYear, setValueYear] = useState<string>("");
   const [showCalcDescription, setShowCalcDescription] = useState(false);
+  
+  // Calculate display values (matching old script.js format)
+  const calculateDisplayValues = () => {
+    const c1 = parseFloat(replaceability) || 0;
+    let c2 = 0;
+    let calcData: { eur2000: number; eurThisYear: number } | null = null;
+    
+    const valRial = valueTotal ? parseFloat(valueTotal) : 0;
+    const year = valueYear ? parseInt(valueYear) : NaN;
+    
+    if (valRial && year) {
+      calcData = convertIranValueTo2000EUR(valRial, year);
+      if (calcData && calcData.eur2000 > 7100000) {
+        c2 = 0.25 * Math.log10(calcData.eur2000 / 7100000);
+      }
+    }
+    
+    return { c1, c2, calcData, c: c1 + c2 };
+  };
+  
+  const displayValues = calculateDisplayValues();
 
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
     queryKey: ["assessment", floorId],
@@ -106,17 +104,36 @@ export default function ValueFactorTab({
 
   const handleCalculate = useMutation({
     mutationFn: async () => {
+      // Helper to parse number, allowing 0 as valid value
+      const parseNumber = (val: string | undefined): number | undefined => {
+        if (val === undefined || val === null || val === "") return undefined;
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? undefined : parsed;
+      };
+
+      const parseInteger = (val: string | undefined): number | undefined => {
+        if (val === undefined || val === null || val === "") return undefined;
+        const parsed = parseInt(val);
+        return isNaN(parsed) ? undefined : parsed;
+      };
+
       const res = await fetch(
         `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
         {
           method: "PUT",
           body: JSON.stringify({
-            replaceability: parseFloat(replaceability),
-            valueTotal: valueTotal ? parseFloat(valueTotal) : undefined,
-            valueYear: valueYear ? parseInt(valueYear) : undefined,
+            replaceability: parseNumber(replaceability) ?? 0, // Default to 0 if not provided
+            valueTotal: parseNumber(valueTotal),
+            valueYear: parseInteger(valueYear),
           }),
         }
       );
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to calculate c factor");
+      }
+      
       return res.json();
     },
     onSuccess: (data) => {
@@ -227,10 +244,24 @@ export default function ValueFactorTab({
       </button>
 
       <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
-        <div className="result-value">
-          {assessment?.assessment.factor_c
-            ? assessment?.assessment.factor_c.toFixed(3)
-            : "-"}
+        <div className="result-value" style={{ direction: "ltr", textAlign: "left" }}>
+          {assessment?.assessment.factor_c !== null && assessment?.assessment.factor_c !== undefined ? (
+            <>
+              <div style={{ fontSize: "1.2em", fontWeight: "bold", marginBottom: "0.5em" }}>
+                c = {assessment.assessment.factor_c.toFixed(3)}
+                <span style={{ fontSize: "0.9em", fontWeight: "normal", color: "#666" }}>
+                  {" "}(c₁={displayValues.c1.toFixed(2)}, c₂={displayValues.c2.toFixed(3)})
+                </span>
+              </div>
+              {displayValues.calcData && (
+                <div style={{ fontSize: "0.95em", color: "#555", marginTop: "0.3em" }}>
+                  € {displayValues.calcData.eur2000.toLocaleString("en-US", { maximumFractionDigits: 3 })} ≈ 2000 معادل سال
+                </div>
+              )}
+            </>
+          ) : (
+            "-"
+          )}
         </div>
       </div>
 

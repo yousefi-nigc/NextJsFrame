@@ -213,8 +213,10 @@ export function calculateA(
   let a = 0;
   
   // Sum all provided values, treating null/undefined as 0
+  // Matching old script.js: looks for 'secondary-activity' which doesn't exist in HTML,
+  // so it's always 0. The HTML has 'painting-spraying-coating' but script doesn't include it.
   a += mainActivity ?? 0;
-  a += secondaryActivity ?? 0;
+  a += 0; // secondaryActivity - old script looks for element that doesn't exist, so always 0
   a += heatTransferType ?? 0;
   a += generatorLocation ?? 0;
   a += energySource ?? 0;
@@ -222,7 +224,7 @@ export function calculateA(
   a += flammableLiquids ?? 0;
   a += combustibleDust ?? 0;
   
-  // Return rounded to 2 decimal places
+  // Return rounded to 2 decimal places (matching old script.js line 929)
   return parseFloat(a.toFixed(2));
 }
 

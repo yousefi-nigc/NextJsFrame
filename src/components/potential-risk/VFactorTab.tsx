@@ -56,14 +56,54 @@ export default function VFactorTab({
   });
 
   const calculateAutoK = () => {
-    const window = typeof windowArea === "number" ? windowArea : 0;
+    let window = typeof windowArea === "number" ? windowArea : 0;
     const staticVent = typeof staticVentArea === "number" ? staticVentArea : 0;
-    const area = typeof compartmentArea === "number" ? compartmentArea : 100;
+    const mechanicalVent = typeof mechanicalVentFlow === "number" ? mechanicalVentFlow : 0;
+    const area = typeof compartmentArea === "number" ? compartmentArea : 1;
 
-    if (area > 0) {
-      const k = (window + staticVent) / area;
-      setVentingRatio(k);
+    // ✅ اصلاح مساحت پنجره‌ها (تقسیم بر 3.33)
+    window = window / 3.33;
+
+    // معادل سطح برای تهویه مکانیکی
+    let mechanicalEquivArea = (mechanicalVent > 0) ? (mechanicalVent / 3600) : 0;
+
+    // جمع کل بازشوها
+    const totalOpenings = window + staticVent + mechanicalEquivArea;
+
+    // نسبت تهویه k
+    let k = totalOpenings / area;
+
+    // محدود کردن مقدار k به بازه استاندارد: 0.001 تا 1
+    let kClamped = Math.max(0.001, Math.min(k, 1.0));
+
+    setVentingRatio(parseFloat(kClamped.toFixed(3)));
+  };
+
+  const calculateMechanicalFromAdvanced = () => {
+    // Exactly matching the old script.js parsing logic: parseFloat(value) || defaultValue
+    const Qv = parseFloat(String(qvAdvanced)) || 0;
+    const Cd = parseFloat(String(cdAdvanced)) || 0.65;
+    const deltaP = parseFloat(String(deltaPAdvanced)) || 25;
+    const rho = parseFloat(String(rhoAdvanced)) || 1.2;
+
+    if (Qv <= 0 || Cd <= 0 || deltaP <= 0 || rho <= 0) {
+      toast.error("لطفاً مقادیر Qv، Cd، ΔP، و ρ را به‌درستی وارد کنید");
+      return;
     }
+
+    // فرمول NFPA 204 / TR 12101-4
+    const A_equiv = Qv / (Cd * Math.sqrt((2 * deltaP) / rho));
+
+    // خروجی نهایی به Nm³/h (Qv به m³/s سپس ×3600)
+    const flowNm3h = Qv * 3600;
+
+    setMechanicalVentFlow(parseFloat(flowNm3h.toFixed(2)));
+    toast.success(
+      `دبی مکانیکی معادل: ${flowNm3h.toFixed(2)} Nm³/h (A_eq=${A_equiv.toFixed(3)} m²)`
+    );
+
+    // بعد از محاسبه، حالت را روی دستی برگردانید تا autoCalculateK مستقیم بخواند
+    setVentMode("manual");
   };
 
   const handleCalculateV = useMutation({
@@ -295,7 +335,11 @@ export default function VFactorTab({
                 className="w-full"
               />
             </div>
-            <button className="bg-primary text-sm cursor-pointer px-3 py-2 rounded text-white hover:bg-primary-dark transition-all duration-200">
+            <button
+              type="button"
+              onClick={calculateMechanicalFromAdvanced}
+              className="bg-primary text-sm cursor-pointer px-3 py-2 rounded text-white hover:bg-primary-dark transition-all duration-200"
+            >
               محاسبه از فرمول پیشرفته
             </button>
           </div>

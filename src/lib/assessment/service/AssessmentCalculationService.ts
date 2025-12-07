@@ -450,7 +450,8 @@ function calculateT(
   exitWidthTotal: number | undefined,
   mobilityFactor: number | undefined,
   heightAbove: number | undefined,
-  depthBelow: number | undefined
+  depthBelow: number | undefined,
+  exitCountToOpenSpace: number | undefined
 ): number | null {
   let b = width || 0;
   let l = length || 0;
@@ -500,10 +501,10 @@ function calculateT(
     //   return { value: null, error: "طول یا عرض بخش صفر است" };
   }
 
-  // FRAME 2015 formula
+  // FRAME 2015 formula (matching old script.js exactly)
   const numerator =
-    p * (b + l + X / x + 1.25 * Hplus + 2 * Hminus) * (x * (b + l));
-  const denominator = 800 * K * (1.4 * x * (b + l) - 0.44 * X);
+    p * ((b + l) + (X / x) + (1.25 * Hplus) + (2 * Hminus)) * (x * (b + l));
+  const denominator = 800 * K * ((1.4 * x * (b + l)) - (0.44 * X));
 
   if (denominator <= 0) {
     return null;
@@ -511,7 +512,10 @@ function calculateT(
   }
 
   const tHours = numerator / denominator;
-  const tValue = tHours * 60; // Convert to minutes
+  const tValue = tHours * 60; // Convert to minutes (matching old script.js line 1023)
+
+  // Note: exitCountToOpenSpace is stored but not used in calculation
+  // (old script.js has 'external-exits' in tInputs but doesn't use it in calculateT)
 
   return tValue;
   //     return {
@@ -529,22 +533,29 @@ function calculateC(
   replaceability: number | undefined,
   valueTotal: number | undefined,
   valueYear: number | undefined
-): number | null {
-  const c1 = replaceability || 0;
+): number {
+  // Matching old script.js exactly:
+  // const c1 = parseFloat(document.getElementById('replaceability').value) || 0;
+  // This means: if replaceability is 0, use 0; if undefined/NaN, use 0
+  const c1 = (replaceability !== undefined && !isNaN(replaceability)) ? replaceability : 0;
   let c2 = 0;
 
-  if (
-    valueTotal !== undefined &&
-    valueYear !== undefined &&
-    valueTotal > 0 &&
-    valueYear > 0
-  ) {
-    const calcData = convertIranValueTo2000EUR(valueTotal, valueYear);
+  // Matching old script.js exactly:
+  // const valRial = parseFloat(document.getElementById('current-value-rial').value) || 0;
+  // const year = parseInt(document.getElementById('value-year').value);
+  // if (valRial && year) { ... }
+  // This means: only calculate c2 if valRial > 0 (truthy) AND year is truthy (not 0, not NaN)
+  const valRial = (valueTotal !== undefined && !isNaN(valueTotal)) ? valueTotal : 0;
+  const year = (valueYear !== undefined && !isNaN(valueYear)) ? valueYear : NaN;
+
+  if (valRial && year) {
+    const calcData = convertIranValueTo2000EUR(valRial, year);
     if (calcData && calcData.eur2000 > 7100000) {
       c2 = 0.25 * Math.log10(calcData.eur2000 / 7100000);
     }
   }
 
+  // Matching old script.js: calculationResults.c = c1 + c2;
   return c1 + c2;
 }
 
@@ -624,28 +635,40 @@ function calculateD(
   dependencyType: string | undefined,
   dependencyManual: number | undefined
 ): number | null {
-  if (dependencyType && dependencyType !== "manual") {
+  // Matching old script.js exactly:
+  // if (categoryValue && categoryValue !== 'manual') {
+  //     d = parseFloat(categoryValue);
+  // } 
+  // else if (categoryValue === 'manual') {
+  //     if (manualValue === null || isNaN(manualValue)) return null;
+  //     if (manualValue < 0 || manualValue > 1) return null;
+  //     d = manualValue;
+  // } 
+  // else {
+  //     return null; // No category selected
+  // }
+
+  if (!dependencyType) {
+    return null; // No category selected
+  }
+
+  if (dependencyType !== "manual") {
+    // Predefined category - parse the value
     const d = parseFloat(dependencyType);
-    if (!isNaN(d)) return d;
+    if (isNaN(d)) return null;
+    return d;
   }
 
-  //    if (!dependencyType) {
-  //     return { value: null, error: "لطفاً یک گروه فعالیت انتخاب کنید" };
-  //   }
-
-  if (dependencyType === "manual" && dependencyManual !== undefined) {
-    if (dependencyManual < 0 || dependencyManual > 1) return null;
-    return dependencyManual;
+  // Manual mode - require dependencyManual
+  if (dependencyManual === undefined || dependencyManual === null || isNaN(dependencyManual)) {
+    return null; // Manual value not provided or invalid
   }
 
-  //     // ✅ Predefined category
-  //   if (dependencyType !== "manual") {
-  //     const d = parseFloat(dependencyType);
-  //     if (isNaN(d)) {
-  //       return { value: null, error: "مقدار گروه انتخاب‌شده نامعتبر است" };
-  //     }
-  //     return { value: d };
-  //   }
+  if (dependencyManual < 0 || dependencyManual > 1) {
+    return null; // Out of valid range
+  }
+
+  return dependencyManual;
 
   //   // ✅ Manual value
   //   if (dependencyType === "manual") {
@@ -747,9 +770,9 @@ function calculateN(
   n5: number | undefined
 ): number | null {
   if (n1 === undefined && n2 === undefined && n3 === undefined && n4 === undefined && n5 === undefined) {
-  return null;
+    return null;
   }
-  
+
   const n = (n1 ?? 0) + (n2 ?? 0) + (n3 ?? 0) + (n4 ?? 0) + (n5 ?? 0);
   return Math.pow(0.95, n);
 }
@@ -768,7 +791,7 @@ function calculateS(
   if (detectionType === undefined && waterSupplyType === undefined && sprinklerType === undefined && fireStationType === undefined && industrialBrigade === undefined) {
     return null;
   }
-  
+
   const s1 = detectionType ?? 0;
   const s2 = waterSupplyType ?? 0;
   const s3 = sprinklerType ?? 0;
@@ -783,6 +806,7 @@ function calculateS(
  * Calculate factor F (Fire Resistance Factor)
  * Formula: F = [1 + f/100 - f^2.5/10^6] * [1 - (S-1)/40]
  * where f = (1/2)*fs + (1/4)*ff + (1/8)*fd + (1/8)*fw
+ * Matching old script.js exactly (lines 1761-1810)
  */
 function calculateF(
   structureResist: number | undefined,
@@ -796,30 +820,47 @@ function calculateF(
 ): number | null {
   if (structureResist === undefined) return null;
 
-  let fs = Math.min(structureResist, 120);
-  let ff = Math.min(facadeResist || 0, 120);
-  let fd = Math.min(roofResist || 0, 120);
-  let fw = Math.min(wallResist || 0, 120);
+  // Matching old script.js exactly (lines 1763-1794):
+  // دریافت مقادیر مقاومت آتش
+  let fs = structureResist || 0;
+  let ff = facadeResist || 0;
+  let fd = roofResist || 0;
+  let fw = wallResist || 0;
 
-  // Apply special conditions
+  // بررسی شرایط خاص (matching old script.js order - BEFORE clamping)
+  // اگر پنجره بیش از 5% باشد
   if (hasManyWindows) ff = 0;
+  
+  // اگر فضای باز بدون تقسیم‌بندی باشد
   if (noInternalSeparation) fw = 0;
+  
+  // اگر عایق سوختنی داشته باشد
   if (combustibleInsulation) fd = 0;
 
-  // No component can exceed structural resistance
+  // محدود کردن به 120 دقیقه (matching old script.js - AFTER special conditions)
+  fs = Math.min(fs, 120);
+  ff = Math.min(ff, 120);
+  fd = Math.min(fd, 120);
+  fw = Math.min(fw, 120);
+
+  // هیچ بخشی نمی‌تواند از مقاومت سازه بیشتر باشد (matching old script.js)
   ff = Math.min(ff, fs);
   fd = Math.min(fd, fs);
   fw = Math.min(fw, fs);
 
-  // Weighted average
+  // محاسبه میانگین وزنی مقاومت آتش (matching old script.js)
   const f = (1 / 2) * fs + (1 / 4) * ff + (1 / 8) * fd + (1 / 8) * fw;
 
+  // دریافت مقدار S (matching old script.js: parseFloat(...) || 1)
   const S = factor_S || 1;
 
-  const term1 = 1 + f / 100 - Math.pow(f, 2.5) / 1000000;
-  const term2 = 1 - (S - 1) / 40;
+  // محاسبه F با فرمول کامل (matching old script.js)
+  const term1 = 1 + (f / 100) - (Math.pow(f, 2.5) / 1000000);
+  const term2 = 1 - ((S - 1) / 40);
 
   let F = term1 * term2;
+
+  // محدود کردن مقدار نهایی (matching old script.js)
   F = Math.max(0.1, F);
 
   return F;
@@ -828,6 +869,7 @@ function calculateF(
 /**
  * Calculate factor U (Escape and Rescue Factor)
  * Formula: U = 1.05^u, where u = subcompartment + stairways + horizontalExit + sprinklers
+ * Matching old script.js exactly (lines 1902-1925)
  */
 function calculateU(
   subcompartment: number | undefined,
@@ -835,12 +877,23 @@ function calculateU(
   horizontalExit: number | undefined,
   sprinklers: number | undefined
 ): number | null {
+  // Matching old script.js: if all undefined, return null (no calculation)
   if (subcompartment === undefined && stairways === undefined && horizontalExit === undefined && sprinklers === undefined) {
     return null;
   }
 
-  const u = (subcompartment ?? 0) + (stairways ?? 0) + (horizontalExit ?? 0) + (sprinklers ?? 0);
-  return Math.pow(1.05, u);
+  // جمع امتیازها بر اساس انتخاب کاربر (matching old script.js)
+  // parseFloat(...) || 0 for each value
+  let u = 0;
+  u += subcompartment ?? 0;
+  u += stairways ?? 0;
+  u += horizontalExit ?? 0;
+  u += sprinklers ?? 0;
+
+  // فرمول نهایی U (matching old script.js)
+  const U = Math.pow(1.05, u);
+  
+  return U;
 }
 
 /**
@@ -859,29 +912,29 @@ function calculateY(
   relocationAgreements: boolean | undefined,
   multipleProduction: boolean | undefined
 ): number | null {
-  if (subCompartmentEI30 === undefined && subCompartmentEI60 === undefined && partialDetection === undefined && 
-      partialSprinkler === undefined && otherAutoExtinguish === undefined && financialDataBackup === undefined &&
-      sparePartsAccess === undefined && selfRepairCapability === undefined && relocationAgreements === undefined &&
-      multipleProduction === undefined) {
-  return null;
+  if (subCompartmentEI30 === undefined && subCompartmentEI60 === undefined && partialDetection === undefined &&
+    partialSprinkler === undefined && otherAutoExtinguish === undefined && financialDataBackup === undefined &&
+    sparePartsAccess === undefined && selfRepairCapability === undefined && relocationAgreements === undefined &&
+    multipleProduction === undefined) {
+    return null;
   }
-  
+
   let y = 0;
-  
+
   // Physical protection
   if (subCompartmentEI30) y += 2;
   if (subCompartmentEI60) y += 4;
   if (partialDetection) y += 3;
   if (partialSprinkler) y += 5;
   if (otherAutoExtinguish) y += 4;
-  
+
   // Crisis planning
   if (financialDataBackup) y += 2;
   if (sparePartsAccess) y += 4;
   if (selfRepairCapability) y += 2;
   if (relocationAgreements) y += 3;
   if (multipleProduction) y += 4;
-  
+
   return Math.pow(1.05, y);
 }
 
@@ -916,161 +969,195 @@ function getRiskStatus(risk: number | null): string | null {
  */
 export function calculateAssessment(inputs: CreateAssessmentValidationSchema): AssessmentCalculationResult {
 
-    // Potential Risk Factors
-    let factor_q: number | null = null;
-    let factor_i: number | null = null;
-    let factor_g: number | null = null;
-    let factor_e: number | null = null;
-    let factor_v: number | null = null;
-    let factor_z: number | null = null;
+  // Potential Risk Factors
+  let factor_q: number | null = null;
+  let factor_i: number | null = null;
+  let factor_g: number | null = null;
+  let factor_e: number | null = null;
+  let factor_v: number | null = null;
+  let factor_z: number | null = null;
 
-    // Acceptance Factors
-    let factor_a: number | null = null;
-    let factor_t: number | null = null;
-    let factor_c: number | null = null;
-    let factor_r: number | null = null;
-    let factor_d: number | null = null;
+  // Acceptance Factors
+  let factor_a: number | null = null;
+  let factor_t: number | null = null;
+  let factor_c: number | null = null;
+  let factor_r: number | null = null;
+  let factor_d: number | null = null;
 
-    // Protection Factors
-    let factor_W: number | null = null;
-    let factor_N: number | null = null;
-    let factor_S: number | null = null;
-    let factor_F: number | null = null;
-    let factor_U: number | null = null;
-    let factor_Y: number | null = null;
+  // Protection Factors
+  let factor_W: number | null = null;
+  let factor_N: number | null = null;
+  let factor_S: number | null = null;
+  let factor_F: number | null = null;
+  let factor_U: number | null = null;
+  let factor_Y: number | null = null;
 
-    // Potential Risks
-    let risk_P: number | null = null;
-    let risk_P1: number | null = null;
-    let risk_P2: number | null = null;
+  // Potential Risks
+  let risk_P: number | null = null;
+  let risk_P1: number | null = null;
+  let risk_P2: number | null = null;
 
-    // Acceptable Levels
-    let level_A: number | null = null;
-    let level_A1: number | null = null;
-    let level_A2: number | null = null;
+  // Acceptable Levels
+  let level_A: number | null = null;
+  let level_A1: number | null = null;
+  let level_A2: number | null = null;
 
-    // Protection Levels
-    let level_D: number | null = null;
-    let level_D1: number | null = null;
-    let level_D2: number | null = null;
+  // Protection Levels
+  let level_D: number | null = null;
+  let level_D1: number | null = null;
+  let level_D2: number | null = null;
 
-    // Initial Risk
-    let factor_Fo: number | null = null;
-    let risk_Ro: number | null = null;
-    let final_R: number | null = null;
-    let final_R1: number | null = null;
-    let final_R2: number | null = null;
-    let status_R: string | null = null;
-    let status_R1: string | null = null;
-    let status_R2: string | null = null;
+  // Initial Risk
+  let factor_Fo: number | null = null;
+  let risk_Ro: number | null = null;
+  let final_R: number | null = null;
+  let final_R1: number | null = null;
+  let final_R2: number | null = null;
+  let status_R: string | null = null;
+  let status_R1: string | null = null;
+  let status_R2: string | null = null;
 
-    // Calculate Potential Risk Factors
+  // Calculate Potential Risk Factors
 
-    if (inputs.qi && inputs.qm) {
-        factor_q = calculateQ(inputs.qi, inputs.qm);
-    }
-    if (inputs.tempDestruction && inputs.avgDimension && inputs.materialClass) {
-        factor_i = calculateI(inputs.tempDestruction, inputs.avgDimension, inputs.materialClass);
-    }
-    if (inputs.length && inputs.width && inputs.area && inputs.accessType) {
-        factor_g = calculateG(inputs.length, inputs.width, inputs.area, inputs.accessType);
-    }
-    if (inputs.floorLevel) {
-        factor_e = calculateE(inputs.floorLevel);
-    }
-    if (inputs.qm && inputs.ventingRatio_k && inputs.height) {
-        factor_v = calculateV(inputs.qm, inputs.ventingRatio_k, inputs.height);
-    }
-    if (inputs.width && inputs.accessSides && inputs.heightAbove && inputs.depthBelow) {
-        factor_z = calculateZ(inputs.width, inputs.accessSides, inputs.heightAbove, inputs.depthBelow);
-    }
+  if (inputs.qi && inputs.qm) {
+    factor_q = calculateQ(inputs.qi, inputs.qm);
+  }
+  if (inputs.tempDestruction && inputs.avgDimension && inputs.materialClass) {
+    factor_i = calculateI(inputs.tempDestruction, inputs.avgDimension, inputs.materialClass);
+  }
+  if (inputs.length && inputs.width && inputs.area && inputs.accessType) {
+    factor_g = calculateG(inputs.length, inputs.width, inputs.area, inputs.accessType);
+  }
+  if (inputs.floorLevel) {
+    factor_e = calculateE(inputs.floorLevel);
+  }
+  if (inputs.qm && inputs.ventingRatio_k && inputs.height) {
+    factor_v = calculateV(inputs.qm, inputs.ventingRatio_k, inputs.height);
+  }
+  if (inputs.width && inputs.accessSides && inputs.heightAbove && inputs.depthBelow) {
+    factor_z = calculateZ(inputs.width, inputs.accessSides, inputs.heightAbove, inputs.depthBelow);
+  }
 
-    // Calculate Acceptance Factors
-    if (inputs.mainActivity && inputs.secondaryActivity && inputs.heatTransferType && inputs.generatorLocation && inputs.energySource && inputs.electricalSystem && inputs.flammableLiquids && inputs.combustibleDust) {    
-        factor_a = calculateA(inputs.mainActivity, inputs.secondaryActivity, inputs.heatTransferType, inputs.generatorLocation, inputs.energySource, inputs.electricalSystem, inputs.flammableLiquids, inputs.combustibleDust);
-    }
-    if (inputs.length && inputs.width && inputs.area && inputs.occupantCount && inputs.occupantFactor && inputs.exitWidthTotal && inputs.mobilityFactor && inputs.heightAbove && inputs.depthBelow) {
-        factor_t = calculateT(inputs.length, inputs.width, inputs.area, inputs.occupantCount, inputs.occupantFactor, inputs.exitWidthTotal, inputs.mobilityFactor, inputs.heightAbove, inputs.depthBelow);
-    }
-    if (inputs.replaceability && inputs.valueTotal && inputs.valueYear) {
-        factor_c = calculateC(inputs.replaceability, inputs.valueTotal, inputs.valueYear);
-    }
-    if (inputs.qi && inputs.materialClass) {
-        factor_r = calculateR(inputs.qi, inputs.materialClass);
-    }
-    if (inputs.dependencyType && inputs.dependencyManual) {
-        factor_d = calculateD(inputs.dependencyType, inputs.dependencyManual);
-    }
+  // Calculate Acceptance Factors
+  if (inputs.mainActivity !== undefined && inputs.secondaryActivity !== undefined && inputs.heatTransferType !== undefined && inputs.generatorLocation !== undefined && inputs.energySource !== undefined && inputs.electricalSystem !== undefined && inputs.flammableLiquids !== undefined && inputs.combustibleDust !== undefined) {
+    factor_a = calculateA(inputs.mainActivity, inputs.secondaryActivity, inputs.heatTransferType, inputs.generatorLocation, inputs.energySource, inputs.electricalSystem, inputs.flammableLiquids, inputs.combustibleDust);
+  }
+  // Calculate T - matching old script logic
+  // K can come from exitWidthTotal (manual) or calculated from exitWidths (comma-separated)
+  // Optional with defaults: mobilityFactor (p, defaults to 1), heightAbove (H+, defaults to 0), depthBelow (H-, defaults to 0)
+  // Optional but needed for calculation: length/width (b/l) OR area, occupantCount (X) OR occupantFactor
+  // The function itself will return null if required values (b, l, X, K) are missing or invalid
+  
+  // Calculate K from exitWidths if exitWidthTotal is not provided
+  let calculatedK: number | undefined = inputs.exitWidthTotal;
+  if (!calculatedK && inputs.exitWidths) {
+    // Matching old script.js: filter widths >= 0.6 (minimum exit width)
+    const exitWidthsArray = inputs.exitWidths
+      .split(",")
+      .map((w) => parseFloat(w.trim()))
+      .filter((w) => !isNaN(w) && w >= 0.6);
+    calculatedK = exitWidthsArray.reduce((sum, w) => sum + w, 0);
+  }
+  
+  if (calculatedK !== undefined && calculatedK > 0) {
+    factor_t = calculateT(
+      inputs.length,
+      inputs.width,
+      inputs.area,
+      inputs.occupantCount,
+      inputs.occupantFactor,
+      calculatedK,
+      inputs.mobilityFactor,
+      inputs.heightAbove,
+      inputs.depthBelow,
+      inputs.exitCountToOpenSpace
+    );
+  }
+  // Calculate C - replaceability is required (can be 0), valueTotal and valueYear are optional (only needed for c2)
+  // Matching old script: c1 is always calculated from replaceability, c2 is optional based on value
+  if (inputs.replaceability !== undefined) {
+    factor_c = calculateC(inputs.replaceability, inputs.valueTotal, inputs.valueYear);
+  }
+  // Calculate R - qi is required (can be 0), materialClass is required (can be 0 for A1)
+  // Matching old script: both qi and M are required, but can be 0
+  if (inputs.qi !== undefined && inputs.materialClass !== undefined) {
+    factor_r = calculateR(inputs.qi, inputs.materialClass);
+  }
+  // Calculate D - dependencyType is required, dependencyManual is only needed if dependencyType === "manual"
+  // Matching old script: if categoryValue exists, use it; if it's "manual", require manualValue
+  if (inputs.dependencyType !== undefined) {
+    factor_d = calculateD(inputs.dependencyType, inputs.dependencyManual);
+  }
 
-    // Calculate Protection Factors
-    // W can be calculated with just w1, w2, w3 (w4 requires length/width which may not be available yet)
-    if (inputs.waterStorageType ) {
-        factor_W = calculateW(inputs.qi, inputs.qm, inputs.waterStorageType, inputs.waterCapacity, inputs.distributionNetwork, inputs.hydrantCount25, inputs.hydrantCount3, inputs.hydrantCount4, inputs.length, inputs.width);
-    }
-    if (inputs.detectionType !== undefined || inputs.waterSupplyType !== undefined || inputs.sprinklerType !== undefined || inputs.fireStationType !== undefined || inputs.industrialBrigade !== undefined) {
-        factor_S = calculateS(inputs.detectionType, inputs.waterSupplyType, inputs.sprinklerType, inputs.fireStationType, inputs.industrialBrigade);
-    }
-    if (inputs.structureResist && factor_S !== null) {
-        factor_F = calculateF(inputs.structureResist, inputs.facadeResist, inputs.roofResist, inputs.wallResist, factor_S, inputs.hasManyWindows, inputs.noInternalSeparation, inputs.combustibleInsulation);
-    }
-    if (inputs.n1 !== undefined || inputs.n2 !== undefined || inputs.n3 !== undefined || inputs.n4 !== undefined || inputs.n5 !== undefined) {
-        factor_N = calculateN(inputs.n1, inputs.n2, inputs.n3, inputs.n4, inputs.n5);
-    }
-    if (inputs.subcompartment !== undefined || inputs.stairways !== undefined || inputs.horizontalExit !== undefined || inputs.sprinklers !== undefined) {
-        factor_U = calculateU(inputs.subcompartment, inputs.stairways, inputs.horizontalExit, inputs.sprinklers);
-    }
-    if (inputs.subCompartmentEI30 !== undefined || inputs.subCompartmentEI60 !== undefined || inputs.partialDetection !== undefined || inputs.partialSprinkler !== undefined || inputs.otherAutoExtinguish !== undefined || inputs.financialDataBackup !== undefined || inputs.sparePartsAccess !== undefined || inputs.selfRepairCapability !== undefined || inputs.relocationAgreements !== undefined || inputs.multipleProduction !== undefined) {
-        factor_Y = calculateY(inputs.subCompartmentEI30, inputs.subCompartmentEI60, inputs.partialDetection, inputs.partialSprinkler, inputs.otherAutoExtinguish, inputs.financialDataBackup, inputs.sparePartsAccess, inputs.selfRepairCapability, inputs.relocationAgreements, inputs.multipleProduction);
-    }
+  // Calculate Protection Factors
+  // W can be calculated with just w1, w2, w3 (w4 requires length/width which may not be available yet)
+  if (inputs.waterStorageType) {
+    factor_W = calculateW(inputs.qi, inputs.qm, inputs.waterStorageType, inputs.waterCapacity, inputs.distributionNetwork, inputs.hydrantCount25, inputs.hydrantCount3, inputs.hydrantCount4, inputs.length, inputs.width);
+  }
+  if (inputs.detectionType !== undefined || inputs.waterSupplyType !== undefined || inputs.sprinklerType !== undefined || inputs.fireStationType !== undefined || inputs.industrialBrigade !== undefined) {
+    factor_S = calculateS(inputs.detectionType, inputs.waterSupplyType, inputs.sprinklerType, inputs.fireStationType, inputs.industrialBrigade);
+  }
+  if (inputs.structureResist && factor_S !== null) {
+    factor_F = calculateF(inputs.structureResist, inputs.facadeResist, inputs.roofResist, inputs.wallResist, factor_S, inputs.hasManyWindows, inputs.noInternalSeparation, inputs.combustibleInsulation);
+  }
+  if (inputs.n1 !== undefined || inputs.n2 !== undefined || inputs.n3 !== undefined || inputs.n4 !== undefined || inputs.n5 !== undefined) {
+    factor_N = calculateN(inputs.n1, inputs.n2, inputs.n3, inputs.n4, inputs.n5);
+  }
+  if (inputs.subcompartment !== undefined || inputs.stairways !== undefined || inputs.horizontalExit !== undefined || inputs.sprinklers !== undefined) {
+    factor_U = calculateU(inputs.subcompartment, inputs.stairways, inputs.horizontalExit, inputs.sprinklers);
+  }
+  if (inputs.subCompartmentEI30 !== undefined || inputs.subCompartmentEI60 !== undefined || inputs.partialDetection !== undefined || inputs.partialSprinkler !== undefined || inputs.otherAutoExtinguish !== undefined || inputs.financialDataBackup !== undefined || inputs.sparePartsAccess !== undefined || inputs.selfRepairCapability !== undefined || inputs.relocationAgreements !== undefined || inputs.multipleProduction !== undefined) {
+    factor_Y = calculateY(inputs.subCompartmentEI30, inputs.subCompartmentEI60, inputs.partialDetection, inputs.partialSprinkler, inputs.otherAutoExtinguish, inputs.financialDataBackup, inputs.sparePartsAccess, inputs.selfRepairCapability, inputs.relocationAgreements, inputs.multipleProduction);
+  }
 
-    // Calculate Potential Risks (P, P1, P2)
-    if (factor_q !== null && factor_i !== null && factor_g !== null && factor_e !== null && factor_v !== null && factor_z !== null) {
-        risk_P = factor_q * factor_i * factor_g * factor_e * factor_v * factor_z;
-        risk_P1 = factor_q * factor_i * factor_e * factor_v * factor_z;
-        risk_P2 = factor_i * factor_g * factor_e * factor_v * factor_z;
-    }
+  // Calculate Potential Risks (P, P1, P2)
+  if (factor_q !== null && factor_i !== null && factor_g !== null && factor_e !== null && factor_v !== null && factor_z !== null) {
+    risk_P = factor_q * factor_i * factor_g * factor_e * factor_v * factor_z;
+    risk_P1 = factor_q * factor_i * factor_e * factor_v * factor_z;
+    risk_P2 = factor_i * factor_g * factor_e * factor_v * factor_z;
+  }
 
-    // Calculate Acceptable Levels (A, A1, A2)
-    if (factor_a !== null && factor_t !== null && factor_c !== null && factor_r !== null && factor_d !== null) {
-        level_A = Math.max(0.1, 1.6 - factor_a - factor_t - factor_c);
-        level_A1 = Math.max(0.1, 1.6 - factor_a - factor_t - factor_r);
-        level_A2 = Math.max(0.1, 1.6 - factor_a - factor_c - factor_d);
-    }
+  // Calculate Acceptable Levels (A, A1, A2)
+  if (factor_a !== null && factor_t !== null && factor_c !== null && factor_r !== null && factor_d !== null) {
+    level_A = Math.max(0.1, 1.6 - factor_a - factor_t - factor_c);
+    level_A1 = Math.max(0.1, 1.6 - factor_a - factor_t - factor_r);
+    level_A2 = Math.max(0.1, 1.6 - factor_a - factor_c - factor_d);
+  }
 
-    // Calculate Protection Levels (D, D1, D2)
-    if (factor_W !== null && factor_N !== null && factor_S !== null && factor_F !== null) {
-        level_D = factor_W * factor_N * factor_S * factor_F;
-    }
-    if (factor_N !== null && factor_U !== null) {
-        level_D1 = factor_N * factor_U;
-    }
-    if (factor_W !== null && factor_N !== null && factor_S !== null && factor_Y !== null) {
-        level_D2 = factor_W * factor_N * factor_S * factor_Y;
-    }
+  // Calculate Protection Levels (D, D1, D2)
+  if (factor_W !== null && factor_N !== null && factor_S !== null && factor_F !== null) {
+    level_D = factor_W * factor_N * factor_S * factor_F;
+  }
+  if (factor_N !== null && factor_U !== null) {
+    level_D1 = factor_N * factor_U;
+  }
+  if (factor_W !== null && factor_N !== null && factor_S !== null && factor_Y !== null) {
+    level_D2 = factor_W * factor_N * factor_S * factor_Y;
+  }
 
-    // Calculate Initial Risk (Ro) and Fo
-    if (inputs.structureResist) {
-        factor_Fo = calculateFo(inputs.structureResist);
-    }
-    if (risk_P !== null && level_A !== null && factor_Fo !== null) {
-        risk_Ro = risk_P / (level_A * factor_Fo);
-    }
+  // Calculate Initial Risk (Ro) and Fo
+  if (inputs.structureResist) {
+    factor_Fo = calculateFo(inputs.structureResist);
+  }
+  if (risk_P !== null && level_A !== null && factor_Fo !== null) {
+    risk_Ro = risk_P / (level_A * factor_Fo);
+  }
 
-    // Calculate Final Risks (R, R1, R2)
-    if (risk_P !== null && level_A !== null && level_D !== null) {
-        final_R = risk_P / (level_A * level_D);
-    }
-    if (risk_P1 !== null && level_A1 !== null && level_D1 !== null) {
-        final_R1 = risk_P1 / (level_A1 * level_D1);
-    }
-    if (risk_P2 !== null && level_A2 !== null && level_D2 !== null) {
-        final_R2 = risk_P2 / (level_A2 * level_D2);
-    }
+  // Calculate Final Risks (R, R1, R2)
+  if (risk_P !== null && level_A !== null && level_D !== null) {
+    final_R = risk_P / (level_A * level_D);
+  }
+  if (risk_P1 !== null && level_A1 !== null && level_D1 !== null) {
+    final_R1 = risk_P1 / (level_A1 * level_D1);
+  }
+  if (risk_P2 !== null && level_A2 !== null && level_D2 !== null) {
+    final_R2 = risk_P2 / (level_A2 * level_D2);
+  }
 
-    // Calculate Status
-    status_R = getRiskStatus(final_R);
-    status_R1 = getRiskStatus(final_R1);
-    status_R2 = getRiskStatus(final_R2);
+  // Calculate Status
+  status_R = getRiskStatus(final_R);
+  status_R1 = getRiskStatus(final_R1);
+  status_R2 = getRiskStatus(final_R2);
 
   return {
     factor_q,

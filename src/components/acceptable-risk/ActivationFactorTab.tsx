@@ -17,6 +17,7 @@ export default function ActivationFactorTab({
 }) {
   const queryClient = useQueryClient();
   const [mainActivity, setMainActivity] = useState("0");
+  const [mainActivityKey, setMainActivityKey] = useState("A1");
   const [energySource, setEnergySource] = useState("0");
   const [heatTransferType, setHeatTransferType] = useState("0");
   const [generatorLocation, setGeneratorLocation] = useState("0");
@@ -38,7 +39,15 @@ export default function ActivationFactorTab({
 
       const response = data as AssessmentGetApiResponse;
 
-      setMainActivity(response.assessment.mainActivity?.toString() ?? "0");
+      const mainActivityValue = response.assessment.mainActivity?.toString() ?? "0";
+      setMainActivity(mainActivityValue);
+      // Map value back to key for display
+      const keyMap: Record<string, string> = {
+        "0": "A1", // Default to A1 when value is 0 (can't distinguish A1/A2/D from value alone)
+        "0.2": "B",
+        "0.4": "C",
+      };
+      setMainActivityKey(keyMap[mainActivityValue] || "A1");
       setEnergySource(response.assessment.energySource?.toString() ?? "0");
       setHeatTransferType(
         response.assessment.heatTransferType?.toString() ?? "0"
@@ -70,14 +79,14 @@ export default function ActivationFactorTab({
         {
           method: "PUT",
           body: JSON.stringify({
-            mainActivity: parseFloat(mainActivity),
-            energySource: parseFloat(energySource),
-            heatTransferType: parseFloat(heatTransferType),
-            generatorLocation: parseFloat(generatorLocation),
-            electricalSystem: parseFloat(electricalSystem),
-            flammableLiquids: parseFloat(flammableLiquids),
-            combustibleDust: parseFloat(combustibleDust),
-            secondaryActivity: parseFloat(paintingSpraying),
+            mainActivity: parseFloat(mainActivity) || 0,
+            energySource: parseFloat(energySource) || 0,
+            heatTransferType: parseFloat(heatTransferType) || 0,
+            generatorLocation: parseFloat(generatorLocation) || 0,
+            electricalSystem: parseFloat(electricalSystem) || 0,
+            flammableLiquids: parseFloat(flammableLiquids) || 0,
+            combustibleDust: parseFloat(combustibleDust) || 0,
+            secondaryActivity: parseFloat(paintingSpraying) || 0,
           }),
         }
       );
@@ -111,19 +120,27 @@ export default function ActivationFactorTab({
       <div className="input-group">
         <label className="input-label">فعالیت اصلی</label>
         <select
-          value={mainActivity}
-          onChange={(e) => setMainActivity(e.target.value)}
+          value={mainActivityKey}
+          onChange={(e) => {
+            const key = e.target.value;
+            setMainActivityKey(key);
+            // Map key to actual value for calculation
+            const valueMap: Record<string, string> = {
+              A1: "0",
+              A2: "0",
+              B: "0.2",
+              C: "0.4",
+              D: "0",
+            };
+            setMainActivity(valueMap[key] || "0");
+          }}
           className=""
         >
-          <option value="0">A1 - کاربری غیرصنعتی: اداری، مسکونی، آموزشی</option>
-          <option value="0">A2 - صنایع محصولات غیرقابل احتراق (OH1)</option>
-          <option value="0.2">
-            B - صنایع عمومی/فروشگاه‌های بزرگ (OH2–OH3)
-          </option>
-          <option value="0.4">
-            C - صنایع محصولات قابل احتراق (OH4 / HH1–HH4)
-          </option>
-          <option value="0">D - انبارها و ذخیره‌سازی مشابه (S)</option>
+          <option value="A1">A1 - کاربری غیرصنعتی: اداری، مسکونی، آموزشی</option>
+          <option value="A2">A2 - صنایع محصولات غیرقابل احتراق (OH1)</option>
+          <option value="B">B - صنایع عمومی/فروشگاه‌های بزرگ (OH2–OH3)</option>
+          <option value="C">C - صنایع محصولات قابل احتراق (OH4 / HH1–HH4)</option>
+          <option value="D">D - انبارها و ذخیره‌سازی مشابه (S)</option>
         </select>
       </div>
 
@@ -232,7 +249,7 @@ export default function ActivationFactorTab({
       <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
         <div className="result-value">
           {assessment?.assessment.factor_a
-            ? assessment?.assessment.factor_a.toFixed(3)
+            ? "a = " + assessment?.assessment.factor_a.toFixed(3)
             : "-"}
         </div>
       </div>
