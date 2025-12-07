@@ -4,9 +4,18 @@ import { useState } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
-export default function VFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function VFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [windowArea, setWindowArea] = useState<number | "">(0);
   const [staticVentArea, setStaticVentArea] = useState<number | "">(0);
@@ -67,17 +76,22 @@ export default function VFactorTab({ projectId, floorId }: { projectId: string, 
         throw new Error("Qm باید بزرگتر از صفر باشد");
       }
 
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          windowArea: typeof windowArea === "number" ? windowArea : 0,
-          staticVentArea: typeof staticVentArea === "number" ? staticVentArea : 0,
-          mechVentFlow: typeof mechanicalVentFlow === "number" ? mechanicalVentFlow : 0,
-          ventingRatio_k: k,
-          height: h,
-          qm: qm,
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            windowArea: typeof windowArea === "number" ? windowArea : 0,
+            staticVentArea:
+              typeof staticVentArea === "number" ? staticVentArea : 0,
+            mechVentFlow:
+              typeof mechanicalVentFlow === "number" ? mechanicalVentFlow : 0,
+            ventingRatio_k: k,
+            height: h,
+            qm: qm,
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -109,8 +123,7 @@ export default function VFactorTab({ projectId, floorId }: { projectId: string, 
         <div className="text-gray-500 leading-relaxed text-sm dark:text-white">
           ضریب تهویه تأثیر دود و حرارت داخل ساختمان را نشان می‌دهد. <br />
           <b>
-            k = نسبت مساحت بازشوهای تخلیه دود به مساحت کف (معمولاً 0.01 تا
-            0.02)
+            k = نسبت مساحت بازشوهای تخلیه دود به مساحت کف (معمولاً 0.01 تا 0.02)
           </b>
         </div>
       </div>
@@ -160,9 +173,7 @@ export default function VFactorTab({ projectId, floorId }: { projectId: string, 
           />
           <span className="input-unit">m²</span>
         </div>
-        <div className="input-hint">
-          جمع مساحت دریچه‌های ثابت تخلیه دود
-        </div>
+        <div className="input-hint">جمع مساحت دریچه‌های ثابت تخلیه دود</div>
       </div>
 
       <div className="input-group">
@@ -216,24 +227,9 @@ export default function VFactorTab({ projectId, floorId }: { projectId: string, 
         {ventMode === "advanced" && (
           <div
             id="advanced-vent"
-            className="mt-2 p-3 rounded-md border border-dashed"
-            style={{
-              background: "#f9f9f9",
-              borderStyle: "dashed",
-              borderColor: "#ccc",
-            }}
+            className="mt-2 p-3 rounded-md border border-dashed bg-[#f9f9f9] border-[#ccc] dark:bg-(--bg-secondary)"
           >
-            <div
-              style={{
-                fontSize: "0.9rem",
-                marginBottom: "0.8rem",
-                lineHeight: 1.6,
-                backgroundColor: "#eef6fb",
-                padding: "0.6rem",
-                borderLeft: "4px solid #2196F3",
-                borderRadius: 4,
-              }}
-            >
+            <div className="text-sm mb-3 leading-relaxed p-2.5 border-l-4 rounded bg-[#eef6fb] border-l-[#2196F3] dark:bg-card-bg">
               <b>فرمول محاسبه طبق NFPA 204 و EN TR 12101-4:</b>
               <br />
               <code>Qv = Cd × A × √(2 × ΔP / ρ)</code>
@@ -299,6 +295,9 @@ export default function VFactorTab({ projectId, floorId }: { projectId: string, 
                 className="w-full"
               />
             </div>
+            <button className="bg-primary text-sm cursor-pointer px-3 py-2 rounded text-white hover:bg-primary-dark transition-all duration-200">
+              محاسبه از فرمول پیشرفته
+            </button>
           </div>
         )}
       </div>
@@ -367,9 +366,7 @@ export default function VFactorTab({ projectId, floorId }: { projectId: string, 
           />
           <span className="input-unit">MJ/m²</span>
         </div>
-        <div className="input-hint">
-          همان مقدار استفاده شده در محاسبه q
-        </div>
+        <div className="input-hint">همان مقدار استفاده شده در محاسبه q</div>
       </div>
 
       <div className="input-group">
@@ -391,19 +388,24 @@ export default function VFactorTab({ projectId, floorId }: { projectId: string, 
           />
           <span className="input-unit">متر</span>
         </div>
-        <div className="input-hint">
-          ارتفاع از کف تا سقف (حداکثر 15 متر)
-        </div>
+        <div className="input-hint">ارتفاع از کف تا سقف (حداکثر 15 متر)</div>
       </div>
 
-      <button className="btn btn-primary" onClick={() => handleCalculateV.mutate()}>
+      <button
+        className="btn btn-primary"
+        onClick={() => handleCalculateV.mutate()}
+      >
         محاسبه ضریب v
       </button>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_v ? assessment?.assessment.factor_v.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          <span>v = </span>
+          {assessment?.assessment.factor_v
+            ? assessment?.assessment.factor_v.toFixed(3)
+            : "-"}
+        </div>
       </div>
     </div>
   );
 }
-

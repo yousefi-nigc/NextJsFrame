@@ -4,9 +4,18 @@ import { useState } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
-export default function GFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function GFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [showG1Guide, setShowG1Guide] = useState(false);
   const [showG2Guide, setShowG2Guide] = useState(false);
@@ -31,7 +40,9 @@ export default function GFactorTab({ projectId, floorId }: { projectId: string, 
 
       const response = data as AssessmentGetApiResponse;
 
-      setAccessType((response.assessment.accessType as "wide" | "narrow") ?? "wide");
+      setAccessType(
+        (response.assessment.accessType as "wide" | "narrow") ?? "wide"
+      );
       setSectionLength(response.assessment.length ?? 30);
       setSectionWidth(response.assessment.width ?? 20);
       setSectionArea(response.assessment.area ?? "");
@@ -42,15 +53,18 @@ export default function GFactorTab({ projectId, floorId }: { projectId: string, 
 
   const handleCalculateG = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          length: sectionLength,
-          width: sectionWidth,
-          area: typeof sectionArea === "number" ? sectionArea : undefined,
-          accessType,
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            length: sectionLength,
+            width: sectionWidth,
+            area: typeof sectionArea === "number" ? sectionArea : undefined,
+            accessType,
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -82,10 +96,9 @@ export default function GFactorTab({ projectId, floorId }: { projectId: string, 
         <div>
           <b>توضیح:</b>
           <span className="mr-1 text-gray-500 leading-relaxed text-sm dark:text-white">
-            ضریب سطح، مقدار گسترش افقی آتش را بسته به ابعاد بخش و نوع پلان
-            نشان می‌دهد. هرچه مساحت و شکل ساختمان به مربع نزدیک‌تر باشد (l
-            ≈ b) و راهرو دسترسی به دلیل طول زیاد باریک‌تر باشد، g بزرگ‌تر
-            خواهد شد.
+            ضریب سطح، مقدار گسترش افقی آتش را بسته به ابعاد بخش و نوع پلان نشان
+            می‌دهد. هرچه مساحت و شکل ساختمان به مربع نزدیک‌تر باشد (l ≈ b) و
+            راهرو دسترسی به دلیل طول زیاد باریک‌تر باشد، g بزرگ‌تر خواهد شد.
           </span>
         </div>
 
@@ -106,16 +119,12 @@ export default function GFactorTab({ projectId, floorId }: { projectId: string, 
 
             <ol className="list-decimal pr-5 space-y-1">
               <li>طول (l) را اندازه بگیرید.</li>
-              <li>
-                عرض (b) را اندازه بگیرید یا مساحت کل (A) را داشته باشید.
-              </li>
+              <li>عرض (b) را اندازه بگیرید یا مساحت کل (A) را داشته باشید.</li>
               <li>نوع دسترسی را مشخص کنید (wide یا narrow).</li>
               <li>اگر narrow انتخاب شد، طول و عرض جابجا می‌شوند.</li>
               <li>
                 مقادیر را وارد کنید تا مطابق فرمول محاسبه شود:
-                <code className="mr-2">
-                  g = (b + 5 × ∛(b² × l)) / 200
-                </code>
+                <code className="mr-2">g = (b + 5 × ∛(b² × l)) / 200</code>
               </li>
             </ol>
           </div>
@@ -148,23 +157,23 @@ export default function GFactorTab({ projectId, floorId }: { projectId: string, 
             <p className="font-bold">نوع دسترسی به ساختمان</p>
             <br />
             <p className="mb-2">
-              نوع ضلع دسترسی آتش‌نشانان بر سرعت و اثربخشی عملیات کنترل آتش
-              تاثیر زیادی دارد.
+              نوع ضلع دسترسی آتش‌نشانان بر سرعت و اثربخشی عملیات کنترل آتش تاثیر
+              زیادی دارد.
             </p>
             <p className="mb-1">
-              - <b>دسترسی از ضلع عریض (Wide)</b> یعنی دسترسی به ساختمان از
-              ضلع بزرگ‌تر پلان است و آتش‌نشانی می‌تواند به بخش زیادی از
-              محیط سریع دسترسی داشته باشد.
+              - <b>دسترسی از ضلع عریض (Wide)</b> یعنی دسترسی به ساختمان از ضلع
+              بزرگ‌تر پلان است و آتش‌نشانی می‌تواند به بخش زیادی از محیط سریع
+              دسترسی داشته باشد.
             </p>
             <p className="mb-1">
-              - <b>دسترسی از ضلع باریک (Narrow)</b> یعنی فقط ضلع کوچک‌تر
-              در معرض دسترسی آتش‌نشانان است. در این حالت گسترش آتش کنترل
-              سخت‌تری دارد و طول و عرض برای محاسبه ضریب g جابجا در نظر
-              گرفته می‌شوند (<b>مطابق بخش 4.5.2 سند FRAME</b>).
+              - <b>دسترسی از ضلع باریک (Narrow)</b> یعنی فقط ضلع کوچک‌تر در معرض
+              دسترسی آتش‌نشانان است. در این حالت گسترش آتش کنترل سخت‌تری دارد و
+              طول و عرض برای محاسبه ضریب g جابجا در نظر گرفته می‌شوند (
+              <b>مطابق بخش 4.5.2 سند FRAME</b>).
             </p>
             <p>
-              انتخاب درست نوع دسترسی بسیار مهم است، زیرا روی برآورد ایمنی
-              اثر مستقیم می‌گذارد.
+              انتخاب درست نوع دسترسی بسیار مهم است، زیرا روی برآورد ایمنی اثر
+              مستقیم می‌گذارد.
             </p>
           </div>
         )}
@@ -204,14 +213,13 @@ export default function GFactorTab({ projectId, floorId }: { projectId: string, 
               <b>l</b> برابر با بیشترین فاصله بین مرکز دو ضلع روبروی هم در
               محدوده پلان طبقه است.
               <br />
-              اگر شکل پلان مستطیل است، همان طول واقعی بزرگ‌تر را وارد
-              کنید.
+              اگر شکل پلان مستطیل است، همان طول واقعی بزرگ‌تر را وارد کنید.
               <br />
-              <b>در پلان‌های نامنظم</b>، از طول فرضی (طبق راهنمای سند:
-              مساحت تقسیم بر عرض معادل) استفاده کنید.
+              <b>در پلان‌های نامنظم</b>، از طول فرضی (طبق راهنمای سند: مساحت
+              تقسیم بر عرض معادل) استفاده کنید.
               <br />
-              <i>مثال:</i> در یک پلان مربعی، طول برابر با عرض خواهد بود.
-              اگر پلان باریک است، طول همان ضلع بلند خواهد شد.
+              <i>مثال:</i> در یک پلان مربعی، طول برابر با عرض خواهد بود. اگر
+              پلان باریک است، طول همان ضلع بلند خواهد شد.
             </span>
           </div>
         )}
@@ -251,14 +259,13 @@ export default function GFactorTab({ projectId, floorId }: { projectId: string, 
               <b>b</b> معادل عرض موثر پلان در نقطه ورودی یا &quot;عرض
               معادل&quot; است (بدست آمده از تقسیم مساحت بخش به طول l).
               <br />
-              ورود مقدار دقیق عرض زمانی ضروری است که پلان نامتقارن یا
-              کشیده باشد.
+              ورود مقدار دقیق عرض زمانی ضروری است که پلان نامتقارن یا کشیده
+              باشد.
               <br />
-              در صورت عدم قطعیت، از تقسیم مساحت به طول برای محاسبه استفاده
-              کنید.
+              در صورت عدم قطعیت، از تقسیم مساحت به طول برای محاسبه استفاده کنید.
               <br />
-              <i>یادآوری:</i> اگر فقط مساحت و طول را می‌دانید، می‌توانید
-              مقدار عرض را خالی بگذارید تا سیستم خودش محاسبه کند.
+              <i>یادآوری:</i> اگر فقط مساحت و طول را می‌دانید، می‌توانید مقدار
+              عرض را خالی بگذارید تا سیستم خودش محاسبه کند.
             </span>
           </div>
         )}
@@ -300,27 +307,34 @@ export default function GFactorTab({ projectId, floorId }: { projectId: string, 
             </p>
             <br />
             <span className="text-[#666] dark:text-gray-300">
-              اگر فقط مساحت پلان را دارید و یکی از ابعاد l یا b را
-              می‌دانید، وارد کردن مقدار مساحت کافی است.
+              اگر فقط مساحت پلان را دارید و یکی از ابعاد l یا b را می‌دانید،
+              وارد کردن مقدار مساحت کافی است.
               <br />
               <b>مساحت معادل = طول × عرض</b>
               <br />
               در محاسبه ضریب گسترش (g)، این مقدار به تعیین دقیق ابعاد موثر
               خصوصاً در پلان‌های نامنظم و راهروها کمک می‌کند.
               <br />
-              <i>توصیه:</i> همیشه از مقدار دقیق و مهندسی‌شده مساحت طبق
-              نقشه تأیید شده استفاده کنید.
+              <i>توصیه:</i> همیشه از مقدار دقیق و مهندسی‌شده مساحت طبق نقشه
+              تأیید شده استفاده کنید.
             </span>
           </div>
         )}
       </div>
 
-      <button className="btn btn-primary" onClick={() => handleCalculateG.mutate()}>
+      <button
+        className="btn btn-primary"
+        onClick={() => handleCalculateG.mutate()}
+      >
         محاسبه ضریب g
       </button>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_g ? assessment?.assessment.factor_g.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          {assessment?.assessment.factor_g
+            ? assessment?.assessment.factor_g.toFixed(3)
+            : "-"}
+        </div>
       </div>
     </div>
   );

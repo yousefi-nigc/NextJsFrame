@@ -4,9 +4,18 @@ import { useState } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
-export default function IFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function IFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [showTWeightedTable, setShowTWeightedTable] = useState(false);
   const [showDimsModal, setShowDimsModal] = useState(false);
@@ -28,7 +37,9 @@ export default function IFactorTab({ projectId, floorId }: { projectId: string, 
 
       const response = data as AssessmentGetApiResponse;
 
-      setTempDestruction(response.assessment.tempDestruction?.toString() ?? "250");
+      setTempDestruction(
+        response.assessment.tempDestruction?.toString() ?? "250"
+      );
       setAvgDimension(response.assessment.avgDimension?.toString() ?? "0.3");
       setFireClass(response.assessment.materialClass?.toString() ?? "5");
 
@@ -38,14 +49,17 @@ export default function IFactorTab({ projectId, floorId }: { projectId: string, 
 
   const handleCalculateI = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          tempDestruction: parseFloat(tempDestruction),
-          avgDimension: parseFloat(avgDimension) || 0.3,
-          materialClass: parseFloat(fireClass),
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            tempDestruction: parseFloat(tempDestruction),
+            avgDimension: parseFloat(avgDimension) || 0.3,
+            materialClass: parseFloat(fireClass),
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -82,12 +96,12 @@ export default function IFactorTab({ projectId, floorId }: { projectId: string, 
         <div className="text-gray-500 leading-relaxed text-sm dark:text-white">
           <ul className="list-disc text-sm pr-5">
             <li className="mb-1.5">
-              <b>i</b> بیانگر سرعت و نرخ رشد آتش است. هر چه مقدار بالاتر
-              باشد، رشد آتش سریع‌تر است.
+              <b>i</b> بیانگر سرعت و نرخ رشد آتش است. هر چه مقدار بالاتر باشد،
+              رشد آتش سریع‌تر است.
             </li>
             <li className="mb-1.5">
-              مقدار <b>i</b> معمولاً بین <b>0.5 تا 1.65</b> (سقف تجربی:
-              0.4 تا 1.8) قرار می‌گیرد.
+              مقدار <b>i</b> معمولاً بین <b>0.5 تا 1.65</b> (سقف تجربی: 0.4 تا
+              1.8) قرار می‌گیرد.
             </li>
             <li className="mb-1.5">
               ارتباط i با &quot;نرخ آزادسازی گرما HRR&quot;:
@@ -110,9 +124,7 @@ export default function IFactorTab({ projectId, floorId }: { projectId: string, 
       </div>
 
       <div className="input-group">
-        <label className="input-label">
-          دمای تخریب T (درجه سانتیگراد)
-        </label>
+        <label className="input-label">دمای تخریب T (درجه سانتیگراد)</label>
         <select
           id="temp-destruction"
           value={tempDestruction}
@@ -163,9 +175,7 @@ export default function IFactorTab({ projectId, floorId }: { projectId: string, 
               <thead className="bg-gray-100 dark:bg-gray-800 font-semibold">
                 <tr>
                   <th className="p-2 border-b border-gray-200">انتخاب</th>
-                  <th className="p-2 border-b border-gray-200">
-                    دمای T (°C)
-                  </th>
+                  <th className="p-2 border-b border-gray-200">دمای T (°C)</th>
                   <th className="p-2 border-b border-gray-200">توضیحات</th>
                   <th className="p-2 border-b border-gray-200">درصد (%)</th>
                 </tr>
@@ -263,21 +273,12 @@ export default function IFactorTab({ projectId, floorId }: { projectId: string, 
 
           <div
             id="m-ref-guide"
-            style={{
-              display: "block",
-              fontSize: "0.9em",
-              color: "#333",
-              background: "#f0f8ff",
-              padding: 8,
-              borderRadius: 5,
-              marginTop: 6,
-            }}
+            className="block text-[0.9em] text-[#333] bg-[#f0f8ff] p-2 rounded-sm mt-1.5 dark:text-white dark:bg-[#2a375370]"
           >
             <b>مقادیر مرجع:</b>
             <p className="mt-2">
-              رایج‌ترین مقدار مورد استفاده برای m= <b>0.3</b> است که به
-              عنوان میانگین ابعاد اکثر اشیاء در محیط روزمره ما در نظر
-              گرفته می‌شود.
+              رایج‌ترین مقدار مورد استفاده برای m= <b>0.3</b> است که به عنوان
+              میانگین ابعاد اکثر اشیاء در محیط روزمره ما در نظر گرفته می‌شود.
             </p>
             <p className="mt-2">
               سایر مقادیر معمول عبارتند از:
@@ -312,15 +313,13 @@ export default function IFactorTab({ projectId, floorId }: { projectId: string, 
           onChange={(e) => setFireClass(e.target.value)}
           className="w-full p-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-[#2c3e50] dark:text-white"
         >
-          <option value="0">
-            A1 - طبق EN13501-1 یا غیرقابل‌احتراق (M=0)
-          </option>
+          <option value="0">A1 - طبق EN13501-1 یا غیرقابل‌احتراق (M=0)</option>
           <option value="0.5">
             A2 - طبق EN13501-1 یا تقریباً غیرقابل‌احتراق (M=0.5)
           </option>
           <option value="1">
-            B - طبق EN13501 یا EN12845 Cat. I : سخت برای اشتعال
-            (خودخاموش‌شونده) (M=1)
+            B - طبق EN13501 یا EN12845 Cat. I : سخت برای اشتعال (خودخاموش‌شونده)
+            (M=1)
           </option>
           <option value="2">C - طبق EN13501-1 : مواد کندسوز (M=2)</option>
           <option value="3">
@@ -439,15 +438,22 @@ export default function IFactorTab({ projectId, floorId }: { projectId: string, 
       </div>
 
       <div className="mt-4">
-        <button className="btn btn-primary" onClick={() => handleCalculateI.mutate()}>
+        <button
+          className="btn btn-primary"
+          onClick={() => handleCalculateI.mutate()}
+        >
           محاسبه ضریب i
         </button>
       </div>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_i ? assessment?.assessment.factor_i.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          <span>i = </span>
+          {assessment?.assessment.factor_i
+            ? assessment?.assessment.factor_i.toFixed(3)
+            : "-"}
+        </div>
       </div>
     </div>
   );
 }
-

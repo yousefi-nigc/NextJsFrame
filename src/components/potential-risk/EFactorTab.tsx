@@ -5,13 +5,22 @@ import { BlockMath } from "react-katex";
 import Image from "next/image";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 import mezzIntExit from "../../../public/assets/mezz_int_exit.png";
 import mezzDirExit from "../../../public/assets/mezz_dir_exit.png";
 import atriumLevels from "../../../public/assets/atrium_levels.png";
 import loftDuplex from "../../../public/assets/loft_duplex.png";
 
-export default function EFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function EFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [showAteruimodal, setShowAteruimodal] = useState(false);
   const [floorNumber, setFloorNumber] = useState<number | "">(0);
@@ -37,12 +46,15 @@ export default function EFactorTab({ projectId, floorId }: { projectId: string, 
 
   const handleCalculateE = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          floorLevel: typeof floorNumber === "number" ? floorNumber : 0,
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            floorLevel: typeof floorNumber === "number" ? floorNumber : 0,
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -71,19 +83,16 @@ export default function EFactorTab({ projectId, floorId }: { projectId: string, 
       </div>
 
       <div className="help-card mb-[0.7em]">
-        <div className="text-primary mb-3 font-semibold">
-          توضیحات مهندسی
-        </div>
+        <div className="text-primary mb-3 font-semibold">توضیحات مهندسی</div>
         <div className="text-gray-500 leading-relaxed text-sm dark:text-white">
-          ضریب طبقه، اثر ارتفاع یا عمق طبقه نسبت به سطح زمین را لحاظ
-          می‌کند.
+          ضریب طبقه، اثر ارتفاع یا عمق طبقه نسبت به سطح زمین را لحاظ می‌کند.
           <br />
-          هرچه طبقه موردنظر بالاتر یا پایین‌تر باشد، <b>e</b> بیشتر شده و
-          ریسک افزایش می‌یابد.
+          هرچه طبقه موردنظر بالاتر یا پایین‌تر باشد، <b>e</b> بیشتر شده و ریسک
+          افزایش می‌یابد.
           <br />
           <span className="text-[#7986cb]">
-            برای طبقات با گالری/نیم‌طبقه (مثل سالن‌های چندسطحی)، مقدار
-            اعشاری وارد کنید.
+            برای طبقات با گالری/نیم‌طبقه (مثل سالن‌های چندسطحی)، مقدار اعشاری
+            وارد کنید.
             <br />
             <i>مثال: طبقه اول با ۴۰٪ مساحت گالری → عدد 1.4</i>
           </span>
@@ -100,9 +109,7 @@ export default function EFactorTab({ projectId, floorId }: { projectId: string, 
 
       <div
         className={`transition-all duration-300 overflow-hidden mb-8 ${
-          showAteruimodal
-            ? "max-h-[5000px] opacity-100"
-            : "max-h-0 opacity-0"
+          showAteruimodal ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
         <div
@@ -119,29 +126,27 @@ export default function EFactorTab({ projectId, floorId }: { projectId: string, 
           </h2>
 
           <p className="mb-4">
-            در روش FRAME 2015، فضاهای معماری ویژه مانند{" "}
-            <strong>آتریوم</strong>، نیم‌طبقه یا <em>mezzanine</em>، و
-            همچنین واحدهای دوبلکس یا لوفت، شرایط خاصی در محاسبات ضرایب{" "}
-            <strong>e</strong>، <strong>z</strong> و گاهی{" "}
-            <strong>g</strong> ایجاد می‌کنند.
+            در روش FRAME 2015، فضاهای معماری ویژه مانند <strong>آتریوم</strong>،
+            نیم‌طبقه یا <em>mezzanine</em>، و همچنین واحدهای دوبلکس یا لوفت،
+            شرایط خاصی در محاسبات ضرایب <strong>e</strong>، <strong>z</strong> و
+            گاهی <strong>g</strong> ایجاد می‌کنند.
           </p>
 
           <h3 className="text-lg font-semibold mb-2">
             ۱. Mezzanine (نیم‌طبقه)
           </h3>
           <p className="mb-2">
-            نیم‌طبقه بخشی است که مساحت آن کمتر از طبقه کامل بوده و درون
-            همان فضا ساخته می‌شود.
+            نیم‌طبقه بخشی است که مساحت آن کمتر از طبقه کامل بوده و درون همان فضا
+            ساخته می‌شود.
           </p>
           <ul className="list-disc pr-6 mb-4 text-[15px] leading-7">
             <li>
-              اگر نیم‌طبقه خروج داخلی داشته باشد → در محاسبه{" "}
-              <strong>e</strong> به صورت <strong>اعشار</strong> اضافه
-              می‌شود.
+              اگر نیم‌طبقه خروج داخلی داشته باشد → در محاسبه <strong>e</strong>{" "}
+              به صورت <strong>اعشار</strong> اضافه می‌شود.
             </li>
             <li>
-              اگر نیم‌طبقه خروج مستقیم داشته باشد → دسترسی امداد بهتر و
-              مقدار <strong>z</strong> کمتر می‌شود.
+              اگر نیم‌طبقه خروج مستقیم داشته باشد → دسترسی امداد بهتر و مقدار{" "}
+              <strong>z</strong> کمتر می‌شود.
             </li>
           </ul>
 
@@ -167,8 +172,7 @@ export default function EFactorTab({ projectId, floorId }: { projectId: string, 
 
           <ul className="list-disc pr-6 mb-4 text-[15px] leading-7">
             <li>
-              ارتفاع مؤثر طبقه در آتریوم بر ضریب <strong>e</strong> تأثیر
-              دارد.
+              ارتفاع مؤثر طبقه در آتریوم بر ضریب <strong>e</strong> تأثیر دارد.
             </li>
             <li>
               تهویه طبیعی و مسیر دود خروجی می‌تواند <strong>k</strong> و{" "}
@@ -185,8 +189,7 @@ export default function EFactorTab({ projectId, floorId }: { projectId: string, 
           <h3 className="text-lg font-semibold mb-2">۳. لوفت و دوبلکس</h3>
 
           <p className="mb-2">
-            طبقه دوم در این واحدها معمولاً بدون جداسازی کامل است،
-            بنابراین:
+            طبقه دوم در این واحدها معمولاً بدون جداسازی کامل است، بنابراین:
           </p>
 
           <ul className="list-disc pr-6 mb-4 text-[15px] leading-7">
@@ -195,8 +198,8 @@ export default function EFactorTab({ projectId, floorId }: { projectId: string, 
               می‌شود.
             </li>
             <li>
-              ضریب <strong>z</strong> باید دسترسی امداد به هر دو سطح را
-              بررسی کند.
+              ضریب <strong>z</strong> باید دسترسی امداد به هر دو سطح را بررسی
+              کند.
             </li>
           </ul>
 
@@ -254,12 +257,19 @@ export default function EFactorTab({ projectId, floorId }: { projectId: string, 
         </select>
       </div>
 
-      <button className="btn btn-primary" onClick={() => handleCalculateE.mutate()}>
+      <button
+        className="btn btn-primary"
+        onClick={() => handleCalculateE.mutate()}
+      >
         محاسبه ضریب e
       </button>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_e ? assessment?.assessment.factor_e.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          {assessment?.assessment.factor_e
+            ? assessment?.assessment.factor_e.toFixed(3)
+            : "-"}
+        </div>
       </div>
     </div>
   );

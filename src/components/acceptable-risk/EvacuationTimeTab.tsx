@@ -4,7 +4,10 @@ import { useState } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
 // Helper function to calculate t factor (simplified version)
 function calculateTFactor(
@@ -27,7 +30,12 @@ function calculateTFactor(
   }
 
   let X = occupantCount || 0;
-  if ((!X || X <= 0) && occupantFactor !== undefined && occupantFactor > 0 && area_calc > 0) {
+  if (
+    (!X || X <= 0) &&
+    occupantFactor !== undefined &&
+    occupantFactor > 0 &&
+    area_calc > 0
+  ) {
     X = Math.round(area_calc * occupantFactor);
   }
 
@@ -44,8 +52,9 @@ function calculateTFactor(
 
   if (b <= 0 || l <= 0) return { tValue: null, timeMinutes: null, status: "" };
 
-  const numerator = p * ((b + l) + (X / x) + (1.25 * Hplus) + (2 * Hminus)) * (x * (b + l));
-  const denominator = 800 * K * ((1.4 * x * (b + l)) - (0.44 * X));
+  const numerator =
+    p * (b + l + X / x + 1.25 * Hplus + 2 * Hminus) * (x * (b + l));
+  const denominator = 800 * K * (1.4 * x * (b + l) - 0.44 * X);
 
   if (denominator <= 0) return { tValue: null, timeMinutes: null, status: "" };
 
@@ -72,13 +81,20 @@ function calculateTFactor(
   return { tValue, timeMinutes, status };
 }
 
-export default function EvacuationTimeTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function EvacuationTimeTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [occupantFactor, setOccupantFactor] = useState<string>("");
   const [occupantCount, setOccupantCount] = useState<string>("");
   const [area, setArea] = useState<string>("");
   const [exitWidths, setExitWidths] = useState<string>("");
   const [exitWidthTotal, setExitWidthTotal] = useState<string>("");
+  const [exitCountToOpenSpace, setExitCountToOpenSpace] = useState<string>("");
   const [mobilityFactor, setMobilityFactor] = useState<string>("1");
   const [length, setLength] = useState<string>("");
   const [width, setWidth] = useState<string>("");
@@ -145,20 +161,27 @@ export default function EvacuationTimeTab({ projectId, floorId }: { projectId: s
       setCalcResult(result);
       setShowIntermediate(true);
 
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          length: length ? parseFloat(length) : undefined,
-          width: width ? parseFloat(width) : undefined,
-          area: area ? parseFloat(area) : undefined,
-          occupantCount: occupantCount ? parseInt(occupantCount) : undefined,
-          occupantFactor: occupantFactor ? parseFloat(occupantFactor) : undefined,
-          exitWidthTotal: calculatedK > 0 ? calculatedK : undefined,
-          mobilityFactor: mobilityFactor ? parseFloat(mobilityFactor) : undefined,
-          heightAbove: heightAbove ? parseFloat(heightAbove) : undefined,
-          depthBelow: depthBelow ? parseFloat(depthBelow) : undefined,
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            length: length ? parseFloat(length) : undefined,
+            width: width ? parseFloat(width) : undefined,
+            area: area ? parseFloat(area) : undefined,
+            occupantCount: occupantCount ? parseInt(occupantCount) : undefined,
+            occupantFactor: occupantFactor
+              ? parseFloat(occupantFactor)
+              : undefined,
+            exitWidthTotal: calculatedK > 0 ? calculatedK : undefined,
+            mobilityFactor: mobilityFactor
+              ? parseFloat(mobilityFactor)
+              : undefined,
+            heightAbove: heightAbove ? parseFloat(heightAbove) : undefined,
+            depthBelow: depthBelow ? parseFloat(depthBelow) : undefined,
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -261,6 +284,17 @@ t = \\frac{p \\times \\left[(b + l) + \\frac{X}{x} + 1.25\\,H^{+} + 2\\,H^{-} \\
       </div>
 
       <div className="input-group">
+        <label>تعداد خروج‌های منتهی به فضای آزاد </label>
+        <input
+          type="number"
+          value={exitCountToOpenSpace}
+          onChange={(e) => setExitCountToOpenSpace(e.target.value)}
+          min="1"
+          placeholder="خروجی مستقیم به بیرون"
+        />
+      </div>
+
+      <div className="input-group">
         <label>ضریب تحرک (p)</label>
         <select
           value={mobilityFactor}
@@ -340,14 +374,20 @@ t = \\frac{p \\times \\left[(b + l) + \\frac{X}{x} + 1.25\\,H^{+} + 2\\,H^{-} \\
         </div>
       )}
 
-      <button className="btn btn-primary" onClick={() => handleCalculate.mutate()}>
+      <button
+        className="btn btn-primary"
+        onClick={() => handleCalculate.mutate()}
+      >
         محاسبه ضریب t
       </button>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_t ? assessment?.assessment.factor_t.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          {assessment?.assessment.factor_t
+            ? assessment?.assessment.factor_t.toFixed(3)
+            : "-"}
+        </div>
       </div>
     </div>
   );
 }
-
