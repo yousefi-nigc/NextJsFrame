@@ -1,32 +1,29 @@
-// import { NextResponse } from "next/server";
-// import { getSession } from "@/src/lib/auth-server";
-
-// export async function middleware(req) {
-//   const session = await getSession();
-
-//   if (!session && req.nextUrl.pathname.startsWith("/dashboard")) {
-//     return NextResponse.redirect(new URL("/login", req.url));
-//   }
-
-//   return NextResponse.next();
-// }
-
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
 export async function proxy(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request);
+  const { pathname } = request.nextUrl;
 
-  // THIS IS NOT SECURE!
-  // This is the recommended approach to optimistically redirect users
-  // We recommend handling auth checks in each page/route
-  if (!sessionCookie) {
-    return NextResponse.redirect(new URL("/", request.url));
+  // Protect admin routes
+  if (pathname.startsWith("/admin") || pathname.startsWith("/dashboard/admin")) {
+    // Check for session cookie (lightweight check without Prisma)
+    const sessionCookie = getSessionCookie(request);
+
+    // If no session cookie, redirect to login
+    if (!sessionCookie) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard"], // Specify the routes the middleware applies to
+
+  matcher: [
+    "/admin/:path*",
+    "/dashboard/admin/:path*",
+  ],
 };
