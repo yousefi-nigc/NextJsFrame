@@ -1,7 +1,22 @@
 import "dotenv/config";
-import { db } from "../src/lib/db";
+import { PrismaClient } from "./generated";
 import { randomBytes } from "crypto";
-import { hashPassword } from "../src/lib/password";
+import { scrypt } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
+
+// Create Prisma client for seeding
+const db = new PrismaClient({
+  log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+});
+
+// Hash password function (matching Better Auth's format)
+async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(16);
+  const hash = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `$scrypt$N=16384,r=8,p=1$${salt.toString("base64")}$${hash.toString("base64")}`;
+}
 
 async function main() {
   console.log("🌱 Seeding database...");
