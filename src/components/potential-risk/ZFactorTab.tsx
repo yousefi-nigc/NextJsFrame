@@ -4,9 +4,18 @@ import { useState } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
-export default function ZFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function ZFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [showZGuide, setShowZGuide] = useState(false);
   const [sectionWidth, setSectionWidth] = useState(20);
@@ -38,15 +47,18 @@ export default function ZFactorTab({ projectId, floorId }: { projectId: string, 
 
   const handleCalculateZ = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          width: sectionWidth,
-          accessSides: accessDirections,
-          heightAbove,
-          depthBelow: heightBelow,
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            width: sectionWidth,
+            accessSides: accessDirections,
+            heightAbove,
+            depthBelow: heightBelow,
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -64,9 +76,7 @@ export default function ZFactorTab({ projectId, floorId }: { projectId: string, 
     <div id="z-factor" className="tab-content mt-6">
       <div className="formula-card">
         <div className="mb-3 flex items-center justify-center">
-          <h3 className="text-primary text-lg font-semibold">
-            فرمول محاسبه z
-          </h3>
+          <h3 className="text-primary text-lg font-semibold">فرمول محاسبه z</h3>
           <button
             type="button"
             onClick={() => setShowZGuide((prev) => !prev)}
@@ -99,12 +109,11 @@ export default function ZFactorTab({ projectId, floorId }: { projectId: string, 
                 <b>Z</b> = تعداد جبهه‌های دسترسی آتش‌نشانی (۱ تا ۴).
               </li>
               <li>
-                <b>H⁺</b> = ارتفاعی که باید از سطح دسترسی تا محل حریق به
-                بالا رفت (متر).
+                <b>H⁺</b> = ارتفاعی که باید از سطح دسترسی تا محل حریق به بالا
+                رفت (متر).
               </li>
               <li>
-                <b>H⁻</b> = عمقی که باید به پایین رفت تا به محل حریق رسید
-                (متر).
+                <b>H⁻</b> = عمقی که باید به پایین رفت تا به محل حریق رسید (متر).
               </li>
             </ul>
 
@@ -113,8 +122,7 @@ export default function ZFactorTab({ projectId, floorId }: { projectId: string, 
             </p>
             <ul>
               <li>
-                ۲۰ متر = طول استاندارد یک شلنگ آتش‌نشانی در بسیاری از
-                کشورها.
+                ۲۰ متر = طول استاندارد یک شلنگ آتش‌نشانی در بسیاری از کشورها.
               </li>
               <li>۲۵ متر = ارتفاع مرجع نردبان هوایی.</li>
               <li>۳ متر = ارتفاع تقریبی یک زیرزمین.</li>
@@ -131,17 +139,14 @@ export default function ZFactorTab({ projectId, floorId }: { projectId: string, 
                 می‌کنیم تا بفهمیم چند شلنگ سری لازم است.
               </li>
               <li>
-                هر چه Z بیشتر باشد (دسترسی از چند سمت)، این عدد کوچک‌تر و
-                دسترسی آسان‌تر می‌شود.
+                هر چه Z بیشتر باشد (دسترسی از چند سمت)، این عدد کوچک‌تر و دسترسی
+                آسان‌تر می‌شود.
               </li>
             </ul>
 
             <h4 className="font-semibold flex items-center justify-center gap-1">
               ب) قسمت دوم:
-              <div
-                className="flex items-center justify-center gap-1"
-                dir="ltr"
-              >
+              <div className="flex items-center justify-center gap-1" dir="ltr">
                 <BlockMath math={"\\frac{H^+}{25}"} />
                 <span className="my-1 inline-block">یا</span>
                 <BlockMath math={"\\frac{H^-}{3}"} />
@@ -149,9 +154,8 @@ export default function ZFactorTab({ projectId, floorId }: { projectId: string, 
             </h4>
 
             <p>
-              <span className="font-semibold">بالا رفتن (H⁺):</span>{" "}
-              ارتفاع از محل توقف ماشین آتش‌نشانی تا طبقه محل حریق تقسیم بر
-              ۲۵ متر.
+              <span className="font-semibold">بالا رفتن (H⁺):</span> ارتفاع از
+              محل توقف ماشین آتش‌نشانی تا طبقه محل حریق تقسیم بر ۲۵ متر.
             </p>
             <ul className="">
               <li>۲۵ متر = طول مرجع نردبان‌ها و محدودیت پمپ آب.</li>
@@ -165,19 +169,17 @@ export default function ZFactorTab({ projectId, floorId }: { projectId: string, 
             </p>
             <ul className="">
               <li>
-                ۳ متر: ارتفاع معمولی یک طبقه زیرزمین؛ این عمق با دود/حرارت
-                جهت بالا کار را سخت‌تر می‌کند.
+                ۳ متر: ارتفاع معمولی یک طبقه زیرزمین؛ این عمق با دود/حرارت جهت
+                بالا کار را سخت‌تر می‌کند.
               </li>
             </ul>
 
             <h4 className="font-semibold">پ) قسمت سوم: INT[…]</h4>
-            <p>
-              INT یعنی فقط قسمت صحیح عدد محاسبه‌شده بدون گرد کردن اعشار.
-            </p>
+            <p>INT یعنی فقط قسمت صحیح عدد محاسبه‌شده بدون گرد کردن اعشار.</p>
 
             <p>
-              <b>محدوده z:</b> از 1.00 (دسترسی عالی) تا حدود 1.20 (محدود)
-              یا بیشتر در شرایط خاص.
+              <b>محدوده z:</b> از 1.00 (دسترسی عالی) تا حدود 1.20 (محدود) یا
+              بیشتر در شرایط خاص.
             </p>
           </div>
         )}
@@ -186,11 +188,10 @@ export default function ZFactorTab({ projectId, floorId }: { projectId: string, 
       <div className="help-card">
         <div className="text-primary mb-3 font-semibold">توضیحات</div>
         <div className="text-gray-500 leading-relaxed text-sm dark:text-white">
-          ضریب دسترسی میزان سهولت دسترسی آتش‌نشانان به محل را نشان می‌دهد.
-          INT بخش صحیح عدد است. برای طبقات بالا از H+ و برای زیرزمین از H-
-          استفاده کنید. <br />
-          <b>Z:</b> تعداد جبهه‌های دسترسی مستقل آتش‌نشانی (عدد صحیح: 1 تا
-          4)
+          ضریب دسترسی میزان سهولت دسترسی آتش‌نشانان به محل را نشان می‌دهد. INT
+          بخش صحیح عدد است. برای طبقات بالا از H+ و برای زیرزمین از H- استفاده
+          کنید. <br />
+          <b>Z:</b> تعداد جبهه‌های دسترسی مستقل آتش‌نشانی (عدد صحیح: 1 تا 4)
         </div>
       </div>
 
@@ -219,18 +220,14 @@ export default function ZFactorTab({ projectId, floorId }: { projectId: string, 
             max="4"
             step="1"
             value={accessDirections}
-            onChange={(e) =>
-              setAccessDirections(parseInt(e.target.value) || 1)
-            }
+            onChange={(e) => setAccessDirections(parseInt(e.target.value) || 1)}
           />
           <span className="input-unit">عدد</span>
         </div>
       </div>
 
       <div className="input-group">
-        <label className="input-label">
-          ارتفاع بالای سطح دسترسی (H+)
-        </label>
+        <label className="input-label">ارتفاع بالای سطح دسترسی (H+)</label>
         <div className="input-wrapper">
           <input
             type="number"
@@ -259,12 +256,20 @@ export default function ZFactorTab({ projectId, floorId }: { projectId: string, 
         </div>
       </div>
 
-      <button className="btn btn-primary" onClick={() => handleCalculateZ.mutate()}>
+      <button
+        className="btn btn-primary"
+        onClick={() => handleCalculateZ.mutate()}
+      >
         محاسبه ضریب z
       </button>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_z ? assessment?.assessment.factor_z.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          <span>z = </span>
+          {assessment?.assessment.factor_z
+            ? assessment?.assessment.factor_z.toFixed(3)
+            : "-"}
+        </div>
       </div>
     </div>
   );

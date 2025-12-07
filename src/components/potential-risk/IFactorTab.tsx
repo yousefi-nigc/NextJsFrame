@@ -20,7 +20,13 @@ interface MWeightedRow {
   percent: number;
 }
 
-export default function IFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function IFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [showTWeightedTable, setShowTWeightedTable] = useState(false);
   const [showDimsModal, setShowDimsModal] = useState(false);
@@ -70,7 +76,9 @@ export default function IFactorTab({ projectId, floorId }: { projectId: string, 
 
       const response = data as AssessmentGetApiResponse;
 
-      setTempDestruction(response.assessment.tempDestruction?.toString() ?? "250");
+      setTempDestruction(
+        response.assessment.tempDestruction?.toString() ?? "250"
+      );
       setAvgDimension(response.assessment.avgDimension?.toString() ?? "0.3");
       setFireClass(response.assessment.materialClass?.toString() ?? "5");
 
@@ -248,12 +256,12 @@ export default function IFactorTab({ projectId, floorId }: { projectId: string, 
         <div className="text-gray-500 leading-relaxed text-sm dark:text-white">
           <ul className="list-disc text-sm pr-5">
             <li className="mb-1.5">
-              <b>i</b> بیانگر سرعت و نرخ رشد آتش است. هر چه مقدار بالاتر
-              باشد، رشد آتش سریع‌تر است.
+              <b>i</b> بیانگر سرعت و نرخ رشد آتش است. هر چه مقدار بالاتر باشد،
+              رشد آتش سریع‌تر است.
             </li>
             <li className="mb-1.5">
-              مقدار <b>i</b> معمولاً بین <b>0.5 تا 1.65</b> (سقف تجربی:
-              0.4 تا 1.8) قرار می‌گیرد.
+              مقدار <b>i</b> معمولاً بین <b>0.5 تا 1.65</b> (سقف تجربی: 0.4 تا
+              1.8) قرار می‌گیرد.
             </li>
             <li className="mb-1.5">
               ارتباط i با &quot;نرخ آزادسازی گرما HRR&quot;:
@@ -276,9 +284,7 @@ export default function IFactorTab({ projectId, floorId }: { projectId: string, 
 
       {/* Temperature Selection */}
       <div className="input-group">
-        <label className="input-label">
-          دمای تخریب T (درجه سانتیگراد)
-        </label>
+        <label className="input-label">دمای تخریب T (درجه سانتیگراد)</label>
         <select
           id="temp-destruction"
           value={tempDestruction}
@@ -532,15 +538,13 @@ export default function IFactorTab({ projectId, floorId }: { projectId: string, 
           }}
           className="w-full p-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-[#2c3e50] dark:text-white"
         >
-          <option value="0">
-            A1 - طبق EN13501-1 یا غیرقابل‌احتراق (M=0)
-          </option>
+          <option value="0">A1 - طبق EN13501-1 یا غیرقابل‌احتراق (M=0)</option>
           <option value="0.5">
             A2 - طبق EN13501-1 یا تقریباً غیرقابل‌احتراق (M=0.5)
           </option>
           <option value="1">
-            B - طبق EN13501 یا EN12845 Cat. I : سخت برای اشتعال
-            (خودخاموش‌شونده) (M=1)
+            B - طبق EN13501 یا EN12845 Cat. I : سخت برای اشتعال (خودخاموش‌شونده)
+            (M=1)
           </option>
           <option value="2">C - طبق EN13501-1 : مواد کندسوز (M=2)</option>
           <option value="3">

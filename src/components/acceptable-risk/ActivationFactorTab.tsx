@@ -3,9 +3,18 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
-export default function ActivationFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function ActivationFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [mainActivity, setMainActivity] = useState("0");
   const [energySource, setEnergySource] = useState("0");
@@ -31,12 +40,24 @@ export default function ActivationFactorTab({ projectId, floorId }: { projectId:
 
       setMainActivity(response.assessment.mainActivity?.toString() ?? "0");
       setEnergySource(response.assessment.energySource?.toString() ?? "0");
-      setHeatTransferType(response.assessment.heatTransferType?.toString() ?? "0");
-      setGeneratorLocation(response.assessment.generatorLocation?.toString() ?? "0");
-      setElectricalSystem(response.assessment.electricalSystem?.toString() ?? "0");
-      setFlammableLiquids(response.assessment.flammableLiquids?.toString() ?? "0");
-      setCombustibleDust(response.assessment.combustibleDust?.toString() ?? "0");
-      setPaintingSpraying(response.assessment.secondaryActivity?.toString() ?? "0");
+      setHeatTransferType(
+        response.assessment.heatTransferType?.toString() ?? "0"
+      );
+      setGeneratorLocation(
+        response.assessment.generatorLocation?.toString() ?? "0"
+      );
+      setElectricalSystem(
+        response.assessment.electricalSystem?.toString() ?? "0"
+      );
+      setFlammableLiquids(
+        response.assessment.flammableLiquids?.toString() ?? "0"
+      );
+      setCombustibleDust(
+        response.assessment.combustibleDust?.toString() ?? "0"
+      );
+      setPaintingSpraying(
+        response.assessment.secondaryActivity?.toString() ?? "0"
+      );
 
       return response;
     },
@@ -44,19 +65,22 @@ export default function ActivationFactorTab({ projectId, floorId }: { projectId:
 
   const handleCalculateA = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          mainActivity: parseFloat(mainActivity),
-          energySource: parseFloat(energySource),
-          heatTransferType: parseFloat(heatTransferType),
-          generatorLocation: parseFloat(generatorLocation),
-          electricalSystem: parseFloat(electricalSystem),
-          flammableLiquids: parseFloat(flammableLiquids),
-          combustibleDust: parseFloat(combustibleDust),
-          secondaryActivity: parseFloat(paintingSpraying),
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            mainActivity: parseFloat(mainActivity),
+            energySource: parseFloat(energySource),
+            heatTransferType: parseFloat(heatTransferType),
+            generatorLocation: parseFloat(generatorLocation),
+            electricalSystem: parseFloat(electricalSystem),
+            flammableLiquids: parseFloat(flammableLiquids),
+            combustibleDust: parseFloat(combustibleDust),
+            secondaryActivity: parseFloat(paintingSpraying),
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -93,7 +117,9 @@ export default function ActivationFactorTab({ projectId, floorId }: { projectId:
         >
           <option value="0">A1 - کاربری غیرصنعتی: اداری، مسکونی، آموزشی</option>
           <option value="0">A2 - صنایع محصولات غیرقابل احتراق (OH1)</option>
-          <option value="0.2">B - صنایع عمومی/فروشگاه‌های بزرگ (OH2–OH3)</option>
+          <option value="0.2">
+            B - صنایع عمومی/فروشگاه‌های بزرگ (OH2–OH3)
+          </option>
           <option value="0.4">
             C - صنایع محصولات قابل احتراق (OH4 / HH1–HH4)
           </option>
@@ -196,14 +222,20 @@ export default function ActivationFactorTab({ projectId, floorId }: { projectId:
         </select>
       </div>
 
-      <button className="btn btn-primary" onClick={() => handleCalculateA.mutate()}>
+      <button
+        className="btn btn-primary"
+        onClick={() => handleCalculateA.mutate()}
+      >
         محاسبه ضریب a
       </button>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_a ? assessment?.assessment.factor_a.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          {assessment?.assessment.factor_a
+            ? assessment?.assessment.factor_a.toFixed(3)
+            : "-"}
+        </div>
       </div>
     </div>
   );
 }
-
