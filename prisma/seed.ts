@@ -1,10 +1,6 @@
 import "dotenv/config";
 import { PrismaClient } from "./generated";
-import { randomBytes } from "crypto";
-import { scrypt } from "crypto";
-import { promisify } from "util";
-
-const scryptAsync = promisify(scrypt);
+import { randomBytes, scrypt } from "crypto";
 
 // Create Prisma client for seeding
 const db = new PrismaClient({
@@ -14,8 +10,23 @@ const db = new PrismaClient({
 // Hash password function (matching Better Auth's format)
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16);
-  const hash = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `$scrypt$N=16384,r=8,p=1$${salt.toString("base64")}$${hash.toString("base64")}`;
+  const N = 16384; // cost factor (2^14)
+  const r = 8; // block size
+  const p = 1; // parallelization
+
+  // Use scrypt with callback (matching src/lib/password.ts)
+  const hash = await new Promise<Buffer>((resolve, reject) => {
+    scrypt(password, salt, 64, { N, r, p }, (err, derivedKey) => {
+      if (err) reject(err);
+      else resolve(derivedKey);
+    });
+  });
+
+  // Better Auth format: $scrypt$N$r$p$salt$hash
+  const saltBase64 = salt.toString("base64");
+  const hashBase64 = hash.toString("base64");
+
+  return `$scrypt$${N}$${r}$${p}$${saltBase64}$${hashBase64}`;
 }
 
 async function main() {

@@ -42,7 +42,7 @@ yarn-error.log*
 next-env.d.ts
 
 # prisma
-prisma/generated
+/prisma/generated
 
 # IDE
 .vscode/
