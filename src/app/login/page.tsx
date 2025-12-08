@@ -26,7 +26,7 @@ export default function LoginPage() {
       const role = session?.user.role;
 
       if (result.error) {
-        setError(result.error.message || "Failed to sign in");
+        setError(result.error.message || "ورود ناموفق بود");
       } else {
         // Redirect to dashboard on success
         if (role === "admin") {
@@ -38,7 +38,7 @@ export default function LoginPage() {
         }
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError("خطای غیرمنتظره‌ای رخ داد");
     } finally {
       setLoading(false);
     }
@@ -46,16 +46,16 @@ export default function LoginPage() {
 
   return (
     <div
-      dir="ltr"
+      dir="rtl"
       className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black px-4"
     >
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white dark:bg-zinc-900 p-8 shadow-lg">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-black dark:text-zinc-50">
-            Welcome back
+            خوش آمدید
           </h1>
           <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-            Sign in to your account to continue
+            برای ادامه وارد حساب کاربری خود شوید
           </p>
         </div>
 
@@ -72,7 +72,7 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
               >
-                Email address
+                آدرس ایمیل
               </label>
               <input
                 id="email"
@@ -92,7 +92,7 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
               >
-                Password
+                رمز عبور
               </label>
               <input
                 id="password"
@@ -114,7 +114,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-lg bg-black dark:bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-white dark:text-black transition-colors hover:bg-zinc-800 dark:hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "در حال ورود..." : "ورود"}
             </button>
           </div>
         </form>
