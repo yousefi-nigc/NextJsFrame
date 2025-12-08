@@ -45,8 +45,9 @@ export default function EvacuationTimeTab({
 
       // Use stored key if available, otherwise fall back to value mapping
       const storedKey = response.assessment.occupantFactorKey ?? "";
-      const occFactorValue = response.assessment.occupantFactor?.toString() ?? "";
-      
+      const occFactorValue =
+        response.assessment.occupantFactor?.toString() ?? "";
+
       if (storedKey) {
         // Use the stored key directly (this preserves the exact selection)
         setOccupantFactorKey(storedKey);
@@ -124,12 +125,12 @@ export default function EvacuationTimeTab({
           }),
         }
       );
-      
+
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || "Failed to calculate t factor");
       }
-      
+
       return res.json();
     },
     onSuccess: (data) => {
@@ -148,14 +149,46 @@ export default function EvacuationTimeTab({
         <div className="text-info mb-2 text-base font-semibold">
           فرمول محاسبه t (FRAME 2015)
         </div>
+
         <div className="formula-content">
           <BlockMath
             math={`
-t = \\frac{p \\times \\left[(b + l) + \\frac{X}{x} + 1.25\\,H^{+} + 2\\,H^{-} \\right]
-\\times \\left[x \\times (b + l)\\right]}{800 \\times K \\times \\left[1.4\\,x\\,(b + l) -
-0.44\\,X \\right]}
-        `}
+t = \\frac{
+  p \\times \\left[(b + l) + \\frac{X}{x} + 1.25\\,H^{+} + 2\\,H^{-} \\right]
+  \\times \\left[x \\times (b + l)\\right]
+}{
+  800 \\times K \\times \\left[1.4\\,x\\,(b + l) - 0.44\\,X \\right]
+}
+      `}
           />
+        </div>
+
+        <div className="formula-description mt-4 space-y-1 text-sm leading-7">
+          <p>
+            <strong>t:</strong> ضریب زمان تخلیه بر اساس FRAME 2015
+          </p>
+          <p>
+            <strong>b, l:</strong> عرض و طول بخش (متر) – اگر خالی باشد از نتایج
+            ضریب g استفاده می‌شود
+          </p>
+          <p>
+            <strong>X:</strong> تعداد کل افراد – از ورودی یا ضریب اشغال
+          </p>
+          <p>
+            <strong>x:</strong> تعداد واحدهای خروج (هر 0.6m = 1 واحد)
+          </p>
+          <p>
+            <strong>K:</strong> عرض مؤثر کل خروج‌ها (متر)
+          </p>
+          <p>
+            <strong>p:</strong> ضریب تحرک افراد
+          </p>
+          <p>
+            <strong>
+              H<sup>+</sup> / H<sup>-</sup>:
+            </strong>{" "}
+            ارتفاع یا عمق نسبت به سطح دسترسی
+          </p>
         </div>
       </div>
 
@@ -169,19 +202,19 @@ t = \\frac{p \\times \\left[(b + l) + \\frac{X}{x} + 1.25\\,H^{+} + 2\\,H^{-} \\
             // Map key to actual value for calculation
             const valueMap: Record<string, string> = {
               "": "",
-              "waiting": "3",
+              waiting: "3",
               "gathering-dense": "1.5",
               "gathering-normal": "0.6",
-              "school": "0.5",
-              "kindergarten": "0.3",
-              "technical": "0.2",
-              "medical": "0.1",
-              "residential": "0.05",
+              school: "0.5",
+              kindergarten: "0.3",
+              technical: "0.2",
+              medical: "0.1",
+              residential: "0.05",
               "sales-level": "0.3",
               "sales-upper": "0.2",
-              "office": "0.1",
-              "factory": "0.03",
-              "warehouse": "0.003",
+              office: "0.1",
+              factory: "0.03",
+              warehouse: "0.003",
             };
             setOccupantFactor(valueMap[key] || "");
           }}
@@ -340,6 +373,102 @@ t = \\frac{p \\times \\left[(b + l) + \\frac{X}{x} + 1.25\\,H^{+} + 2\\,H^{-} \\
             ? assessment?.assessment.factor_t.toFixed(3)
             : "-"}
         </div>
+      </div>
+
+      <div className="quick-reference mt-8">
+        <h4 className="text-lg font-semibold mb-4 text-black dark:text-white">
+          جدول مرجع سریع زمان تخلیه
+        </h4>
+
+        <table className="w-full border-collapse reference-table text-right text-sm">
+          <thead>
+            <tr className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+              <th className="p-3 border border-gray-300 dark:border-gray-600">
+                زمان تخلیه (دقیقه)
+              </th>
+              <th className="p-3 border border-gray-300 dark:border-gray-600">
+                ضریب t
+              </th>
+              <th className="p-3 border border-gray-300 dark:border-gray-600">
+                وضعیت
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr className="bg-green-100 dark:bg-green-900/40">
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                ≤ 1
+              </td>
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                0
+              </td>
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                عالی
+              </td>
+            </tr>
+
+            <tr className="bg-emerald-100 dark:bg-emerald-900/40">
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                1-2
+              </td>
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                0.1
+              </td>
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                خوب
+              </td>
+            </tr>
+
+            <tr className="bg-yellow-100 dark:bg-yellow-900/40">
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                2-3
+              </td>
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                0.2
+              </td>
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                متوسط
+              </td>
+            </tr>
+
+            <tr className="bg-orange-100 dark:bg-orange-900/40">
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                3-4
+              </td>
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                0.3
+              </td>
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                نیاز به بهبود
+              </td>
+            </tr>
+
+            <tr className="bg-red-100 dark:bg-red-900/40">
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                4-5
+              </td>
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                0.4
+              </td>
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                بحرانی
+              </td>
+            </tr>
+
+            <tr className="bg-red-200 dark:bg-red-900/60">
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                &gt; 5
+              </td>
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                0.5
+              </td>
+              <td className="p-3 border border-gray-300 dark:border-gray-700">
+                غیرقابل قبول
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   );
