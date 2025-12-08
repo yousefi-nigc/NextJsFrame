@@ -4,7 +4,10 @@ import { useState } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
 interface SectionProps {
   title: string;
@@ -39,7 +42,13 @@ function Select({ value, onChange, children }: SelectProps) {
   );
 }
 
-export default function NFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function NFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [n1, setN1] = useState(0);
   const [n2, setN2] = useState(0);
@@ -72,16 +81,19 @@ export default function NFactorTab({ projectId, floorId }: { projectId: string, 
 
   const handleCalculateN = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          n1,
-          n2,
-          n3,
-          n4,
-          n5,
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            n1,
+            n2,
+            n3,
+            n4,
+            n5,
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -102,10 +114,7 @@ export default function NFactorTab({ projectId, floorId }: { projectId: string, 
           فرمول محاسبه N - ضریب حفاظت عادی
         </div>
 
-        <div
-          className="formula-content text-center text-base mt-3"
-          dir="ltr"
-        >
+        <div className="formula-content text-center text-base mt-3" dir="ltr">
           <BlockMath
             math={`N = 0.95^{n} \\quad \\text{که} \\quad n = n_1 + n_2 + n_3 + n_4 + n_5`}
           />
@@ -156,12 +165,19 @@ export default function NFactorTab({ projectId, floorId }: { projectId: string, 
         </Select>
       </Section>
 
-      <button className="btn btn-primary" onClick={() => handleCalculateN.mutate()}>
+      <button
+        className="btn btn-primary"
+        onClick={() => handleCalculateN.mutate()}
+      >
         محاسبه ضریب N
       </button>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_N ? assessment?.assessment.factor_N.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          {assessment?.assessment.factor_N
+            ? assessment?.assessment.factor_N.toFixed(3)
+            : "-"}
+        </div>
       </div>
     </div>
   );
