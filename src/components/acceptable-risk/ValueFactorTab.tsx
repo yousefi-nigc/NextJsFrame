@@ -59,26 +59,26 @@ export default function ValueFactorTab({
   const [valueTotal, setValueTotal] = useState<string>("");
   const [valueYear, setValueYear] = useState<string>("");
   const [showCalcDescription, setShowCalcDescription] = useState(false);
-  
+
   // Calculate display values (matching old script.js format)
   const calculateDisplayValues = () => {
     const c1 = parseFloat(replaceability) || 0;
     let c2 = 0;
     let calcData: { eur2000: number; eurThisYear: number } | null = null;
-    
+
     const valRial = valueTotal ? parseFloat(valueTotal) : 0;
     const year = valueYear ? parseInt(valueYear) : NaN;
-    
+
     if (valRial && year) {
       calcData = convertIranValueTo2000EUR(valRial, year);
       if (calcData && calcData.eur2000 > 7100000) {
         c2 = 0.25 * Math.log10(calcData.eur2000 / 7100000);
       }
     }
-    
+
     return { c1, c2, calcData, c: c1 + c2 };
   };
-  
+
   const displayValues = calculateDisplayValues();
 
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
@@ -128,12 +128,12 @@ export default function ValueFactorTab({
           }),
         }
       );
-      
+
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || "Failed to calculate c factor");
       }
-      
+
       return res.json();
     },
     onSuccess: (data) => {
@@ -244,18 +244,37 @@ export default function ValueFactorTab({
       </button>
 
       <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
-        <div className="result-value" style={{ direction: "ltr", textAlign: "left" }}>
-          {assessment?.assessment.factor_c !== null && assessment?.assessment.factor_c !== undefined ? (
+        <div className="result-value">
+          {assessment?.assessment.factor_c !== null &&
+          assessment?.assessment.factor_c !== undefined ? (
             <>
-              <div style={{ fontSize: "1.2em", fontWeight: "bold", marginBottom: "0.5em" }}>
+              <div>
                 c = {assessment.assessment.factor_c.toFixed(3)}
-                <span style={{ fontSize: "0.9em", fontWeight: "normal", color: "#666" }}>
-                  {" "}(c₁={displayValues.c1.toFixed(2)}, c₂={displayValues.c2.toFixed(3)})
+                <span
+                  style={{
+                    fontSize: "0.9em",
+                    fontWeight: "normal",
+                    color: "#666",
+                  }}
+                >
+                  {" "}
+                  (c₁={displayValues.c1.toFixed(2)}, c₂=
+                  {displayValues.c2.toFixed(3)})
                 </span>
               </div>
               {displayValues.calcData && (
-                <div style={{ fontSize: "0.95em", color: "#555", marginTop: "0.3em" }}>
-                  € {displayValues.calcData.eur2000.toLocaleString("en-US", { maximumFractionDigits: 3 })} ≈ 2000 معادل سال
+                <div
+                  style={{
+                    fontSize: "0.95em",
+                    color: "#555",
+                    marginTop: "0.3em",
+                  }}
+                >
+                  €{" "}
+                  {displayValues.calcData.eur2000.toLocaleString("en-US", {
+                    maximumFractionDigits: 3,
+                  })}{" "}
+                  ≈ 2000 معادل سال
                 </div>
               )}
             </>
@@ -274,20 +293,85 @@ export default function ValueFactorTab({
       </button>
 
       {showCalcDescription && (
-        <div className="mt-2.5 p-4 border rounded-md bg-[#fafafa] leading-relaxed border-[#ccc] dark:bg-[#0f3460] dark:border-[#263238] dark:text-[#eceff1]">
-          <p className="font-bold mb-2">
+        <div
+          className="
+      mt-3 p-5 rounded-xl border bg-[#fafafa] dark:bg-[#0f3460]
+      border-[#d0d0d0] dark:border-[#24303a]
+      leading-relaxed text-[15px] font-vazir shadow-sm
+    "
+          dir="rtl"
+        >
+          {/* Title */}
+          <p className="font-bold text-black dark:text-blue-200 mb-3 text-lg">
             فرآیند تبدیل و محاسبه c₂ بر پایه FRAME 2008:
           </p>
-          <p className="mb-2">1️⃣ ورود مقدار ارزش (ریال ایران) + سال شمسی</p>
-          <p className="mb-2">2️⃣ تبدیل به یورو همان سال با نرخ بانک مرکزی</p>
-          <p className="mb-2">
-            3️⃣ تعدیل با شاخص ساخت‌وساز ایران → یورو سال 2000
+
+          {/* Steps */}
+          <div className="space-y-1.5 text-gray-800 dark:text-gray-100">
+            <p>1️⃣ ورود مقدار ارزش (ریال ایران) + سال شمسی</p>
+            <p>2️⃣ تبدیل به یورو همان سال با نرخ بانک مرکزی</p>
+            <p>3️⃣ تعدیل با شاخص ساخت‌وساز ایران → یورو سال 2000</p>
+            <p>
+              4️⃣ مقایسه با آستانه ۷.۱ میلیون یورو و محاسبه c₂ طبق فرمول FRAME
+              2008
+            </p>
+            <p>5️⃣ جمع c₁ و c₂ برای استفاده در محاسبه سطح پذیرش (A)</p>
+          </div>
+
+          {/* Divider */}
+          <hr className="my-4 border-t border-gray-300 dark:border-gray-600" />
+
+          {/* Example Title */}
+          <p className="font-bold text-black dark:text-blue-200 mb-2">
+            مثال عددی (ساختمان خدماتی - سال 1404 / 2025):
           </p>
-          <p className="mb-2">
-            4️⃣ مقایسه با آستانه ۷.۱ میلیون یورو و محاسبه c₂ طبق فرمول FRAME 2008
+
+          <ul className="list-disc pr-5 space-y-1 text-gray-800 dark:text-gray-100">
+            <li>c₁ = 0.10 (جایگزینی با تأخیر کوتاه)</li>
+            <li>ارزش کل = 50٬000٬000٬000 ریال</li>
+            <li>سال ارزش جاری = 1404 (2025)</li>
+          </ul>
+
+          {/* Calculation Steps */}
+          <p className="font-bold mt-3 text-black dark:text-blue-200">
+            گام‌های محاسبه:
           </p>
-          <p className="mb-2">
-            5️⃣ جمع c₁ و c₂ برای استفاده در محاسبه سطح پذیرش (A)
+
+          <div className="space-y-2 mt-2 text-gray-800 dark:text-gray-100">
+            <p>🔹 نرخ یورو 2025 = 1٬100٬000 ریال/€</p>
+            <p>🔹 شاخص ساخت 2025 = 11٬400.0</p>
+
+            <p className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-md text-[14px] font-mono">
+              ارزش یورو همان سال = 50٬000٬000٬000 ÷ 1٬100٬000 ≈ 45٬454.55 €
+            </p>
+
+            <p className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-md text-[14px] font-mono">
+              ارزش معادل سال 2000 = 45٬454.55 ÷ (11400.0 ÷ 100) ≈ 398.72 €
+            </p>
+
+            <p>🔹 چون 398.72 € &lt; 7.1M € → c₂ = 0</p>
+          </div>
+
+          {/* Result */}
+          <p className="font-bold mt-4 text-black dark:text-blue-200">نتیجه:</p>
+
+          <p className="bg-green-100 dark:bg-green-800/40 px-3 py-1 mt-1 rounded-md text-[14px] font-mono text-green-900 dark:text-green-200">
+            c = 0.10 + 0 = 0.10
+          </p>
+
+          <p className="mt-1 text-gray-700 dark:text-gray-200 text-[14px]">
+            معادل سال 2000 ≈{" "}
+            <span className="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded font-mono">
+              398.72 €
+            </span>
+          </p>
+
+          {/* Footer Note */}
+          <hr className="my-4 border-t border-gray-300 dark:border-gray-600" />
+
+          <p className="text-gray-600 dark:text-gray-300 italic text-[13px]">
+            (خروجی واقعی کد هنگام وارد کردن همین داده‌ها باید با این محاسبات یکی
+            باشد)
           </p>
         </div>
       )}
