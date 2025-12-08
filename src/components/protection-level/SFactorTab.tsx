@@ -4,7 +4,10 @@ import { useState } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
 interface SectionProps {
   title: string;
@@ -39,7 +42,13 @@ function Select({ value, onChange, children }: SelectProps) {
   );
 }
 
-export default function SFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function SFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [s1, setS1] = useState(0);
   const [s2, setS2] = useState(0);
@@ -72,16 +81,19 @@ export default function SFactorTab({ projectId, floorId }: { projectId: string, 
 
   const handleCalculateS = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          detectionType: s1,
-          waterSupplyType: s2,
-          sprinklerType: s3,
-          fireStationType: s4,
-          industrialBrigade: s5,
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            detectionType: s1,
+            waterSupplyType: s2,
+            sprinklerType: s3,
+            fireStationType: s4,
+            industrialBrigade: s5,
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -126,9 +138,7 @@ export default function SFactorTab({ projectId, floorId }: { projectId: string, 
         <p className="text-sm">وضعیت منابع آب</p>
         <Select value={s2} onChange={setS2}>
           <option value={0}>منبع تک جریان/فشار</option>
-          <option value={5}>
-            قابل اطمینان بالا: یک مخزن + دو جریان/فشار
-          </option>
+          <option value={5}>قابل اطمینان بالا: یک مخزن + دو جریان/فشار</option>
           <option value={12}>دو مخزن مستقل هر کدام با جریان/فشار</option>
         </Select>
       </Section>
@@ -147,9 +157,7 @@ export default function SFactorTab({ projectId, floorId }: { projectId: string, 
         <p className="text-sm">نوع ایستگاه آتش‌نشانی</p>
         <Select value={s4} onChange={setS4}>
           <option value={8}>ایستگاه تمام‌وقت ۲۴ساعته در ۷ روز هفته</option>
-          <option value={6}>
-            ایستگاه نیمه‌وقت (روز تمام‌وقت، شب آنکال)
-          </option>
+          <option value={6}>ایستگاه نیمه‌وقت (روز تمام‌وقت، شب آنکال)</option>
           <option value={4}>ایستگاه با پرسنل پاره‌وقت</option>
           <option value={2}>ایستگاه داوطلب</option>
         </Select>
@@ -165,13 +173,20 @@ export default function SFactorTab({ projectId, floorId }: { projectId: string, 
       </Section>
 
       <div>
-        <button className="btn btn-primary" onClick={() => handleCalculateS.mutate()}>
+        <button
+          className="btn btn-primary"
+          onClick={() => handleCalculateS.mutate()}
+        >
           محاسبه ضریب S
         </button>
       </div>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_S ? assessment?.assessment.factor_S.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          {assessment?.assessment.factor_S
+            ? assessment?.assessment.factor_S.toFixed(3)
+            : "-"}
+        </div>
       </div>
     </div>
   );

@@ -4,9 +4,18 @@ import { useState } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
-export default function WFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function WFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [showW1Guide, setShowW1Guide] = useState(false);
   const [showW2Guide, setShowW2Guide] = useState(false);
@@ -14,7 +23,9 @@ export default function WFactorTab({ projectId, floorId }: { projectId: string, 
   const [showW4Guide, setShowW4Guide] = useState(false);
   const [waterStorageType, setWaterStorageType] = useState("auto");
   const [waterCapacity, setWaterCapacity] = useState<number>(0);
-  const [distributionNetwork, setDistributionNetwork] = useState<"adequate" | "limited" | "none">("adequate");
+  const [distributionNetwork, setDistributionNetwork] = useState<
+    "adequate" | "limited" | "none"
+  >("adequate");
   const [hydrant25, setHydrant25] = useState<number>(0);
   const [hydrant3, setHydrant3] = useState<number>(0);
   const [hydrant4, setHydrant4] = useState<number>(0);
@@ -35,7 +46,12 @@ export default function WFactorTab({ projectId, floorId }: { projectId: string, 
 
       setWaterStorageType(response.assessment.waterStorageType ?? "auto");
       setWaterCapacity(response.assessment.waterCapacity ?? 0);
-      setDistributionNetwork((response.assessment.distributionNetwork as "adequate" | "limited" | "none") ?? "adequate");
+      setDistributionNetwork(
+        (response.assessment.distributionNetwork as
+          | "adequate"
+          | "limited"
+          | "none") ?? "adequate"
+      );
       setHydrant25(response.assessment.hydrantCount25 ?? 0);
       setHydrant3(response.assessment.hydrantCount3 ?? 0);
       setHydrant4(response.assessment.hydrantCount4 ?? 0);
@@ -46,17 +62,20 @@ export default function WFactorTab({ projectId, floorId }: { projectId: string, 
 
   const handleCalculateW = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          waterStorageType,
-          waterCapacity,
-          distributionNetwork,
-          hydrantCount25: hydrant25,
-          hydrantCount3: hydrant3,
-          hydrantCount4: hydrant4,
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            waterStorageType,
+            waterCapacity,
+            distributionNetwork,
+            hydrantCount25: hydrant25,
+            hydrantCount3: hydrant3,
+            hydrantCount4: hydrant4,
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -88,8 +107,8 @@ export default function WFactorTab({ projectId, floorId }: { projectId: string, 
           راهنمای FRAME 2015 - ضریب تأمین آب (W)
         </div>
         <div className="text-gray-500 leading-relaxed text-sm dark:text-white">
-          ضریب W کیفیت و کفایت سیستم تأمین آب برای اطفای حریق را می‌سنجد. هر
-          ضعف در سیستم بر اساس جداول سند FRAME 2015 جریمه می‌گیرد.
+          ضریب W کیفیت و کفایت سیستم تأمین آب برای اطفای حریق را می‌سنجد. هر ضعف
+          در سیستم بر اساس جداول سند FRAME 2015 جریمه می‌گیرد.
         </div>
       </div>
 
@@ -187,7 +206,11 @@ export default function WFactorTab({ projectId, floorId }: { projectId: string, 
         <select
           id="distribution-network"
           value={distributionNetwork}
-          onChange={(e) => setDistributionNetwork(e.target.value as "adequate" | "limited" | "none")}
+          onChange={(e) =>
+            setDistributionNetwork(
+              e.target.value as "adequate" | "limited" | "none"
+            )
+          }
         >
           <option value="adequate">کافی (w₃=0)</option>
           <option value="limited">محدود (w₃=2)</option>
@@ -276,14 +299,20 @@ export default function WFactorTab({ projectId, floorId }: { projectId: string, 
         )}
       </div>
 
-      <button className="btn btn-primary" onClick={() => handleCalculateW.mutate()}>
+      <button
+        className="btn btn-primary"
+        onClick={() => handleCalculateW.mutate()}
+      >
         محاسبه W (FRAME 2015)
       </button>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_W ? assessment?.assessment.factor_W.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          {assessment?.assessment.factor_W
+            ? assessment?.assessment.factor_W.toFixed(3)
+            : "-"}
+        </div>
       </div>
     </div>
   );
 }
-

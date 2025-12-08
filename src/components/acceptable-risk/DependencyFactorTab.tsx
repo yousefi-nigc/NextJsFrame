@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
 function calculateD(
   dependencyType: string,
@@ -22,7 +25,13 @@ function calculateD(
   return null;
 }
 
-export default function DependencyFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function DependencyFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [dependencyType, setDependencyType] = useState<string>("");
   const [dependencyManual, setDependencyManual] = useState<string>("");
@@ -41,7 +50,9 @@ export default function DependencyFactorTab({ projectId, floorId }: { projectId:
       const response = data as AssessmentGetApiResponse;
 
       setDependencyType(response.assessment.dependencyType ?? "");
-      setDependencyManual(response.assessment.dependencyManual?.toString() ?? "");
+      setDependencyManual(
+        response.assessment.dependencyManual?.toString() ?? ""
+      );
 
       return response;
     },
@@ -58,13 +69,17 @@ export default function DependencyFactorTab({ projectId, floorId }: { projectId:
         throw new Error("لطفاً مقدار d را وارد کنید");
       }
 
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          dependencyType: dependencyType !== "manual" ? dependencyType : undefined,
-          dependencyManual: dependencyType === "manual" ? d : undefined,
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            dependencyType:
+              dependencyType !== "manual" ? dependencyType : undefined,
+            dependencyManual: dependencyType === "manual" ? d : undefined,
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -135,14 +150,20 @@ export default function DependencyFactorTab({ projectId, floorId }: { projectId:
         />
       </div>
 
-      <button className="btn btn-primary" onClick={() => handleCalculate.mutate()}>
+      <button
+        className="btn btn-primary"
+        onClick={() => handleCalculate.mutate()}
+      >
         محاسبه ضریب d
       </button>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_d ? assessment?.assessment.factor_d.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          {assessment?.assessment.factor_d
+            ? assessment?.assessment.factor_d.toFixed(3)
+            : "-"}
+        </div>
       </div>
     </div>
   );
 }
-
