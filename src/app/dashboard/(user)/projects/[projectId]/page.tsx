@@ -268,10 +268,10 @@ export default function ProjectEditPage() {
           <table className="w-full text-sm text-right table-fixed">
             <thead className="bg-gray-100 dark:bg-[#ffffff11] font-semibold">
               <tr>
-                <th className="w-2/3 md:w-[80%] xl:w-5/7 font-semibold p-3 border-b border-gray-300 dark:border-gray-700 whitespace-nowrap md:text-lg">
+                <th className="w-2/3 md:w-[80%] font-semibold p-3 border-b border-gray-300 dark:border-gray-700 whitespace-nowrap md:text-lg">
                   طبقات
                 </th>
-                <th className="w-1/3 md:w-[20%] xl:w-2/7 font-semibold p-3 border-b border-gray-300 dark:border-gray-700 whitespace-nowrap md:text-lg">
+                <th className="w-1/3 md:w-[20%] font-semibold p-3 border-b border-gray-300 dark:border-gray-700 whitespace-nowrap md:text-lg">
                   عملیات
                 </th>
               </tr>
