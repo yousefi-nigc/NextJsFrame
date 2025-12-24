@@ -76,11 +76,63 @@ export default function IFactorTab({
 
       const response = data as AssessmentGetApiResponse;
 
-      setTempDestruction(
-        response.assessment.tempDestruction?.toString() ?? "250"
-      );
+      // Restore temperature selection (single or multi)
+      if (response.assessment.tempDestructionMulti) {
+        try {
+          const savedTemps = JSON.parse(response.assessment.tempDestructionMulti);
+          if (Array.isArray(savedTemps) && savedTemps.length > 0) {
+            setTempDestruction("multi");
+            setShowTWeightedTable(true);
+            const restoredRows = tWeightedRows.map((row) => {
+              const saved = savedTemps.find((s: any) => s.t === row.t);
+              if (saved) {
+                return { ...row, checked: true, percent: saved.percent || 0 };
+              }
+              return { ...row, checked: false, percent: 0 };
+            });
+            setTWeightedRows(restoredRows);
+          } else {
+            setTempDestruction(
+              response.assessment.tempDestruction?.toString() ?? "250"
+            );
+          }
+        } catch (e) {
+          setTempDestruction(
+            response.assessment.tempDestruction?.toString() ?? "250"
+          );
+        }
+      } else {
+        setTempDestruction(
+          response.assessment.tempDestruction?.toString() ?? "250"
+        );
+      }
+
+      // Restore material class selection (single or multi)
+      if (response.assessment.materialClassMulti) {
+        try {
+          const savedClasses = JSON.parse(response.assessment.materialClassMulti);
+          if (Array.isArray(savedClasses) && savedClasses.length > 0) {
+            setFireClass("multi");
+            setShowMMultiSelect(true);
+            const restoredRows = mWeightedRows.map((row) => {
+              const saved = savedClasses.find((s: any) => s.m === row.m);
+              if (saved) {
+                return { ...row, checked: true, percent: saved.percent || 0 };
+              }
+              return { ...row, checked: false, percent: 0 };
+            });
+            setMWeightedRows(restoredRows);
+          } else {
+            setFireClass(response.assessment.materialClass?.toString() ?? "5");
+          }
+        } catch (e) {
+          setFireClass(response.assessment.materialClass?.toString() ?? "5");
+        }
+      } else {
+        setFireClass(response.assessment.materialClass?.toString() ?? "5");
+      }
+
       setAvgDimension(response.assessment.avgDimension?.toString() ?? "0.3");
-      setFireClass(response.assessment.materialClass?.toString() ?? "5");
 
       return response;
     },
@@ -93,14 +145,23 @@ export default function IFactorTab({
 
     tWeightedRows.forEach((row) => {
       if (row.checked && row.percent > 0) {
-        weightedSum += row.t * (row.percent / 100);
+        weightedSum += row.t * row.percent;
         totalPercent += row.percent;
       }
     });
 
     if (totalPercent > 0) {
-      return weightedSum;
+      // Normalize by total percent to get correct weighted average
+      const result = weightedSum / totalPercent;
+      console.log("calculateWeightedT:", {
+        weightedSum,
+        totalPercent,
+        result,
+        rows: tWeightedRows.filter(r => r.checked && r.percent > 0)
+      });
+      return result;
     }
+    console.log("calculateWeightedT: No valid rows, returning default 250");
     return 250; // default
   };
 
@@ -111,13 +172,14 @@ export default function IFactorTab({
 
     mWeightedRows.forEach((row) => {
       if (row.checked && row.percent > 0) {
-        weightedSum += row.m * (row.percent / 100);
+        weightedSum += row.m * row.percent;
         totalPercent += row.percent;
       }
     });
 
     if (totalPercent > 0) {
-      return weightedSum;
+      // Normalize by total percent to get correct weighted average
+      return weightedSum / totalPercent;
     }
     return 5; // default
   };
@@ -166,9 +228,19 @@ export default function IFactorTab({
   const handleCalculateI = useMutation({
     mutationFn: async () => {
       // Get T value
-      let finalT = parseFloat(tempDestruction);
+      let finalT: number;
       if (tempDestruction === "multi") {
         finalT = calculateWeightedT();
+        // Validate that we have at least one selected temperature
+        const hasSelectedT = tWeightedRows.some(row => row.checked && row.percent > 0);
+        if (!hasSelectedT) {
+          throw new Error("لطفاً حداقل یک دما را انتخاب کرده و درصد معتبر وارد کنید");
+        }
+      } else {
+        finalT = parseFloat(tempDestruction);
+        if (isNaN(finalT) || finalT <= 0) {
+          finalT = 250; // default
+        }
       }
 
       // Get m value
@@ -186,19 +258,64 @@ export default function IFactorTab({
       }
 
       // Get M value
-      let finalMaterialClass = parseFloat(fireClass);
+      let finalMaterialClass: number;
       if (fireClass === "multi") {
         finalMaterialClass = calculateWeightedM();
+        // Validate that we have at least one selected material class
+        const hasSelectedM = mWeightedRows.some(row => row.checked && row.percent > 0);
+        if (!hasSelectedM) {
+          throw new Error("لطفاً حداقل یک کلاس را انتخاب کرده و درصد معتبر وارد کنید");
+        }
+      } else {
+        finalMaterialClass = parseFloat(fireClass);
+        if (isNaN(finalMaterialClass) || finalMaterialClass < 0) {
+          finalMaterialClass = 5; // default
+        }
+      }
+
+      // Debug: log the values being sent
+      const selectedTemps = tempDestruction === "multi"
+        ? tWeightedRows
+            .filter((row) => row.checked && row.percent > 0)
+            .map((row) => ({ t: row.t, percent: row.percent }))
+        : [];
+
+      const selectedClasses = fireClass === "multi"
+        ? mWeightedRows
+            .filter((row) => row.checked && row.percent > 0)
+            .map((row) => ({ m: row.m, percent: row.percent }))
+        : [];
+
+      console.log("Calculating I with:", {
+        tempDestruction: finalT,
+        avgDimension: finalM,
+        materialClass: finalMaterialClass,
+        isMultiT: tempDestruction === "multi",
+        isMultiM: fireClass === "multi",
+        selectedTemps,
+        selectedClasses,
+      });
+
+      // Build payload without sending nulls (omit when not in multi mode)
+      const payload: Record<string, any> = {
+        tempDestruction: finalT,
+        avgDimension: finalM,
+        materialClass: finalMaterialClass,
+        // default clear; will overwrite below if multi with data
+        tempDestructionMulti: null,
+        materialClassMulti: null,
+      };
+      if (tempDestruction === "multi" && selectedTemps.length > 0) {
+        payload.tempDestructionMulti = JSON.stringify(selectedTemps);
+      }
+      if (fireClass === "multi" && selectedClasses.length > 0) {
+        payload.materialClassMulti = JSON.stringify(selectedClasses);
       }
 
       const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tempDestruction: finalT,
-          avgDimension: finalM,
-          materialClass: finalMaterialClass,
-        }),
+        body: JSON.stringify(payload),
       });
       
       if (!res.ok) {

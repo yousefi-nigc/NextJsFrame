@@ -19,8 +19,8 @@ export default function PotentialRisk({ }) {
   const tabs = [
     { id: "q-factor", label: "ضریب بار آتش (q)" },
     { id: "i-factor", label: "ضریب گسترش (i)" },
-    { id: "v-factor", label: "ضریب تهویه (v)" },
     { id: "g-factor", label: "ضریب سطح (g)" },
+    { id: "v-factor", label: "ضریب تهویه (v)" },
     { id: "e-factor", label: "ضریب طبقه (e)" },
     { id: "z-factor", label: "ضریب دسترسی (z)" },
   ];
@@ -78,12 +78,12 @@ export default function PotentialRisk({ }) {
           <IFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
-        {activeTab === "v-factor" && (
-          <VFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
-        )}
-
         {activeTab === "g-factor" && (
           <GFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
+        )}
+
+        {activeTab === "v-factor" && (
+          <VFactorTab projectId={projectId?.toString() || ""} floorId={floorId?.toString() || ""} />
         )}
 
         {activeTab === "e-factor" && (

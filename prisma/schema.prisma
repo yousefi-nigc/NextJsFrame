@@ -133,8 +133,10 @@ model Assessment {
   qi              Float? // Fire Load Fixed (MJ/m2)
   qm              Float? // Fire Load Mobile (MJ/m2)
   tempDestruction Float? // T (Degrees C)
+  tempDestructionMulti String? // JSON string of selected T rows with percents
   avgDimension    Float? // m (Meters)
   materialClass   Float? // M (0 to 5)
+  materialClassMulti String? // JSON string of selected M rows with percents
 
   // Geometry
   length     Float? // l

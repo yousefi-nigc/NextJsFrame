@@ -1,11 +1,6 @@
-// Only load dotenv if DATABASE_URL is not set
-if (!process.env.DATABASE_URL) {
-  try {
-    require("dotenv/config");
-  } catch {
-    // dotenv not available, which is fine if env vars are set
-  }
-}
+// Load dotenv first, before any Prisma imports
+import { config } from "dotenv";
+config({ path: ".env" });
 
 import { PrismaClient } from "./generated";
 import { randomBytes, scrypt } from "crypto";

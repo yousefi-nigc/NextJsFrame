@@ -28,8 +28,10 @@ export interface AssessmentResponse {
   qi: number | null;
   qm: number | null;
   tempDestruction: number | null;
+  tempDestructionMulti: string | null;
   avgDimension: number | null;
   materialClass: number | null;
+  materialClassMulti: string | null;
   
   // Geometry
   length: number | null;

@@ -33,8 +33,10 @@ export async function updateAssessmentService({
             qi: existing.qi ?? undefined,
             qm: existing.qm ?? undefined,
             tempDestruction: existing.tempDestruction ?? undefined,
+            tempDestructionMulti: existing.tempDestructionMulti ?? undefined,
             avgDimension: existing.avgDimension ?? undefined,
             materialClass: existing.materialClass ?? undefined,
+            materialClassMulti: existing.materialClassMulti ?? undefined,
             length: existing.length ?? undefined,
             width: existing.width ?? undefined,
             area: existing.area ?? undefined,
@@ -112,9 +114,10 @@ export async function updateAssessmentService({
         const mergedInputs: any = { ...currentInputs };
         Object.keys(inputs).forEach(key => {
             const value = inputs[key as keyof typeof inputs];
-            // Only update if value is explicitly provided (not undefined and not null)
-            // This prevents accidental overwriting of existing values
-            if (value !== undefined && value !== null) {
+            // For most fields, ignore undefined/null to avoid accidental overwrite
+            // For tempDestructionMulti/materialClassMulti we allow null to clear previous values
+            const allowNullClear = key === "tempDestructionMulti" || key === "materialClassMulti";
+            if (value !== undefined && (allowNullClear || value !== null)) {
                 mergedInputs[key] = value;
             }
         });
@@ -134,8 +137,10 @@ export async function updateAssessmentService({
                 ...(inputs.qi !== undefined && inputs.qi !== null && { qi: inputs.qi }),
                 ...(inputs.qm !== undefined && inputs.qm !== null && { qm: inputs.qm }),
                 ...(inputs.tempDestruction !== undefined && inputs.tempDestruction !== null && { tempDestruction: inputs.tempDestruction }),
+                ...(inputs.tempDestructionMulti !== undefined && { tempDestructionMulti: inputs.tempDestructionMulti ?? null }),
                 ...(inputs.avgDimension !== undefined && inputs.avgDimension !== null && { avgDimension: inputs.avgDimension }),
                 ...(inputs.materialClass !== undefined && inputs.materialClass !== null && { materialClass: inputs.materialClass }),
+                ...(inputs.materialClassMulti !== undefined && { materialClassMulti: inputs.materialClassMulti ?? null }),
                 ...(inputs.length !== undefined && inputs.length !== null && { length: inputs.length }),
                 ...(inputs.width !== undefined && inputs.width !== null && { width: inputs.width }),
                 ...(inputs.area !== undefined && inputs.area !== null && { area: inputs.area }),

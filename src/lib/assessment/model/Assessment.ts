@@ -23,8 +23,10 @@ export const createAssessmentValidationSchema = z.object({
     qi: z.number().min(0).optional(),
     qm: z.number().min(0).optional(),
     tempDestruction: z.number().min(20).max(800).optional(),
+    tempDestructionMulti: z.string().nullable().optional(), // JSON string of weighted T selections
     avgDimension: z.number().min(0.001).max(10).optional(),
     materialClass: z.number().min(0).max(5).optional(),
+    materialClassMulti: z.string().nullable().optional(), // JSON string of weighted M selections
     
     // Geometry
     length: z.number().min(0).optional(),
