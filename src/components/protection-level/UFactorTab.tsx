@@ -4,9 +4,18 @@ import { useState } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
-export default function UFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function UFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [subcompartment, setSubcompartment] = useState(0);
   const [stairways, setStairways] = useState(0);
@@ -37,15 +46,18 @@ export default function UFactorTab({ projectId, floorId }: { projectId: string, 
 
   const handleCalculateU = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          subcompartment,
-          stairways,
-          horizontalExit,
-          sprinklers,
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            subcompartment,
+            stairways,
+            horizontalExit,
+            sprinklers,
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -73,18 +85,13 @@ export default function UFactorTab({ projectId, floorId }: { projectId: string, 
       </div>
 
       <div className="help-card">
-        <div className="mb-2 font-semibold text-primary">
-          توضیحات کاربردی
-        </div>
+        <div className="mb-2 font-semibold text-primary">توضیحات کاربردی</div>
         <div className="text-gray-500 leading-relaxed text-sm dark:text-white">
           ضریب U بیانگر اثربخشی شرایط فرار و نجات در ساختمان است و از مجموع
           امتیازهای چهار بخش اصلی محاسبه می‌شود:
-          <b>
-            {" "}
-            بخش‌بندی فرعی، نوع پله‌های تخلیه، خروج افقی، حفاظت اسپرینکلر{" "}
-          </b>
-          . هر گزینه در این بخش‌ها بسته به سطح حفاظت و تسهیل مسیر فرار،
-          امتیاز مثبت می‌گیرد. مجموع امتیازها (u) در فرمول
+          <b> بخش‌بندی فرعی، نوع پله‌های تخلیه، خروج افقی، حفاظت اسپرینکلر </b>.
+          هر گزینه در این بخش‌ها بسته به سطح حفاظت و تسهیل مسیر فرار، امتیاز
+          مثبت می‌گیرد. مجموع امتیازها (u) در فرمول
           <code className="mx-1 font-mono">U = 1.05ᵘ</code>
           قرار می‌گیرد؛ هرچه U بزرگ‌تر باشد، شرایط تخلیه مناسب‌تر است.
         </div>
@@ -116,11 +123,11 @@ export default function UFactorTab({ projectId, floorId }: { projectId: string, 
       >
         <b className="text-[#f57c00] dark:text-warning">راهنما:</b>
         <br />
-        <b>EI 30</b> یعنی دیوار/جداکننده‌ها ۳۰ دقیقه مقاومت حریق دارند (
-        <i>E</i> = یکپارچگی، <i>I</i> = عایق حرارتی).
+        <b>EI 30</b> یعنی دیوار/جداکننده‌ها ۳۰ دقیقه مقاومت حریق دارند (<i>E</i>{" "}
+        = یکپارچگی، <i>I</i> = عایق حرارتی).
         <br />
-        <b>EI 60</b> یعنی مقاومت حریق این جداکننده‌ها ۶۰ دقیقه است؛ حفاظت
-        بیشتر و زمان تخلیه امن‌تر.
+        <b>EI 60</b> یعنی مقاومت حریق این جداکننده‌ها ۶۰ دقیقه است؛ حفاظت بیشتر
+        و زمان تخلیه امن‌تر.
       </div>
 
       <div className="text-primary font-semibold mt-6 mb-2 border-r-4 border-primary pr-2">
@@ -178,22 +185,43 @@ export default function UFactorTab({ projectId, floorId }: { projectId: string, 
         </select>
       </div>
 
-      <button className="btn btn-primary mt-4" onClick={() => handleCalculateU.mutate()}>
+      <button
+        className="btn btn-primary mt-4"
+        onClick={() => handleCalculateU.mutate()}
+      >
         محاسبه ضریب U
       </button>
 
       <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
-        <div className="result-value" style={{ direction: "ltr", textAlign: "center" }}>
-          {assessment?.assessment.factor_U !== null && assessment?.assessment.factor_U !== undefined ? (
+        <div className="result-value">
+          {assessment?.assessment.factor_U !== null &&
+          assessment?.assessment.factor_U !== undefined ? (
             <>
-              <div style={{ fontSize: "1.2em", fontWeight: "bold", marginBottom: "0.5em" }}>
+              <div
+                style={{
+                  fontSize: "1.2em",
+                  fontWeight: "bold",
+                  marginBottom: "0.5em",
+                }}
+              >
                 U = {assessment.assessment.factor_U.toFixed(3)}
               </div>
               {(() => {
                 // Calculate u value for display (matching old script.js)
-                const u = (subcompartment ?? 0) + (stairways ?? 0) + (horizontalExit ?? 0) + (sprinklers ?? 0);
+                const u =
+                  (subcompartment ?? 0) +
+                  (stairways ?? 0) +
+                  (horizontalExit ?? 0) +
+                  (sprinklers ?? 0);
                 return (
-                  <div style={{ fontSize: "0.95em", color: "#2196F3", fontWeight: "bold", lineHeight: "1.8" }}>
+                  <div
+                    style={{
+                      fontSize: "0.95em",
+                      color: "#2196F3",
+                      fontWeight: "bold",
+                      lineHeight: "1.8",
+                    }}
+                  >
                     u = {u.toFixed(1)}
                   </div>
                 );

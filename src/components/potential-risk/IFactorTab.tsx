@@ -33,33 +33,103 @@ export default function IFactorTab({
   const [showITable, setShowITable] = useState(false);
   const [showMMultiSelect, setShowMMultiSelect] = useState(false);
   const [mMode, setMMode] = useState<"formula" | "reference">("reference");
-  
+
   const [tempDestruction, setTempDestruction] = useState("250");
   const [avgDimension, setAvgDimension] = useState("0.3");
   const [fireClass, setFireClass] = useState("5");
-  
+
   // Weighted T state
   const [tWeightedRows, setTWeightedRows] = useState<TWeightedRow[]>([
-    { t: 20, desc: "a. مایعات قابل‌اشتعال — 21°C تا 70°F (≈20°C میانگین)", checked: false, percent: 0 },
-    { t: 100, desc: "b. پلاستیک / لوازم الکترونیکی / انسان — 100°C (212°F)", checked: false, percent: 0 },
-    { t: 200, desc: "c. منسوجات، چوب، کاغذ، غذا — 200°C (400°F)", checked: false, percent: 0 },
-    { t: 250, desc: "d. متوسط محتویات ساختمان مسکونی — 250°C (482°F)", checked: false, percent: 0 },
-    { t: 300, desc: "e. ماشین‌آلات، لوازم خانگی — 300°C (572°F)", checked: false, percent: 0 },
-    { t: 400, desc: "f. اجسام فلزی — 400°C (752°F)", checked: false, percent: 0 },
-    { t: 500, desc: "g. مواد غیرقابل‌احتراق (مصالح ساختمانی) — 500°C (932°F)", checked: false, percent: 0 },
+    {
+      t: 20,
+      desc: "a. مایعات قابل‌اشتعال — 21°C تا 70°F (≈20°C میانگین)",
+      checked: false,
+      percent: 0,
+    },
+    {
+      t: 100,
+      desc: "b. پلاستیک / لوازم الکترونیکی / انسان — 100°C (212°F)",
+      checked: false,
+      percent: 0,
+    },
+    {
+      t: 200,
+      desc: "c. منسوجات، چوب، کاغذ، غذا — 200°C (400°F)",
+      checked: false,
+      percent: 0,
+    },
+    {
+      t: 250,
+      desc: "d. متوسط محتویات ساختمان مسکونی — 250°C (482°F)",
+      checked: false,
+      percent: 0,
+    },
+    {
+      t: 300,
+      desc: "e. ماشین‌آلات، لوازم خانگی — 300°C (572°F)",
+      checked: false,
+      percent: 0,
+    },
+    {
+      t: 400,
+      desc: "f. اجسام فلزی — 400°C (752°F)",
+      checked: false,
+      percent: 0,
+    },
+    {
+      t: 500,
+      desc: "g. مواد غیرقابل‌احتراق (مصالح ساختمانی) — 500°C (932°F)",
+      checked: false,
+      percent: 0,
+    },
   ]);
-  
+
   // Weighted M state
   const [mWeightedRows, setMWeightedRows] = useState<MWeightedRow[]>([
-    { m: 0, desc: "A1 (M=0) : طبق EN13501-1 | غیرقابل‌احتراق", checked: false, percent: 0 },
-    { m: 0.5, desc: "A2 (M=0.5) : تقریباً غیرقابل‌احتراق | EN13501-1", checked: false, percent: 0 },
-    { m: 1, desc: "B (M=1) : سخت برای اشتعال (خودخاموش‌شونده) | EN12845 Cat. I", checked: false, percent: 0 },
-    { m: 2, desc: "C (M=2) : مواد کندسوز | EN13501-1", checked: false, percent: 0 },
-    { m: 3, desc: "D (M=3) : سطوح قابل‌احتراق | EN12845 Cat. II", checked: false, percent: 0 },
-    { m: 4, desc: "E (M=4) : سطوح قابل‌اشتعال | EN12845 Cat. III", checked: false, percent: 0 },
-    { m: 5, desc: "F (M=5) : سطوح بسیار قابل‌اشتعال | EN12845 Cat. IV", checked: false, percent: 0 },
+    {
+      m: 0,
+      desc: "A1 (M=0) : طبق EN13501-1 | غیرقابل‌احتراق",
+      checked: false,
+      percent: 0,
+    },
+    {
+      m: 0.5,
+      desc: "A2 (M=0.5) : تقریباً غیرقابل‌احتراق | EN13501-1",
+      checked: false,
+      percent: 0,
+    },
+    {
+      m: 1,
+      desc: "B (M=1) : سخت برای اشتعال (خودخاموش‌شونده) | EN12845 Cat. I",
+      checked: false,
+      percent: 0,
+    },
+    {
+      m: 2,
+      desc: "C (M=2) : مواد کندسوز | EN13501-1",
+      checked: false,
+      percent: 0,
+    },
+    {
+      m: 3,
+      desc: "D (M=3) : سطوح قابل‌احتراق | EN12845 Cat. II",
+      checked: false,
+      percent: 0,
+    },
+    {
+      m: 4,
+      desc: "E (M=4) : سطوح قابل‌اشتعال | EN12845 Cat. III",
+      checked: false,
+      percent: 0,
+    },
+    {
+      m: 5,
+      desc: "F (M=5) : سطوح بسیار قابل‌اشتعال | EN12845 Cat. IV",
+      checked: false,
+      percent: 0,
+    },
   ]);
-  
+
   // Dimensions for geometric mean calculation
   const [dimensions, setDimensions] = useState<string[]>(Array(10).fill(""));
 
@@ -246,7 +316,9 @@ export default function IFactorTab({
       // Get m value
       let finalM = parseFloat(avgDimension);
       if (mMode === "formula") {
-        const dims = dimensions.map((d) => parseFloat(d)).filter((d) => !isNaN(d) && d > 0);
+        const dims = dimensions
+          .map((d) => parseFloat(d))
+          .filter((d) => !isNaN(d) && d > 0);
         if (dims.length > 0) {
           finalM = calculateMFromDims(dims);
         } else {
@@ -322,7 +394,7 @@ export default function IFactorTab({
         const error = await res.json();
         throw new Error(error.error || "Failed to calculate");
       }
-      
+
       return res.json();
     },
     onSuccess: () => {
@@ -334,12 +406,17 @@ export default function IFactorTab({
     },
   });
 
-  const tPercentSum = tWeightedRows.reduce((sum, row) => sum + (row.checked ? row.percent : 0), 0);
+  const tPercentSum = tWeightedRows.reduce(
+    (sum, row) => sum + (row.checked ? row.percent : 0),
+    0
+  );
   const weightedT = calculateWeightedT();
   const weightedM = calculateWeightedM();
 
   const handleCalcMFromModal = () => {
-    const dims = dimensions.map((d) => parseFloat(d)).filter((d) => !isNaN(d) && d > 0);
+    const dims = dimensions
+      .map((d) => parseFloat(d))
+      .filter((d) => !isNaN(d) && d > 0);
     if (dims.length > 0) {
       const calculatedM = calculateMFromDims(dims);
       setAvgDimension(calculatedM.toFixed(3));
@@ -456,7 +533,9 @@ export default function IFactorTab({
                     <input
                       type="checkbox"
                       checked={row.checked}
-                      onChange={(e) => handleTWeightedChange(idx, e.target.checked)}
+                      onChange={(e) =>
+                        handleTWeightedChange(idx, e.target.checked)
+                      }
                     />
                   </td>
                   <td className="p-2 text-center">{row.t}</td>
@@ -468,7 +547,12 @@ export default function IFactorTab({
                       min={0}
                       max={100}
                       disabled={!row.checked}
-                      onChange={(e) => handleTPercentChange(idx, parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        handleTPercentChange(
+                          idx,
+                          parseFloat(e.target.value) || 0
+                        )
+                      }
                       className="w-20 p-1 border rounded dark:bg-slate-700 dark:text-white"
                     />{" "}
                     %
@@ -548,14 +632,11 @@ export default function IFactorTab({
           </div>
 
           {mMode === "reference" && (
-            <div
-              className="text-sm text-gray-700 dark:text-gray-300 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mt-2"
-            >
+            <div className="text-sm text-gray-700 dark:text-gray-300 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mt-2">
               <b>مقادیر مرجع:</b>
               <p className="mt-2">
-                رایج‌ترین مقدار مورد استفاده برای m= <b>0.3</b> است که به
-                عنوان میانگین ابعاد اکثر اشیاء در محیط روزمره ما در نظر
-                گرفته می‌شود.
+                رایج‌ترین مقدار مورد استفاده برای m= <b>0.3</b> است که به عنوان
+                میانگین ابعاد اکثر اشیاء در محیط روزمره ما در نظر گرفته می‌شود.
               </p>
               <p className="mt-2">
                 سایر مقادیر معمول عبارتند از:
@@ -575,8 +656,8 @@ export default function IFactorTab({
 
       {/* Dimensions Modal */}
       {showDimsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="">
+          <div className="bg-[#419ae711] dark:bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold">ورود ابعاد اشیاء (متر)</h3>
               <button
@@ -589,15 +670,15 @@ export default function IFactorTab({
             <table className="w-full border-collapse text-center mb-4">
               <thead>
                 <tr className="bg-gray-100 dark:bg-gray-700">
-                  <th className="border p-2">بُعد</th>
-                  <th className="border p-2">مقدار (متر)</th>
+                  <th className="border border-gray-200 p-2">بُعد</th>
+                  <th className="border border-gray-200 p-2">مقدار (متر)</th>
                 </tr>
               </thead>
               <tbody>
                 {dimensions.map((dim, idx) => (
                   <tr key={idx}>
-                    <td className="border p-2">{idx + 1}</td>
-                    <td className="border p-2">
+                    <td className="border border-gray-200 p-2">{idx + 1}</td>
+                    <td className="border border-gray-200 p-2">
                       <input
                         type="number"
                         step="0.001"
@@ -618,13 +699,13 @@ export default function IFactorTab({
             <div className="flex gap-2">
               <button
                 onClick={handleCalcMFromModal}
-                className="flex-1 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
+                className="flex-1 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-all duration-200"
               >
                 محاسبه m
               </button>
               <button
                 onClick={() => setShowDimsModal(false)}
-                className="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500"
+                className="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 transition-all duration-200"
               >
                 بستن
               </button>
@@ -727,7 +808,9 @@ export default function IFactorTab({
               <thead className="bg-gray-100 dark:bg-gray-800 font-semibold">
                 <tr>
                   <th className="p-2 border-b border-gray-200">انتخاب</th>
-                  <th className="p-2 border-b border-gray-200">کلاس + توضیحات</th>
+                  <th className="p-2 border-b border-gray-200">
+                    کلاس + توضیحات
+                  </th>
                   <th className="p-2 border-b border-gray-200">درصد</th>
                 </tr>
               </thead>
@@ -741,7 +824,9 @@ export default function IFactorTab({
                       <input
                         type="checkbox"
                         checked={row.checked}
-                        onChange={(e) => handleMWeightedChange(idx, e.target.checked)}
+                        onChange={(e) =>
+                          handleMWeightedChange(idx, e.target.checked)
+                        }
                       />
                     </td>
                     <td className="p-2">{row.desc}</td>
@@ -752,7 +837,12 @@ export default function IFactorTab({
                         min={0}
                         max={100}
                         disabled={!row.checked}
-                        onChange={(e) => handleMPercentChange(idx, parseFloat(e.target.value) || 0)}
+                        onChange={(e) =>
+                          handleMPercentChange(
+                            idx,
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
                         className="w-20 p-1 border rounded dark:bg-slate-700 dark:text-white"
                       />
                       %
@@ -783,19 +873,25 @@ export default function IFactorTab({
         </button>
       </div>
 
-      {assessment?.assessment.factor_i !== null && assessment?.assessment.factor_i !== undefined && (
-        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-primary">
-          <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">نتیجه محاسبه:</div>
-          <div className="text-2xl font-bold text-primary">
-            i = {assessment.assessment.factor_i.toFixed(3)}
-          </div>
-          {assessment.assessment.factor_i !== null && (
-            <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-              HRR = {Math.round(25 * Math.pow(10, assessment.assessment.factor_i)).toLocaleString()} kW/m²
+      {assessment?.assessment.factor_i !== null &&
+        assessment?.assessment.factor_i !== undefined && (
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+            <div className="result-value">
+              <div className="">
+                i = {assessment.assessment.factor_i.toFixed(3)}
+              </div>
             </div>
-          )}
-        </div>
-      )}
+            {assessment.assessment.factor_i !== null && (
+              <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
+                <span className="text-base text-secondary">HRR: </span>
+                {Math.round(
+                  25 * Math.pow(10, assessment.assessment.factor_i)
+                ).toLocaleString()}{" "}
+                kW/m²
+              </div>
+            )}
+          </div>
+        )}
     </div>
   );
 }

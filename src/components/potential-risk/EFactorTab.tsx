@@ -129,88 +129,132 @@ export default function EFactorTab({
             در روش FRAME 2015، فضاهای معماری ویژه مانند <strong>آتریوم</strong>،
             نیم‌طبقه یا <em>mezzanine</em>، و همچنین واحدهای دوبلکس یا لوفت،
             شرایط خاصی در محاسبات ضرایب <strong>e</strong>، <strong>z</strong> و
-            گاهی <strong>g</strong> ایجاد می‌کنند.
+            گاهی <strong>g</strong> به‌وجود می‌آورند. عدم توجه به این موارد
+            می‌تواند منجر به برآورد نادرست ریسک حریق شود.
           </p>
 
+          {/* ----------------------------- 1. Mezzanine ----------------------------- */}
           <h3 className="text-lg font-semibold mb-2">
             ۱. Mezzanine (نیم‌طبقه)
           </h3>
           <p className="mb-2">
-            نیم‌طبقه بخشی است که مساحت آن کمتر از طبقه کامل بوده و درون همان فضا
-            ساخته می‌شود.
+            نیم‌طبقه بخشی است که مساحت آن کمتر از طبقه کامل بوده و معمولاً درون
+            طبقه اصلی ساخته می‌شود. در FRAME، اثر mezzanine بیشتر بر ضریب e و z
+            دیده می‌شود:
           </p>
+
           <ul className="list-disc pr-6 mb-4 text-[15px] leading-7">
             <li>
-              اگر نیم‌طبقه خروج داخلی داشته باشد → در محاسبه <strong>e</strong>{" "}
-              به صورت <strong>اعشار</strong> اضافه می‌شود.
+              اگر نیم‌طبقه به‌صورت داخلی به فضای اصلی متصل باشد (خروج داخلی)،
+              تخلیه و تهویه سخت‌تر است و در محاسبه <strong>e</strong> باید
+              به‌صورت <strong>اعشار</strong> به طبقه کامل اضافه شود.
+              <br />
+              <code className="text-sm opacity-80">
+                مثال: طبقه اول با ۴۰٪ مساحت نیم‌طبقه → E = 1.4
+              </code>
             </li>
             <li>
-              اگر نیم‌طبقه خروج مستقیم داشته باشد → دسترسی امداد بهتر و مقدار{" "}
-              <strong>z</strong> کمتر می‌شود.
+              اگر نیم‌طبقه خروج مستقیم به بیرون داشته باشد، ممکن است دسترسی
+              امداد بهبود پیدا کند و مقدار <strong>z</strong> کاهش یابد.
             </li>
           </ul>
 
           <div className="space-y-4 mb-4">
-            <Image
-              src={mezzIntExit}
-              alt="Mezzanine internal exit"
-              className="w-fit rounded-lg"
-            />
+            <figure className="space-y-2">
+              <Image
+                src={mezzIntExit}
+                alt="Mezzanine internal exit"
+                className="w-fit rounded-lg"
+              />
+              <figcaption className="text-xs opacity-70">
+                نیم‌طبقه با خروج داخلی — نیازمند محاسبه e اعشاری و بررسی تأثیر
+                بر z
+              </figcaption>
+            </figure>
 
-            <Image
-              src={mezzDirExit}
-              alt="Mezzanine direct exit"
-              className="w-fit rounded-lg"
-            />
+            <figure className="space-y-2">
+              <Image
+                src={mezzDirExit}
+                alt="Mezzanine direct exit"
+                className="w-fit rounded-lg"
+              />
+              <figcaption className="text-xs opacity-70">
+                نیم‌طبقه با خروج مستقیم — بهبود تخلیه و کاهش بار روی ضریب t
+              </figcaption>
+            </figure>
           </div>
 
+          {/* ----------------------------- 2. Atrium ----------------------------- */}
           <h3 className="text-lg font-semibold mb-2">۲. آتریوم</h3>
           <p className="mb-2">
-            آتریوم فضایی چندسطحی است که طبقات را به‌طور مستقیم به هم متصل
-            می‌کند.
+            آتریوم فضایی باز و چندسطحی است که معمولاً طبقات را در بر می‌گیرد و
+            باعث ارتباط مستقیم بین بخش‌های مختلف ساختمان می‌شود.
           </p>
 
           <ul className="list-disc pr-6 mb-4 text-[15px] leading-7">
             <li>
-              ارتفاع مؤثر طبقه در آتریوم بر ضریب <strong>e</strong> تأثیر دارد.
+              در محاسبه <strong>e</strong>، باید ارتفاع مؤثر طبقه را بر اساس
+              بالاترین نقطه قابل‌استفاده محاسبه کرد.
             </li>
             <li>
-              تهویه طبیعی و مسیر دود خروجی می‌تواند <strong>k</strong> و{" "}
-              <strong>v</strong> را تغییر دهد.
+              آتریوم بر تخلیه دود و مسیرهای دسترسی امداد اثر دارد و می‌تواند{" "}
+              <strong>k</strong> (نسبت تهویه) و <strong>v</strong> (ضریب تهویه)
+              را تغییر دهد.
             </li>
           </ul>
 
-          <Image
-            src={atriumLevels}
-            className="w-fit rounded-lg mb-4"
-            alt="Atrium levels"
-          />
+          <figure className="space-y-2 mb-4">
+            <Image
+              src={atriumLevels}
+              className="w-fit rounded-lg"
+              alt="Atrium levels"
+            />
+            <figcaption className="text-xs opacity-70">
+              چیدمان طبقات و نحوه محاسبه e در یک آتریوم
+            </figcaption>
+          </figure>
 
+          {/* ----------------------------- 3. Loft & Duplex ----------------------------- */}
           <h3 className="text-lg font-semibold mb-2">۳. لوفت و دوبلکس</h3>
 
           <p className="mb-2">
-            طبقه دوم در این واحدها معمولاً بدون جداسازی کامل است، بنابراین:
+            در واحدهای دوبلکس یا لوفت، طبقه بالایی بدون جداسازی کامل به طبقه
+            پایین متصل است. این موضوع باعث می‌شود:
           </p>
 
           <ul className="list-disc pr-6 mb-4 text-[15px] leading-7">
             <li>
-              مقدار <strong>e</strong> برای طبقه دوم به صورت اعشاری محاسبه
-              می‌شود.
+              در محاسبه <strong>e</strong>، شماره طبقه به‌صورت اعشاری در نظر
+              گرفته شود (مشابه mezzanine).
             </li>
             <li>
-              ضریب <strong>z</strong> باید دسترسی امداد به هر دو سطح را بررسی
-              کند.
+              برای <strong>z</strong>، باید دسترسی آتش‌نشانی به هر دو سطح بررسی
+              شود، حتی اگر فقط یک ورودی مشترک وجود داشته باشد.
             </li>
           </ul>
 
-          <Image
-            src={loftDuplex}
-            className="w-fit rounded-lg mb-4"
-            alt="Loft duplex"
-          />
+          <figure className="space-y-2 mb-4">
+            <Image
+              src={loftDuplex}
+              className="w-fit rounded-lg"
+              alt="Loft duplex"
+            />
+            <figcaption className="text-xs opacity-70">
+              دسترسی امداد به طبقات لوفت و دوبلکس و تأثیر بر z
+            </figcaption>
+          </figure>
+
+          {/* ----------------------------- 4. Effect on Other Coefficients ----------------------------- */}
+          <h3 className="text-lg font-semibold mb-2">۴. اثر بر سایر ضرایب</h3>
+          <p className="mb-4">
+            این فضاهای خاص ممکن است ضریب <strong>g</strong> را نیز تغییر دهند،
+            خصوصاً اگر به افزایش ابعاد مؤثر پلان منجر شوند یا دسترسی از ضلع
+            باریک/عریض تغییر کند.
+          </p>
 
           <p className="text-xs opacity-70 border-t pt-3">
-            این راهنما بر اساس نسخه 2015 FRAME تهیه شده است.
+            این راهنما بر اساس نسخه 2015 FRAME تهیه شده است. در نسخه 2008 ممکن
+            است پارامترها و ضرایب کمی تفاوت داشته باشند.
           </p>
         </div>
       </div>

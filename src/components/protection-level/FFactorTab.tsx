@@ -4,7 +4,10 @@ import { useState } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
 interface SectionProps {
   title: string;
@@ -172,7 +175,13 @@ function FireResistanceTable({
   );
 }
 
-export default function FFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function FFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [showFTable, setShowFTable] = useState(false);
   const [fs, setFs] = useState(60);
@@ -201,8 +210,12 @@ export default function FFactorTab({ projectId, floorId }: { projectId: string, 
       setFd(response.assessment.roofResist ?? 0);
       setFw(response.assessment.wallResist ?? 0);
       setHasManyWindows(response.assessment.hasManyWindows ?? false);
-      setNoInternalSeparation(response.assessment.noInternalSeparation ?? false);
-      setCombustibleInsulation(response.assessment.combustibleInsulation ?? false);
+      setNoInternalSeparation(
+        response.assessment.noInternalSeparation ?? false
+      );
+      setCombustibleInsulation(
+        response.assessment.combustibleInsulation ?? false
+      );
 
       return response;
     },
@@ -210,18 +223,21 @@ export default function FFactorTab({ projectId, floorId }: { projectId: string, 
 
   const handleCalculateF = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          structureResist: fs,
-          facadeResist: ff,
-          roofResist: fd,
-          wallResist: fw,
-          hasManyWindows,
-          noInternalSeparation,
-          combustibleInsulation,
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            structureResist: fs,
+            facadeResist: ff,
+            roofResist: fd,
+            wallResist: fw,
+            hasManyWindows,
+            noInternalSeparation,
+            combustibleInsulation,
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -244,8 +260,10 @@ export default function FFactorTab({ projectId, floorId }: { projectId: string, 
   const clampedFf = Math.min(effectiveFf, 120);
   const clampedFd = Math.min(effectiveFd, 120);
   const clampedFw = Math.min(effectiveFw, 120);
-  const calculatedF = 0.5 * clampedFs + 0.25 * clampedFf + 0.125 * clampedFd + 0.125 * clampedFw;
-  const calculatedTerm1 = 1 + calculatedF / 100 - Math.pow(calculatedF, 2.5) / 1000000;
+  const calculatedF =
+    0.5 * clampedFs + 0.25 * clampedFf + 0.125 * clampedFd + 0.125 * clampedFw;
+  const calculatedTerm1 =
+    1 + calculatedF / 100 - Math.pow(calculatedF, 2.5) / 1000000;
   const S = assessment?.assessment.factor_S ?? 1;
   const calculatedTerm2 = 1 - (S - 1) / 40;
   const calculatedFValue = calculatedTerm1 * calculatedTerm2;
@@ -293,13 +311,9 @@ export default function FFactorTab({ projectId, floorId }: { projectId: string, 
           </label>
           <Select value={fs} onChange={setFs}>
             <option value={0}>بدون مقاومت (R0)</option>
-            <option value={15}>
-              15 دقیقه (R15) - سازه فولادی بدون پوشش
-            </option>
+            <option value={15}>15 دقیقه (R15) - سازه فولادی بدون پوشش</option>
             <option value={30}>30 دقیقه (R30)</option>
-            <option value={60}>
-              60 دقیقه (R60) - بنایی/بتن معمولی
-            </option>
+            <option value={60}>60 دقیقه (R60) - بنایی/بتن معمولی</option>
             <option value={90}>90 دقیقه (R90)</option>
             <option value={120}>120 دقیقه (R120) - بتن مسلح ضخیم</option>
             <option value={180}>بیش از 120 دقیقه (محاسبه با 120)</option>
@@ -360,9 +374,7 @@ export default function FFactorTab({ projectId, floorId }: { projectId: string, 
             f<sub>w</sub> - مقاومت دیوارهای داخلی
           </label>
           <Select value={fw} onChange={setFw}>
-            <option value={0}>
-              بدون دیوار جداکننده یا مساحت &gt; 1000 m²
-            </option>
+            <option value={0}>بدون دیوار جداکننده یا مساحت &gt; 1000 m²</option>
             <option value={30}>30 دقیقه</option>
             <option value={60}>60 دقیقه</option>
             <option value={90}>90 دقیقه</option>
@@ -370,8 +382,8 @@ export default function FFactorTab({ projectId, floorId }: { projectId: string, 
           </Select>
           <div className="input-hint">
             <i className="fas fa-info-circle"></i>
-            فقط برای دیوارهایی که فضا را به بخش‌های کمتر از 1000 m² و حداکثر
-            25% کل تقسیم می‌کنند
+            فقط برای دیوارهایی که فضا را به بخش‌های کمتر از 1000 m² و حداکثر 25%
+            کل تقسیم می‌کنند
           </div>
         </div>
       </Section>
@@ -400,31 +412,42 @@ export default function FFactorTab({ projectId, floorId }: { projectId: string, 
             S - ضریب حفاظت ویژه (از محاسبه S)
           </label>
           <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            {assessment?.assessment.factor_S ? assessment.assessment.factor_S.toFixed(3) : "محاسبه نشده"}
+            {assessment?.assessment.factor_S
+              ? assessment.assessment.factor_S.toFixed(3)
+              : "محاسبه نشده"}
           </div>
         </div>
       </Section>
 
-      <button onClick={() => handleCalculateF.mutate()} className="btn btn-primary">
+      <button
+        onClick={() => handleCalculateF.mutate()}
+        className="btn btn-primary"
+      >
         محاسبه ضریب F
       </button>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_F ? assessment?.assessment.factor_F.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          {assessment?.assessment.factor_F
+            ? assessment?.assessment.factor_F.toFixed(3)
+            : "-"}
+        </div>
       </div>
 
-      {showFTable && assessment?.assessment.factor_F !== null && assessment?.assessment.factor_F !== undefined && (
-        <FireResistanceTable
-          fs={clampedFs}
-          ff={clampedFf}
-          fd={clampedFd}
-          fw={clampedFw}
-          f={calculatedF}
-          term1={calculatedTerm1}
-          term2={calculatedTerm2}
-          F={assessment.assessment.factor_F}
-        />
-      )}
+      {showFTable &&
+        assessment?.assessment.factor_F !== null &&
+        assessment?.assessment.factor_F !== undefined && (
+          <FireResistanceTable
+            fs={clampedFs}
+            ff={clampedFf}
+            fd={clampedFd}
+            fw={clampedFw}
+            f={calculatedF}
+            term1={calculatedTerm1}
+            term2={calculatedTerm2}
+            F={assessment.assessment.factor_F}
+          />
+        )}
     </div>
   );
 }

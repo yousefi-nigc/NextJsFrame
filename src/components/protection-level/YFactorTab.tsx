@@ -4,9 +4,18 @@ import { useState } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AssessmentGetApiResponse, AssessmentUpdateApiResponse } from "@/lib/APIResponseInterfaces";
+import {
+  AssessmentGetApiResponse,
+  AssessmentUpdateApiResponse,
+} from "@/lib/APIResponseInterfaces";
 
-export default function YFactorTab({ projectId, floorId }: { projectId: string, floorId: string }) {
+export default function YFactorTab({
+  projectId,
+  floorId,
+}: {
+  projectId: string;
+  floorId: string;
+}) {
   const queryClient = useQueryClient();
   const [subCompartmentEI30, setSubCompartmentEI30] = useState(false);
   const [subCompartmentEI60, setSubCompartmentEI60] = useState(false);
@@ -39,8 +48,12 @@ export default function YFactorTab({ projectId, floorId }: { projectId: string, 
       setOtherAutoExtinguish(response.assessment.otherAutoExtinguish ?? false);
       setFinancialDataBackup(response.assessment.financialDataBackup ?? false);
       setSparePartsAccess(response.assessment.sparePartsAccess ?? false);
-      setSelfRepairCapability(response.assessment.selfRepairCapability ?? false);
-      setRelocationAgreements(response.assessment.relocationAgreements ?? false);
+      setSelfRepairCapability(
+        response.assessment.selfRepairCapability ?? false
+      );
+      setRelocationAgreements(
+        response.assessment.relocationAgreements ?? false
+      );
       setMultipleProduction(response.assessment.multipleProduction ?? false);
 
       return response;
@@ -49,21 +62,24 @@ export default function YFactorTab({ projectId, floorId }: { projectId: string, 
 
   const handleCalculateY = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        body: JSON.stringify({
-          subCompartmentEI30,
-          subCompartmentEI60,
-          partialDetection,
-          partialSprinkler,
-          otherAutoExtinguish,
-          financialDataBackup,
-          sparePartsAccess,
-          selfRepairCapability,
-          relocationAgreements,
-          multipleProduction,
-        }),
-      });
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            subCompartmentEI30,
+            subCompartmentEI60,
+            partialDetection,
+            partialSprinkler,
+            otherAutoExtinguish,
+            financialDataBackup,
+            sparePartsAccess,
+            selfRepairCapability,
+            relocationAgreements,
+            multipleProduction,
+          }),
+        }
+      );
       return res.json();
     },
     onSuccess: (data) => {
@@ -89,15 +105,12 @@ export default function YFactorTab({ projectId, floorId }: { projectId: string, 
       </div>
 
       <div className="help-card">
-        <div className="mb-2 font-semibold text-primary">
-          توضیح فاکتور Y
-        </div>
+        <div className="mb-2 font-semibold text-primary">توضیح فاکتور Y</div>
         <div className="text-gray-500 leading-relaxed text-sm dark:text-white">
           فاکتور Y میزان آمادگی برای نجات و حفظ فعالیت‌ها را پس از وقوع حریق
-          نشان می‌دهد. این شامل حفاظت از داده‌ها، تامین قطعات یدکی، امکان
-          تعمیر سریع، انتقال فعالیت‌ها به مکان دیگر و ظرفیت تولید چندمحلی
-          است. هر چه این اقدامات بیشتر رعایت شود، مقدار Y بیشتر شده و حفاظت
-          بهبود می‌یابد.
+          نشان می‌دهد. این شامل حفاظت از داده‌ها، تامین قطعات یدکی، امکان تعمیر
+          سریع، انتقال فعالیت‌ها به مکان دیگر و ظرفیت تولید چندمحلی است. هر چه
+          این اقدامات بیشتر رعایت شود، مقدار Y بیشتر شده و حفاظت بهبود می‌یابد.
         </div>
       </div>
 
@@ -106,9 +119,9 @@ export default function YFactorTab({ projectId, floorId }: { projectId: string, 
       <div className="help-card">
         <div className="mb-2 font-semibold text-primary">توجه مهم</div>
         <div className="text-gray-500 leading-relaxed text-sm dark:text-white">
-          امتیازات حفاظت موضعی فقط زمانی داده می‌شود که حفاظت کلی از همان
-          نوع در کل ساختمان وجود نداشته باشد. برای مثال، اگر کل ساختمان
-          اسپرینکلر دارد، امتیاز اسپرینکلر موضعی داده نمی‌شود.
+          امتیازات حفاظت موضعی فقط زمانی داده می‌شود که حفاظت کلی از همان نوع در
+          کل ساختمان وجود نداشته باشد. برای مثال، اگر کل ساختمان اسپرینکلر دارد،
+          امتیاز اسپرینکلر موضعی داده نمی‌شود.
         </div>
       </div>
 
@@ -219,12 +232,19 @@ export default function YFactorTab({ projectId, floorId }: { projectId: string, 
         </div>
       </div>
 
-      <button className="btn btn-primary mt-4" onClick={() => handleCalculateY.mutate()}>
+      <button
+        className="btn btn-primary mt-4"
+        onClick={() => handleCalculateY.mutate()}
+      >
         محاسبه ضریب Y
       </button>
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary">
-        <div className="result-value">{assessment?.assessment.factor_Y ? assessment?.assessment.factor_Y.toFixed(3) : "-"}</div>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-primary dark:border-primary dark:bg-[#2195f321]">
+        <div className="result-value">
+          {assessment?.assessment.factor_Y
+            ? assessment?.assessment.factor_Y.toFixed(3)
+            : "-"}
+        </div>
       </div>
 
       <div className="summary-table mt-8">
