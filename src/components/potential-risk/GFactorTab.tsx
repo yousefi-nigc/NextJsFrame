@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -26,6 +26,15 @@ export default function GFactorTab({
   const [sectionLength, setSectionLength] = useState(30);
   const [sectionWidth, setSectionWidth] = useState(20);
   const [sectionArea, setSectionArea] = useState<number | "">("");
+  const [isAreaManuallySet, setIsAreaManuallySet] = useState(false);
+
+  // Auto-calculate area when length or width changes
+  useEffect(() => {
+    if (!isAreaManuallySet && sectionLength > 0 && sectionWidth > 0) {
+      const calculatedArea = sectionLength * sectionWidth;
+      setSectionArea(calculatedArea);
+    }
+  }, [sectionLength, sectionWidth, isAreaManuallySet]);
 
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
     queryKey: ["assessment", floorId],
@@ -43,9 +52,21 @@ export default function GFactorTab({
       setAccessType(
         (response.assessment.accessType as "wide" | "narrow") ?? "wide"
       );
-      setSectionLength(response.assessment.length ?? 30);
-      setSectionWidth(response.assessment.width ?? 20);
-      setSectionArea(response.assessment.area ?? "");
+      const loadedLength = response.assessment.length ?? 30;
+      const loadedWidth = response.assessment.width ?? 20;
+      const loadedArea = response.assessment.area;
+      
+      setSectionLength(loadedLength);
+      setSectionWidth(loadedWidth);
+      
+      // If area is provided and doesn't match calculated area, mark as manually set
+      if (loadedArea && loadedArea !== loadedLength * loadedWidth) {
+        setIsAreaManuallySet(true);
+        setSectionArea(loadedArea);
+      } else {
+        setIsAreaManuallySet(false);
+        setSectionArea(loadedArea ?? "");
+      }
 
       return response;
     },
@@ -290,11 +311,16 @@ export default function GFactorTab({
             step="1"
             placeholder="اختیاری"
             value={sectionArea}
-            onChange={(e) =>
-              setSectionArea(
-                e.target.value === "" ? "" : parseFloat(e.target.value)
-              )
-            }
+            onChange={(e) => {
+              const newValue = e.target.value === "" ? "" : parseFloat(e.target.value);
+              // If user clears the field, allow auto-calculation again
+              if (newValue === "") {
+                setIsAreaManuallySet(false);
+              } else {
+                setIsAreaManuallySet(true);
+              }
+              setSectionArea(newValue);
+            }}
             className="border p-2 rounded w-full"
           />
           <span className="input-unit">متر مربع</span>

@@ -20,8 +20,8 @@ export default function ZFactorTab({
   const [showZGuide, setShowZGuide] = useState(false);
   const [sectionWidth, setSectionWidth] = useState(20);
   const [accessDirections, setAccessDirections] = useState(1);
-  const [heightAbove, setHeightAbove] = useState(0);
-  const [heightBelow, setHeightBelow] = useState(0);
+  const [heightAbove, setHeightAbove] = useState<number>(0);
+  const [heightBelow, setHeightBelow] = useState<number>(0);
 
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
     queryKey: ["assessment", floorId],
@@ -47,14 +47,20 @@ export default function ZFactorTab({
 
   const handleCalculateZ = useMutation({
     mutationFn: async () => {
+      // Validate that width is available (should be set from G section)
+      if (!sectionWidth || sectionWidth <= 0) {
+        throw new Error("لطفاً ابتدا عرض ساختمان (b) را در بخش محاسبه ضریب g وارد کنید");
+      }
+
       const res = await fetch(
         `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
         {
           method: "PUT",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             width: sectionWidth,
             accessSides: accessDirections,
-            heightAbove,
+            heightAbove: heightAbove,
             depthBelow: heightBelow,
           }),
         }
@@ -67,7 +73,8 @@ export default function ZFactorTab({
       queryClient.invalidateQueries({ queryKey: ["assessment", floorId] });
     },
     onError: (error) => {
-      toast.error("خطا در محاسبه z");
+      const errorMessage = error instanceof Error ? error.message : "خطا در محاسبه z";
+      toast.error(errorMessage);
       console.log(error);
     },
   });
@@ -197,6 +204,13 @@ export default function ZFactorTab({
 
       <div className="input-group">
         <label className="input-label">عرض مؤثر ساختمان (b)</label>
+        {!assessment?.assessment.width && (
+          <div className="mb-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              ⚠️ <strong>توجه:</strong> لطفاً ابتدا عرض ساختمان را در بخش <strong>محاسبه ضریب g</strong> وارد کرده و محاسبه کنید.
+            </p>
+          </div>
+        )}
         <div className="input-wrapper">
           <input
             type="number"
@@ -204,10 +218,21 @@ export default function ZFactorTab({
             min="1"
             step="0.1"
             value={sectionWidth}
-            onChange={(e) => setSectionWidth(parseFloat(e.target.value) || 0)}
+            readOnly
+            disabled
+            className="opacity-70 cursor-not-allowed bg-gray-100 dark:bg-gray-800"
           />
           <span className="input-unit">متر</span>
         </div>
+        {assessment?.assessment.width ? (
+          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+            ✓ مقدار از بخش g بارگذاری شد: {assessment.assessment.width} متر (فقط خواندنی)
+          </p>
+        ) : (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            این مقدار باید از بخش g وارد شود
+          </p>
+        )}
       </div>
 
       <div className="input-group">
@@ -235,10 +260,21 @@ export default function ZFactorTab({
             min="0"
             step="1"
             value={heightAbove}
-            onChange={(e) => setHeightAbove(parseFloat(e.target.value) || 0)}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value) || 0;
+              setHeightAbove(value);
+              // Clear heightBelow when H+ is entered
+              if (value > 0) {
+                setHeightBelow(0);
+              }
+            }}
+            disabled={heightBelow > 0}
           />
           <span className="input-unit">متر</span>
         </div>
+        <p className="text-xs text-gray-500 mt-1">
+          {heightBelow > 0 ? "⚠️ ابتدا مقدار H- را صفر کنید" : "برای طبقات بالای سطح دسترسی"}
+        </p>
       </div>
 
       <div className="input-group">
@@ -250,10 +286,21 @@ export default function ZFactorTab({
             min="0"
             step="1"
             value={heightBelow}
-            onChange={(e) => setHeightBelow(parseFloat(e.target.value) || 0)}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value) || 0;
+              setHeightBelow(value);
+              // Clear heightAbove when H- is entered
+              if (value > 0) {
+                setHeightAbove(0);
+              }
+            }}
+            disabled={heightAbove > 0}
           />
           <span className="input-unit">متر</span>
         </div>
+        <p className="text-xs text-gray-500 mt-1">
+          {heightAbove > 0 ? "⚠️ ابتدا مقدار H+ را صفر کنید" : "برای زیرزمین‌ها و طبقات زیر سطح دسترسی"}
+        </p>
       </div>
 
       <button

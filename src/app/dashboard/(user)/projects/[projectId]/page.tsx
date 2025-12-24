@@ -18,6 +18,7 @@ export default function ProjectEditPage() {
     level: 0,
     description: "",
   });
+  const [levelInput, setLevelInput] = useState<string>("0");
 
   // FETCH existing project data
   const { data: project, isLoading: isProjectLoading } = useQuery<Project>({
@@ -66,10 +67,27 @@ export default function ProjectEditPage() {
   ) => {
     const { name, value } = e.target;
 
-    setFloorData((prev) => ({
-      ...prev,
-      [name]: name === "level" ? Number(value) : value,
-    }));
+    if (name === "level") {
+      // Allow empty string temporarily for better UX
+      setLevelInput(value);
+      // Update the actual data only if it's a valid number (including 0)
+      if (value === "" || value === "-") {
+        // Keep previous value when input is empty or just a minus sign
+        return;
+      }
+      const numValue = Number(value);
+      if (!isNaN(numValue)) {
+        setFloorData((prev) => ({
+          ...prev,
+          level: numValue,
+        }));
+      }
+    } else {
+      setFloorData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   // SUBMIT form (UPDATE only)
@@ -117,9 +135,12 @@ export default function ProjectEditPage() {
   const createFloor = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validation - allow 0 (ground floor) and negative values (basements)
     if (
       !floorData.name.trim() ||
-      !floorData.level ||
+      floorData.level === null ||
+      floorData.level === undefined ||
+      isNaN(Number(floorData.level)) ||
       !floorData.description.trim()
     ) {
       toast.error("لطفا فیلدهای ضروری را پر کنید");
@@ -150,6 +171,7 @@ export default function ProjectEditPage() {
         console.log("dataaa:", data);
         toast.success("طبقه با موفقیت ایجاد شد");
         setFloorData({ name: "", level: 0, description: "" });
+        setLevelInput("0");
 
         queryClient.invalidateQueries({ queryKey: ["floors", project?.id] });
       } else {
@@ -235,10 +257,14 @@ export default function ProjectEditPage() {
             className="border-2 border-border-color bg-gray-50 dark:bg-(--input-bg) p-2 rounded mb-2 w-full placeholder:text-sm placeholder:text-gray-400"
           />
           <input
+            type="number"
             name="level"
-            value={floorData.level}
-            placeholder="نام لول جدید"
+            value={levelInput}
+            placeholder="سطح طبقه (مثلاً: 0 برای همکف، -1 برای زیرزمین، 1 برای طبقه اول)"
             onChange={handleFloorInputChange}
+            step="0.5"
+            min="-100"
+            max="1000"
             className="border-2 border-border-color bg-gray-50 dark:bg-(--input-bg) p-2 rounded mb-2 w-full placeholder:text-sm placeholder:text-gray-400"
           />
           <input

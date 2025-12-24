@@ -23,7 +23,8 @@ export default function EFactorTab({
 }) {
   const queryClient = useQueryClient();
   const [showAteruimodal, setShowAteruimodal] = useState(false);
-  const [floorNumber, setFloorNumber] = useState<number | "">(0);
+  const [floorNumber, setFloorNumber] = useState<number>(0);
+  const [floorNumberInput, setFloorNumberInput] = useState<string>("0");
 
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
     queryKey: ["assessment", floorId],
@@ -38,7 +39,9 @@ export default function EFactorTab({
 
       const response = data as AssessmentGetApiResponse;
 
-      setFloorNumber(response.assessment.floorLevel ?? 0);
+      const loadedLevel = response.assessment.floorLevel ?? 0;
+      setFloorNumber(loadedLevel);
+      setFloorNumberInput(loadedLevel.toString());
 
       return response;
     },
@@ -46,12 +49,14 @@ export default function EFactorTab({
 
   const handleCalculateE = useMutation({
     mutationFn: async () => {
+      console.log("Calculating E with floorLevel:", floorNumber, "type:", typeof floorNumber);
       const res = await fetch(
         `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
         {
           method: "PUT",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            floorLevel: typeof floorNumber === "number" ? floorNumber : 0,
+            floorLevel: floorNumber,
           }),
         }
       );
@@ -268,12 +273,20 @@ export default function EFactorTab({
           type="number"
           step="0.01"
           id="floor-E"
-          value={floorNumber}
-          onChange={(e) =>
-            setFloorNumber(
-              e.target.value === "" ? "" : parseFloat(e.target.value)
-            )
-          }
+          value={floorNumberInput}
+          onChange={(e) => {
+            const value = e.target.value;
+            setFloorNumberInput(value);
+            // Update the actual number value only if it's valid (including 0)
+            if (value === "" || value === "-") {
+              // Keep previous value when input is empty or just a minus sign
+              return;
+            }
+            const numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+              setFloorNumber(numValue);
+            }
+          }}
           className="inline-block w-[140] ml-3 md:ml-6 md:w-[200px]"
           min="-4"
           max="150"
@@ -285,7 +298,9 @@ export default function EFactorTab({
           className="inline-block w-[140px] md:w-[200px]"
           onChange={(e) => {
             if (e.target.value) {
-              setFloorNumber(parseFloat(e.target.value));
+              const numValue = parseFloat(e.target.value);
+              setFloorNumber(numValue);
+              setFloorNumberInput(e.target.value);
             }
           }}
         >

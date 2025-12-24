@@ -41,17 +41,21 @@ export default function FloorPage() {
 
   const [floorData, setFloorData] = useState<Floor>({
     name: floor?.name || "",
-    level: floor?.level || 0,
+    level: floor?.level ?? 0,
     description: floor?.description || "",
   });
+  const [levelInput, setLevelInput] = useState<string>("");
 
   useEffect(() => {
     if (floor) {
       setFloorData({
         name: floor.name || "",
-        level: floor.level || 0,
+        level: floor.level ?? 0,
         description: floor.description || "",
       });
+      setLevelInput(floor.level?.toString() ?? "0");
+    } else {
+      setLevelInput("0");
     }
   }, [floor]);
 
@@ -60,27 +64,47 @@ export default function FloorPage() {
   ) => {
     const { name, value } = e.target;
 
-    setFloorData((prev) => ({
-      ...prev,
-      [name]: name === "level" ? Number(value) : value,
-    }));
+    if (name === "level") {
+      // Allow empty string temporarily for better UX
+      setLevelInput(value);
+      // Update the actual data only if it's a valid number (including 0)
+      if (value === "" || value === "-") {
+        // Keep previous value when input is empty or just a minus sign
+        return;
+      }
+      const numValue = Number(value);
+      if (!isNaN(numValue)) {
+        setFloorData((prev) => ({
+          ...prev,
+          level: numValue,
+        }));
+      }
+    } else {
+      setFloorData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const updateFloor = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
+    // Validation - allow 0 (ground floor) and negative values (basements)
     if (
       !floorData.name.trim() ||
-      !floorData.level ||
+      floorData.level === null ||
+      floorData.level === undefined ||
+      isNaN(Number(floorData.level)) ||
       !floorData.description.trim()
     ) {
       toast.error("لطفا فیلدهای ضروری را پر کنید");
       return;
     }
 
+    // Check for duplicate level, but exclude current floor when updating
     const levelExists = floors?.some(
-      (f: Floor) => f.level === Number(floorData.level)
+      (f: Floor) => f.id !== floorId && f.level === Number(floorData.level)
     );
 
     if (levelExists) {
@@ -179,10 +203,14 @@ export default function FloorPage() {
           className="border-2 border-border-color bg-gray-50 dark:bg-(--input-bg) p-2 rounded mb-2 w-full placeholder:text-sm placeholder:text-gray-400"
         />
         <input
+          type="number"
           name="level"
-          placeholder="نام لول"
-          value={floorData.level}
+          placeholder="سطح طبقه (مثلاً: 0 برای همکف، -1 برای زیرزمین، 1 برای طبقه اول)"
+          value={levelInput}
           onChange={handleInputChange}
+          step="0.5"
+          min="-100"
+          max="1000"
           className="border-2 border-border-color bg-gray-50 dark:bg-(--input-bg) p-2 rounded mb-2 w-full placeholder:text-sm placeholder:text-gray-400"
         />
         <input

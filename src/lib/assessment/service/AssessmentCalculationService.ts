@@ -1028,13 +1028,14 @@ export function calculateAssessment(inputs: CreateAssessmentValidationSchema): A
   if (inputs.length && inputs.width && inputs.area && inputs.accessType) {
     factor_g = calculateG(inputs.length, inputs.width, inputs.area, inputs.accessType);
   }
-  if (inputs.floorLevel) {
+  if (inputs.floorLevel !== undefined && inputs.floorLevel !== null) {
     factor_e = calculateE(inputs.floorLevel);
   }
   if (inputs.qm && inputs.ventingRatio_k && inputs.height) {
     factor_v = calculateV(inputs.qm, inputs.ventingRatio_k, inputs.height);
   }
-  if (inputs.width && inputs.accessSides && inputs.heightAbove && inputs.depthBelow) {
+  if (inputs.width && inputs.accessSides !== undefined && inputs.accessSides !== null) {
+    // Calculate z if we have width and accessSides, heightAbove/depthBelow are optional (only one needed)
     factor_z = calculateZ(inputs.width, inputs.accessSides, inputs.heightAbove, inputs.depthBelow);
   }
 

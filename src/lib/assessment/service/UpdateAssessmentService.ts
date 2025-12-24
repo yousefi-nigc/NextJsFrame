@@ -210,7 +210,7 @@ export async function updateAssessmentService({
                 ...(inputs.selfRepairCapability !== undefined && inputs.selfRepairCapability !== null && { selfRepairCapability: inputs.selfRepairCapability }),
                 ...(inputs.relocationAgreements !== undefined && inputs.relocationAgreements !== null && { relocationAgreements: inputs.relocationAgreements }),
                 ...(inputs.multipleProduction !== undefined && inputs.multipleProduction !== null && { multipleProduction: inputs.multipleProduction }),
-                ...(inputs.floorLevel !== undefined && inputs.floorLevel !== null && { floorLevel: inputs.floorLevel }),
+                ...(inputs.floorLevel !== undefined && (inputs.floorLevel === 0 || inputs.floorLevel !== null) && { floorLevel: inputs.floorLevel }),
                 // Always update calculated values
                 factor_q: calculations.factor_q,
                 factor_i: calculations.factor_i,

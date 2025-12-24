@@ -108,6 +108,12 @@ export default function VFactorTab({
 
   const handleCalculateV = useMutation({
     mutationFn: async () => {
+      // Validate that area is available (should be set from G section)
+      const area = typeof compartmentArea === "number" ? compartmentArea : 0;
+      if (!area || area <= 0) {
+        throw new Error("لطفاً ابتدا مساحت (A) را در بخش محاسبه ضریب g وارد کنید");
+      }
+
       const qm = typeof qmVentilation === "number" ? qmVentilation : 500;
       const k = typeof ventingRatio === "number" ? ventingRatio : 0.01;
       const h = typeof ceilingHeight === "number" ? ceilingHeight : 3;
@@ -348,6 +354,13 @@ export default function VFactorTab({
 
       <div className="input-group">
         <label className="input-label">مساحت کل کف (A)</label>
+        {!assessment?.assessment.area && (
+          <div className="mb-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              ⚠️ <strong>توجه:</strong> لطفاً ابتدا مساحت را در بخش <strong>محاسبه ضریب g</strong> وارد کرده و محاسبه کنید.
+            </p>
+          </div>
+        )}
         <div className="input-wrapper">
           <input
             type="number"
@@ -355,16 +368,21 @@ export default function VFactorTab({
             min="1"
             step="0.01"
             value={compartmentArea}
-            onChange={(e) =>
-              setCompartmentArea(
-                e.target.value === "" ? "" : parseFloat(e.target.value)
-              )
-            }
-            className="w-full"
+            readOnly
+            disabled
+            className="w-full opacity-70 cursor-not-allowed bg-gray-100 dark:bg-gray-800"
           />
           <span className="input-unit">m²</span>
         </div>
-        <div className="input-hint">کل مساحت فضای مورد نظر</div>
+        {assessment?.assessment.area ? (
+          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+            ✓ مقدار از بخش g بارگذاری شد: {assessment.assessment.area} m² (فقط خواندنی)
+          </p>
+        ) : (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            این مقدار باید از بخش g وارد شود
+          </p>
+        )}
       </div>
 
       <button
