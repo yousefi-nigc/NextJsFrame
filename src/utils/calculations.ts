@@ -200,29 +200,34 @@ export function calculateT(
 
 // Calculate a - Activity factor
 // Sums all activation factor values
+// Note: secondaryActivity (N) is NOT included in the sum per feedback (coefficients are not applied in formula)
 export function calculateA(
   mainActivity: number | null,
-  secondaryActivity: number | null,
+  secondaryActivity: number | null, // N - kept for storage but NOT included in sum
   heatTransferType: number | null,
   generatorLocation: number | null,
   energySource: number | null,
   electricalSystem: number | null,
   flammableLiquids: number | null,
-  combustibleDust: number | null
+  combustibleDust: number | null,
+  weldingOperations: number | null, // W
+  additionalCarpentryPlastic: number | null, // P
+  specialRisk: number | null // S
 ): number | null {
   let a = 0;
   
   // Sum all provided values, treating null/undefined as 0
-  // Matching old script.js: looks for 'secondary-activity' which doesn't exist in HTML,
-  // so it's always 0. The HTML has 'painting-spraying-coating' but script doesn't include it.
   a += mainActivity ?? 0;
-  a += 0; // secondaryActivity - old script looks for element that doesn't exist, so always 0
+  // secondaryActivity (N) is NOT included - coefficients are not applied in formula per feedback
   a += heatTransferType ?? 0;
   a += generatorLocation ?? 0;
   a += energySource ?? 0;
   a += electricalSystem ?? 0;
   a += flammableLiquids ?? 0;
   a += combustibleDust ?? 0;
+  a += weldingOperations ?? 0; // W
+  a += additionalCarpentryPlastic ?? 0; // P
+  a += specialRisk ?? 0; // S
   
   // Return rounded to 2 decimal places (matching old script.js line 929)
   return parseFloat(a.toFixed(2));

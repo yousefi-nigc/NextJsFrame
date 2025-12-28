@@ -60,26 +60,69 @@ export default function DependencyFactorTab({
 
   const handleCalculate = useMutation({
     mutationFn: async () => {
+      // Validate inputs
+      if (!dependencyType) {
+        throw new Error("لطفاً گروه فعالیت را انتخاب کنید");
+      }
+
+      if (dependencyType === "manual") {
+        if (!dependencyManual || dependencyManual.trim() === "") {
+          throw new Error("لطفاً مقدار دستی d را وارد کنید (0 تا 1)");
+        }
+        const manualValue = parseFloat(dependencyManual);
+        if (isNaN(manualValue) || manualValue < 0 || manualValue > 1) {
+          throw new Error("مقدار دستی d باید بین 0 و 1 باشد");
+        }
+      }
+
       const d = calculateD(
         dependencyType,
-        dependencyManual ? parseFloat(dependencyManual) : null
+        dependencyType === "manual" && dependencyManual ? parseFloat(dependencyManual) : null
       );
 
       if (d === null) {
         throw new Error("لطفاً مقدار d را وارد کنید");
       }
 
+      // Prepare the request body
+      const requestBody: any = {};
+      
+      // Always send dependencyType
+      if (dependencyType) {
+        requestBody.dependencyType = dependencyType;
+      }
+      
+      // Only send dependencyManual if in manual mode
+      // When not in manual mode, don't send dependencyManual at all (undefined)
+      // This prevents validation errors and allows backend to handle it correctly
+      if (dependencyType === "manual") {
+        if (!dependencyManual || dependencyManual.trim() === "") {
+          throw new Error("لطفاً مقدار دستی d را وارد کنید (0 تا 1)");
+        }
+        const manualValue = parseFloat(dependencyManual);
+        if (isNaN(manualValue) || manualValue < 0 || manualValue > 1) {
+          throw new Error("مقدار دستی d باید بین 0 و 1 باشد");
+        }
+        requestBody.dependencyManual = manualValue;
+      }
+      // Note: When dependencyType is not "manual", we don't send dependencyManual
+      // The backend will use the category value from dependencyType
+
+      console.log("Sending dependency data:", requestBody);
+
       const res = await fetch(
         `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
         {
           method: "PUT",
-          body: JSON.stringify({
-            dependencyType:
-              dependencyType !== "manual" ? dependencyType : undefined,
-            dependencyManual: dependencyType === "manual" ? d : undefined,
-          }),
+          body: JSON.stringify(requestBody),
         }
       );
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "خطا در ذخیره داده‌ها");
+      }
+
       return res.json();
     },
     onSuccess: (data) => {
@@ -136,7 +179,19 @@ export default function DependencyFactorTab({
       </div>
 
       <div className="input-group">
-        <label className="input-label">ورود دستی مقدار d (0 تا 1)</label>
+        <label className="input-label">
+          ورود دستی مقدار d (0 تا 1)
+          {dependencyType === "manual" && (
+            <small className="block text-green-600 dark:text-green-400 mt-1">
+              ✓ فیلد فعال است - می‌توانید مقدار را وارد کنید
+            </small>
+          )}
+          {dependencyType && dependencyType !== "manual" && (
+            <small className="block text-gray-500 dark:text-gray-400 mt-1">
+              این فیلد فقط زمانی فعال می‌شود که "ورود دستی" را انتخاب کنید
+            </small>
+          )}
+        </label>
         <input
           type="number"
           value={dependencyManual}
@@ -144,9 +199,9 @@ export default function DependencyFactorTab({
           min="0"
           max="1"
           step="0.01"
-          placeholder="مثلاً 0.45"
+          placeholder={dependencyType === "manual" ? "مثلاً 0.45" : "ابتدا 'ورود دستی' را انتخاب کنید"}
           disabled={dependencyType !== "manual"}
-          className={dependencyType !== "manual" ? "opacity-50" : ""}
+          className={dependencyType !== "manual" ? "opacity-50 cursor-not-allowed" : ""}
         />
       </div>
 

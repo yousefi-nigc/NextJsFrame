@@ -53,19 +53,28 @@ export interface AssessmentResponse {
   
   // Acceptable Risk Inputs
   mainActivity: number | null;
+  mainActivityKey: string | null;
   secondaryActivity: number | null;
   heatTransferType: number | null;
+  heatTransferTypeKey: string | null;
   generatorLocation: number | null;
+  generatorLocationKey: string | null;
   energySource: number | null;
   energySourceKey: string | null;
   electricalSystem: number | null;
   flammableLiquids: number | null;
   combustibleDust: number | null;
+  combustibleDustKey: string | null;
+  weldingOperations: number | null;
+  additionalCarpentryPlastic: number | null;
+  specialRisk: number | null;
   occupantCount: number | null;
   occupantFactor: number | null;
   occupantFactorKey: string | null;
   exitWidths: string | null;
   exitWidthTotal: number | null;
+  exitUnitsX: number | null;
+  separatePathsK: number | null;
   mobilityFactor: number | null;
   exitCountToOpenSpace: number | null;
   

@@ -48,21 +48,30 @@ export const createAssessmentValidationSchema = z.object({
     
     // Acceptable Risk Inputs
     mainActivity: z.number().min(0).optional(),
+    mainActivityKey: z.string().optional(), // Key for select display (e.g., "A1", "A2", "B", "C", "D") to handle duplicate values
     secondaryActivity: z.number().min(0).optional(),
     heatTransferType: z.number().min(0).optional(),
+    heatTransferTypeKey: z.string().optional(), // Key for select display (e.g., "E1", "E2", "E3") to handle duplicate values
     generatorLocation: z.number().min(0).optional(),
+    generatorLocationKey: z.string().optional(), // Key for select display (e.g., "F0", "F1", "F2") to handle duplicate values
     energySource: z.number().min(0).optional(),
     energySourceKey: z.string().optional(), // Key for select display (e.g., "G0", "G1", "G2", "G3") to handle duplicate values
     electricalSystem: z.number().min(0).optional(),
     flammableLiquids: z.number().min(0).optional(),
     combustibleDust: z.number().min(0).optional(),
+    combustibleDustKey: z.string().optional(), // Key for select display (e.g., "K0", "K1", "K2") to handle duplicate values
+    weldingOperations: z.number().min(0).optional(), // W - Welding operations (0 or 0.1)
+    additionalCarpentryPlastic: z.number().min(0).optional(), // P - Additional carpentry or use of plastic (0 or 0.1)
+    specialRisk: z.number().min(0).optional(), // S - Special risk (0 or 0.1)
     occupantCount: z.number().int().min(0).optional(),
     occupantFactor: z.number().min(0).optional(),
     occupantFactorKey: z.string().optional(), // Key for select display to handle duplicate values
-    exitWidths: z.string().optional(), // Comma-separated exit widths (e.g., "1.2, 0.9, 2.0")
+    exitWidths: z.string().optional(), // Comma-separated exit widths in centimeters (e.g., "80, 80, 120")
     exitWidthTotal: z.number().min(0.6).optional(),
+    exitUnitsX: z.number().min(1).optional(), // Manual x input (exit units) - takes priority over calculated x
+    separatePathsK: z.number().int().min(1).max(4).optional(), // Manual K input (separate paths) - takes priority over calculated K
     mobilityFactor: z.number().min(0).optional(),
-    exitCountToOpenSpace: z.number().int().min(0).optional(),
+    exitCountToOpenSpace: z.number().int().min(0).optional(), // O - Number of exits leading to open space
     
     // Economic / C-Factor Inputs
     valueTotal: z.number().min(0).optional(),

@@ -437,9 +437,88 @@ function calculateZ(
 // }
 
 /**
+ * Calculate x (exit units) from exit widths in centimeters
+ * Formula: x = floor((width_cm - 20) / 60) for each exit, then sum
+ * Matching script.js calculateExitUnits() function
+ */
+function calculateExitUnitsX(
+  exitWidths: string | undefined,
+  manualX: number | undefined
+): number | null {
+  // Manual x input takes priority (even if 0, but we'll enforce min 1 for calculation)
+  if (manualX !== undefined && manualX !== null && !isNaN(manualX)) {
+    // If user explicitly entered 0, we should still use it but enforce minimum 1 for calculation
+    // However, if it's a valid number >= 0, use it
+    if (manualX >= 0) {
+      return Math.max(1, manualX); // Enforce minimum 1 for calculation
+    }
+  }
+
+  if (!exitWidths || exitWidths.trim() === "") {
+    return null;
+  }
+
+  // Parse exit widths (in centimeters)
+  const widths = exitWidths
+    .split(",")
+    .map((w) => parseFloat(w.trim()))
+    .filter((w) => !isNaN(w) && w > 0);
+
+  if (widths.length === 0) {
+    return null;
+  }
+
+  // Calculate x for each exit: floor((width_cm - 20) / 60)
+  let totalX = 0;
+  widths.forEach((width_cm) => {
+    const effectiveWidth = width_cm - 20; // Subtract 20cm lost
+    const units = effectiveWidth > 0 ? Math.floor(effectiveWidth / 60) : 0;
+    totalX += units;
+  });
+
+  return Math.max(1, totalX); // Minimum x = 1
+}
+
+/**
+ * Calculate K (separate paths) from external exits, x, and X
+ * Formula: capacity = x * 120, ratio = capacity / X, theoreticalK = min(ratio, 4), K = min(O, floor(theoreticalK))
+ * Matching script.js calculateKfromPaths() function
+ */
+function calculateSeparatePathsK(
+  exitCountToOpenSpace: number | undefined, // O
+  exitUnitsX: number | undefined, // x
+  occupantCount: number | undefined, // X
+  manualK: number | undefined
+): number | null {
+  // Manual K input takes priority
+  if (manualK !== undefined && manualK > 0) {
+    return Math.max(1, Math.min(Math.floor(manualK), 4));
+  }
+
+  const O = exitCountToOpenSpace || 0;
+  const x = exitUnitsX || 0;
+  const X = occupantCount || 0;
+
+  if (x <= 0 || X <= 0 || O <= 0) {
+    return 1; // Default to 1 if values are insufficient
+  }
+
+  // Calculate K: capacity = x * 120, ratio = capacity / X, theoreticalK = min(ratio, 4), K = min(O, floor(theoreticalK))
+  const totalCapacity = x * 120; // people per minute
+  const ratio = totalCapacity / X;
+  const theoreticalK = Math.min(ratio, 4);
+  const K = Math.floor(Math.min(O, theoreticalK));
+
+  return Math.max(1, Math.min(K, 4)); // Clamp between 1 and 4
+}
+
+/**
  * Calculate factor t (Evacuation Time)
- * Formula: t = [p * ((b + l) + (X/x) + (1.25*H+) + (2*H-)) * (x*(b+l))] / [800 * K * ((1.4*x*(b+l)) - (0.44*X))]
- * Returns time in minutes
+ * Updated formula matching script.js line 1252-1261:
+ * numerator = p * ((b + l) + (X / x) + 1.25 * Hplus + 2 * Hminus)
+ * denominator = 800 * K * (1.4 * x * (b + l) - 0.44 * X)
+ * t = (numerator * x * (b + l)) / denominator
+ * Returns dimensionless factor t (RSET = t * 720 seconds)
  */
 function calculateT(
   length: number | undefined,
@@ -447,11 +526,14 @@ function calculateT(
   area: number | undefined,
   occupantCount: number | undefined,
   occupantFactor: number | undefined,
+  exitWidths: string | undefined,
   exitWidthTotal: number | undefined,
+  exitUnitsX: number | undefined, // Manual x input
+  separatePathsK: number | undefined, // Manual K input
   mobilityFactor: number | undefined,
   heightAbove: number | undefined,
   depthBelow: number | undefined,
-  exitCountToOpenSpace: number | undefined
+  exitCountToOpenSpace: number | undefined // O - external exits
 ): number | null {
   let b = width || 0;
   let l = length || 0;
@@ -475,53 +557,72 @@ function calculateT(
 
   if (!X || X <= 0) {
     return null;
-    //  return { value: null, error: "تعداد افراد (X) صفر است یا وارد نشده" };
   }
 
-  // Calculate K (total exit width)
-  let K = exitWidthTotal || 0;
+  // Calculate x (exit units) - manual input takes priority
+  const x = calculateExitUnitsX(exitWidths, exitUnitsX);
+  if (!x || x <= 0) {
+    console.log("❌ calculateT: x is missing or invalid", { exitWidths, exitUnitsX, calculatedX: x });
+    return null;
+  }
+
+  // Calculate K (separate paths) - manual input takes priority
+  const K = calculateSeparatePathsK(exitCountToOpenSpace, x, X, separatePathsK);
   if (!K || K <= 0) {
+    console.log("❌ calculateT: K is missing or invalid", { exitCountToOpenSpace, x, X, separatePathsK, calculatedK: K });
     return null;
-    // return { value: null, error: "عرض کل خروج‌ها نامعتبر است" };
   }
-  if (K < 0.6) {
-    return null;
-    // return { value: null, warning: "عرض کل خروج‌ها کمتر از حداقل 0.6 متر است", intermediate: { X, K, x: K / 0.6 } };
-  }
-
-  // Calculate x (exit units)
-  const x = K / 0.6;
 
   const p = mobilityFactor || 1;
   const Hplus = heightAbove || 0;
   const Hminus = depthBelow || 0;
 
   if (b <= 0 || l <= 0) {
+    console.log("❌ calculateT: length or width is missing", { length: l, width: b });
     return null;
-    //   return { value: null, error: "طول یا عرض بخش صفر است" };
   }
+  
+  console.log("✅ calculateT inputs:", { b, l, X, x, K, p, Hplus, Hminus });
 
-  // FRAME 2015 formula (matching old script.js exactly)
-  const numerator =
-    p * ((b + l) + (X / x) + (1.25 * Hplus) + (2 * Hminus)) * (x * (b + l));
-  const denominator = 800 * K * ((1.4 * x * (b + l)) - (0.44 * X));
+  // Updated FRAME formula (matching script.js line 1252-1261)
+  const numerator = p * ((b + l) + (X / x) + 1.25 * Hplus + 2 * Hminus);
+  const denominatorTerm = 1.4 * x * (b + l) - 0.44 * X;
+  const denominator = 800 * K * denominatorTerm;
+
+  console.log("🔍 calculateT calculation:", {
+    numerator,
+    denominatorTerm,
+    denominator,
+    formula: `t = (${numerator} * ${x} * ${b + l}) / (${denominator})`,
+    exitCapacity: x * (b + l),
+    requiredCapacity: 0.314 * X,
+    check: `1.4 * ${x} * ${(b + l)} = ${(1.4 * x * (b + l)).toFixed(2)} vs 0.44 * ${X} = ${(0.44 * X).toFixed(2)}`
+  });
 
   if (denominator <= 0) {
+    const exitCapacity = 1.4 * x * (b + l);
+    const requiredCapacity = 0.44 * X;
+    console.log("❌ calculateT: denominator is <= 0", {
+      denominator,
+      denominatorTerm,
+      reason: denominatorTerm <= 0 
+        ? `ظرفیت خروج ناکافی: 1.4 * x * (b + l) = ${exitCapacity.toFixed(2)} باید بیشتر از 0.44 * X = ${requiredCapacity.toFixed(2)} باشد`
+        : "K is zero or negative",
+      suggestion: denominatorTerm <= 0
+        ? "لطفاً تعداد واحدهای خروج (x) را افزایش دهید یا تعداد افراد (X) را کاهش دهید"
+        : "لطفاً تعداد خروجی‌های منتهی به فضای آزاد (O) یا K را بررسی کنید"
+    });
     return null;
-    // return { value: null, error: "مخرج فرمول منفی یا صفر است - بررسی کنید" };
   }
 
-  const tHours = numerator / denominator;
-  const tValue = tHours * 60; // Convert to minutes (matching old script.js line 1023)
+  // Formula: t = (numerator * x * (b + l)) / denominator
+  // t is a dimensionless factor (not in hours or minutes)
+  // RSET = t * 720 seconds (as per FRAME formula)
+  const t = (numerator * x * (b + l)) / denominator;
 
-  // Note: exitCountToOpenSpace is stored but not used in calculation
-  // (old script.js has 'external-exits' in tInputs but doesn't use it in calculateT)
+  console.log("✅ calculateT result:", { t, RSET_seconds: t * 720 });
 
-  return tValue;
-  //     return {
-  //     value: tValue,
-  //     intermediate: { X, K, x },
-  //   };
+  return t;
 }
 
 /**
@@ -1040,40 +1141,46 @@ export function calculateAssessment(inputs: CreateAssessmentValidationSchema): A
   }
 
   // Calculate Acceptance Factors
-  if (inputs.mainActivity !== undefined && inputs.secondaryActivity !== undefined && inputs.heatTransferType !== undefined && inputs.generatorLocation !== undefined && inputs.energySource !== undefined && inputs.electricalSystem !== undefined && inputs.flammableLiquids !== undefined && inputs.combustibleDust !== undefined) {
-    factor_a = calculateA(inputs.mainActivity, inputs.secondaryActivity, inputs.heatTransferType, inputs.generatorLocation, inputs.energySource, inputs.electricalSystem, inputs.flammableLiquids, inputs.combustibleDust);
-  }
-  // Calculate T - matching old script logic
-  // K can come from exitWidthTotal (manual) or calculated from exitWidths (comma-separated)
-  // Optional with defaults: mobilityFactor (p, defaults to 1), heightAbove (H+, defaults to 0), depthBelow (H-, defaults to 0)
-  // Optional but needed for calculation: length/width (b/l) OR area, occupantCount (X) OR occupantFactor
-  // The function itself will return null if required values (b, l, X, K) are missing or invalid
+  // Always calculate factor_a - if nothing is selected, it will be 0
+  // calculateA handles null/undefined values by treating them as 0
+  // Note: secondaryActivity (N) is passed but NOT included in the sum per feedback
+  factor_a = calculateA(
+    inputs.mainActivity ?? null, 
+    inputs.secondaryActivity ?? null, // N - kept for storage but NOT included in sum
+    inputs.heatTransferType ?? null, 
+    inputs.generatorLocation ?? null, 
+    inputs.energySource ?? null, 
+    inputs.electricalSystem ?? null, 
+    inputs.flammableLiquids ?? null, 
+    inputs.combustibleDust ?? null,
+    inputs.weldingOperations ?? null, // W
+    inputs.additionalCarpentryPlastic ?? null, // P
+    inputs.specialRisk ?? null // S
+  );
+  // Calculate T - updated to match script.js
+  // Manual x/K inputs take priority over calculated values
+  // x is calculated from exit widths in cm: floor((width_cm - 20) / 60)
+  // K is calculated from O (external exits), x, X: capacity = x * 120, ratio = capacity / X, K = min(O, floor(min(ratio, 4)))
+  // Formula: numerator = p * ((b + l) + (X / x) + 1.25 * Hplus + 2 * Hminus)
+  //          denominator = 800 * K * (1.4 * x * (b + l) - 0.44 * X)
+  //          t = (numerator * x * (b + l)) / denominator
   
-  // Calculate K from exitWidths if exitWidthTotal is not provided
-  let calculatedK: number | undefined = inputs.exitWidthTotal;
-  if (!calculatedK && inputs.exitWidths) {
-    // Matching old script.js: filter widths >= 0.6 (minimum exit width)
-    const exitWidthsArray = inputs.exitWidths
-      .split(",")
-      .map((w) => parseFloat(w.trim()))
-      .filter((w) => !isNaN(w) && w >= 0.6);
-    calculatedK = exitWidthsArray.reduce((sum, w) => sum + w, 0);
-  }
-  
-  if (calculatedK !== undefined && calculatedK > 0) {
-    factor_t = calculateT(
-      inputs.length,
-      inputs.width,
-      inputs.area,
-      inputs.occupantCount,
-      inputs.occupantFactor,
-      calculatedK,
-      inputs.mobilityFactor,
-      inputs.heightAbove,
-      inputs.depthBelow,
-      inputs.exitCountToOpenSpace
-    );
-  }
+  // Always attempt to calculate T (will return null if required values are missing)
+  factor_t = calculateT(
+    inputs.length,
+    inputs.width,
+    inputs.area,
+    inputs.occupantCount,
+    inputs.occupantFactor,
+    inputs.exitWidths, // Exit widths in centimeters
+    inputs.exitWidthTotal, // Legacy field, not used in new calculation
+    inputs.exitUnitsX, // Manual x input (takes priority)
+    inputs.separatePathsK, // Manual K input (takes priority)
+    inputs.mobilityFactor,
+    inputs.heightAbove,
+    inputs.depthBelow,
+    inputs.exitCountToOpenSpace // O - external exits count
+  );
   // Calculate C - replaceability is required (can be 0), valueTotal and valueYear are optional (only needed for c2)
   // Matching old script: c1 is always calculated from replaceability, c2 is optional based on value
   if (inputs.replaceability !== undefined) {

@@ -58,14 +58,18 @@ export async function updateAssessmentService({
             
             // Acceptance factors inputs
             mainActivity: existing.acceptanceFactors?.mainActivity ?? undefined,
+            mainActivityKey: existing.acceptanceFactors?.mainActivityKey ?? undefined,
             secondaryActivity: existing.acceptanceFactors?.secondaryActivity ?? undefined,
             heatTransferType: existing.acceptanceFactors?.heatTransferType ?? undefined,
+            heatTransferTypeKey: existing.acceptanceFactors?.heatTransferTypeKey ?? undefined,
             generatorLocation: existing.acceptanceFactors?.generatorLocation ?? undefined,
+            generatorLocationKey: existing.acceptanceFactors?.generatorLocationKey ?? undefined,
             energySource: existing.acceptanceFactors?.energySource ?? undefined,
             energySourceKey: existing.acceptanceFactors?.energySourceKey ?? undefined,
             electricalSystem: existing.acceptanceFactors?.electricalSystem ?? undefined,
             flammableLiquids: existing.acceptanceFactors?.flammableLiquids ?? undefined,
             combustibleDust: existing.acceptanceFactors?.combustibleDust ?? undefined,
+            combustibleDustKey: existing.acceptanceFactors?.combustibleDustKey ?? undefined,
             occupantCount: existing.acceptanceFactors?.occupantCount ?? undefined,
             occupantFactor: existing.acceptanceFactors?.occupantFactor ?? undefined,
             occupantFactorKey: existing.acceptanceFactors?.occupantFactorKey ?? undefined,
@@ -131,6 +135,11 @@ export async function updateAssessmentService({
                 mergedInputs[key] = value;
             }
         });
+        
+        // Special handling for dependencyManual: clear it when dependencyType is not "manual"
+        if (inputs.dependencyType !== undefined && inputs.dependencyType !== "manual") {
+            mergedInputs.dependencyManual = null;
+        }
 
         // Recalculate all factors automatically based on merged inputs
         // Users only send raw input data - all calculated fields are recomputed here
@@ -228,19 +237,28 @@ export async function updateAssessmentService({
                     assessmentId,
                     // Input fields
                     mainActivity: mergedInputs.mainActivity ?? null,
+                    mainActivityKey: mergedInputs.mainActivityKey ?? null,
                     secondaryActivity: mergedInputs.secondaryActivity ?? null,
                     heatTransferType: mergedInputs.heatTransferType ?? null,
+                    heatTransferTypeKey: mergedInputs.heatTransferTypeKey ?? null,
                     generatorLocation: mergedInputs.generatorLocation ?? null,
+                    generatorLocationKey: mergedInputs.generatorLocationKey ?? null,
                     energySource: mergedInputs.energySource ?? null,
                     energySourceKey: mergedInputs.energySourceKey ?? null,
                     electricalSystem: mergedInputs.electricalSystem ?? null,
                     flammableLiquids: mergedInputs.flammableLiquids ?? null,
                     combustibleDust: mergedInputs.combustibleDust ?? null,
+                    combustibleDustKey: mergedInputs.combustibleDustKey ?? null,
+                    weldingOperations: mergedInputs.weldingOperations ?? null,
+                    additionalCarpentryPlastic: mergedInputs.additionalCarpentryPlastic ?? null,
+                    specialRisk: mergedInputs.specialRisk ?? null,
                     occupantCount: mergedInputs.occupantCount ?? null,
                     occupantFactor: mergedInputs.occupantFactor ?? null,
                     occupantFactorKey: mergedInputs.occupantFactorKey ?? null,
                     exitWidths: mergedInputs.exitWidths ?? null,
                     exitWidthTotal: mergedInputs.exitWidthTotal ?? null,
+                    exitUnitsX: mergedInputs.exitUnitsX ?? null,
+                    separatePathsK: mergedInputs.separatePathsK ?? null,
                     mobilityFactor: mergedInputs.mobilityFactor ?? null,
                     exitCountToOpenSpace: mergedInputs.exitCountToOpenSpace ?? null,
                     valueTotal: mergedInputs.valueTotal ?? null,
@@ -262,26 +280,37 @@ export async function updateAssessmentService({
                 update: {
                     // Update inputs only if provided
                     ...buildUpdateData("mainActivity", inputs.mainActivity),
+                    ...buildUpdateData("mainActivityKey", inputs.mainActivityKey),
                     ...buildUpdateData("secondaryActivity", inputs.secondaryActivity),
                     ...buildUpdateData("heatTransferType", inputs.heatTransferType),
+                    ...buildUpdateData("heatTransferTypeKey", inputs.heatTransferTypeKey),
                     ...buildUpdateData("generatorLocation", inputs.generatorLocation),
+                    ...buildUpdateData("generatorLocationKey", inputs.generatorLocationKey),
                     ...buildUpdateData("energySource", inputs.energySource),
                     ...buildUpdateData("energySourceKey", inputs.energySourceKey),
                     ...buildUpdateData("electricalSystem", inputs.electricalSystem),
                     ...buildUpdateData("flammableLiquids", inputs.flammableLiquids),
                     ...buildUpdateData("combustibleDust", inputs.combustibleDust),
+                    ...buildUpdateData("combustibleDustKey", inputs.combustibleDustKey),
+                    ...buildUpdateData("weldingOperations", inputs.weldingOperations),
+                    ...buildUpdateData("additionalCarpentryPlastic", inputs.additionalCarpentryPlastic),
+                    ...buildUpdateData("specialRisk", inputs.specialRisk),
                     ...buildUpdateData("occupantCount", inputs.occupantCount),
                     ...buildUpdateData("occupantFactor", inputs.occupantFactor),
                     ...buildUpdateData("occupantFactorKey", inputs.occupantFactorKey),
                     ...buildUpdateData("exitWidths", inputs.exitWidths),
                     ...buildUpdateData("exitWidthTotal", inputs.exitWidthTotal),
+                    ...buildUpdateData("exitUnitsX", inputs.exitUnitsX),
+                    ...buildUpdateData("separatePathsK", inputs.separatePathsK),
                     ...buildUpdateData("mobilityFactor", inputs.mobilityFactor),
                     ...buildUpdateData("exitCountToOpenSpace", inputs.exitCountToOpenSpace),
                     ...buildUpdateData("valueTotal", inputs.valueTotal),
                     ...buildUpdateData("valueYear", inputs.valueYear),
                     ...buildUpdateData("replaceability", inputs.replaceability),
                     ...buildUpdateData("dependencyType", inputs.dependencyType),
-                    ...buildUpdateData("dependencyManual", inputs.dependencyManual),
+                    // Handle dependencyManual: clear it when dependencyType is not "manual"
+                    // Use mergedInputs to check the final state after special handling
+                    ...buildUpdateData("dependencyManual", mergedInputs.dependencyManual, true), // allowNull to clear when switching from manual to category
                     // Always update calculated values
                     factor_a: calculations.factor_a,
                     factor_t: calculations.factor_t,

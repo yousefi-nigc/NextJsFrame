@@ -205,23 +205,32 @@ model AssessmentAcceptanceFactors {
   // Input Fields for A/T/C/R/D calculations
   // Activation factors
   mainActivity         Float? // Activation factor - main activity
-  secondaryActivity    Float? // Activation factor - secondary activity
+  mainActivityKey      String? // Key for select display (e.g., "A1", "A2", "B", "C", "D") to handle duplicate values
+  secondaryActivity    Float? // N - Painting/Spraying/Coating (NOT included in factor_a calculation per feedback)
   heatTransferType     Float? // Activation factor - heat transfer type
+  heatTransferTypeKey  String? // Key for select display (e.g., "E1", "E2", "E3") to handle duplicate values
   generatorLocation    Float? // Activation factor - generator location
+  generatorLocationKey String? // Key for select display (e.g., "F0", "F1", "F2") to handle duplicate values
   energySource         Float? // Activation factor - energy source
   energySourceKey      String? // Key for select display (e.g., "G0", "G1", "G2", "G3") to handle duplicate values
   electricalSystem     Float? // Activation factor - electrical system
   flammableLiquids     Float? // Activation factor - flammable liquids
   combustibleDust      Float? // Activation factor - combustible dust
+  combustibleDustKey   String? // Key for select display (e.g., "K0", "K1", "K2") to handle duplicate values
+  weldingOperations    Float? // W - Welding operations (0 or 0.1)
+  additionalCarpentryPlastic Float? // P - Additional carpentry or use of plastic (0 or 0.1)
+  specialRisk          Float? // S - Special risk (0 or 0.1)
 
   // Evacuation time inputs
   occupantCount        Int? // X
   occupantFactor       Float? // Factor used to calc X
   occupantFactorKey    String? // Key for select display (e.g., "office", "medical") to handle duplicate values
-  exitWidths           String? // Comma-separated exit widths (e.g., "1.2, 0.9, 2.0")
+  exitWidths           String? // Comma-separated exit widths in centimeters (e.g., "80, 80, 120")
   exitWidthTotal       Float? // K (calculated from exitWidths if not provided)
+  exitUnitsX           Float? // Manual x input (exit units) - takes priority over calculated x
+  separatePathsK       Float? // Manual K input (separate paths) - takes priority over calculated K
   mobilityFactor       Float? // p
-  exitCountToOpenSpace Int? // Number of exits leading to open space
+  exitCountToOpenSpace Int? // O - Number of exits leading to open space
 
   // Value factor inputs
   valueTotal       Float? // In Rials

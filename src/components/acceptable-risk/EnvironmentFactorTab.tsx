@@ -9,6 +9,18 @@ import {
   AssessmentUpdateApiResponse,
 } from "@/lib/APIResponseInterfaces";
 
+// Helper function to get material class label
+function getMaterialClassLabel(m: number): string {
+  if (m === 0) return "A1 - غیرقابل احتراق (M = 0)";
+  if (m === 0.5) return "A2 - تقریباً غیرقابل احتراق (M = 0.5)";
+  if (m === 1) return "B - دیرسوز (M = 1)";
+  if (m === 2) return "C - سوزش کند (M = 2)";
+  if (m === 3) return "D - قابل احتراق (M = 3)";
+  if (m === 4) return "E - به راحتی مشتعل (M = 4)";
+  if (m === 5) return "F - خیلی سریع شعله‌ور (M = 5)";
+  return `M = ${m}`;
+}
+
 function calculateR(qi: number, materialClass: number): number {
   const qi_clamped = Math.max(0, Math.min(qi, 20000));
   const M_clamped = Math.max(0, Math.min(materialClass, 5));
@@ -28,7 +40,6 @@ export default function EnvironmentFactorTab({
 }) {
   const queryClient = useQueryClient();
   const [qi, setQi] = useState<string>("");
-  const [materialClass, setMaterialClass] = useState<string>("0");
 
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
     queryKey: ["assessment", floorId],
@@ -44,7 +55,6 @@ export default function EnvironmentFactorTab({
       const response = data as AssessmentGetApiResponse;
 
       setQi(response.assessment.qi?.toString() ?? "");
-      setMaterialClass(response.assessment.materialClass?.toString() ?? "0");
 
       return response;
     },
@@ -56,13 +66,19 @@ export default function EnvironmentFactorTab({
         throw new Error("Qi باید بزرگتر از صفر باشد");
       }
 
+      // Material class M comes from factor i calculation - use the stored value
+      const materialClass = assessment?.assessment.materialClass;
+      if (materialClass === null || materialClass === undefined) {
+        throw new Error("لطفاً ابتدا کلاس واکنش در برابر آتش (M) را در تب ضریب i وارد کنید");
+      }
+
       const res = await fetch(
         `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
         {
           method: "PUT",
           body: JSON.stringify({
             qi: parseFloat(qi),
-            materialClass: parseFloat(materialClass),
+            // materialClass is not sent - it's already stored from factor i calculation
           }),
         }
       );
@@ -88,8 +104,12 @@ export default function EnvironmentFactorTab({
         <div className="text-gray-500 leading-relaxed text-sm dark:text-white">
           این ضریب شاخص سرعت تولید دود و حرارت است که بر مدت زمان تخلیه ایمن
           (ASET) اثر می‌گذارد. مقدار r بر اساس <b>بار آتش ثابت (Qi)</b> و{" "}
-          <b>کلاس گسترش شعله (M)</b> در بدترین سناریوی آتش‌سوزی محاسبه می‌شود.
-          <p className="mt-5">
+          <b>کلاس واکنش در برابر آتش (M)</b> محاسبه می‌شود.
+          <p className="mt-3">
+            <span className="font-semibold">توجه:</span> کلاس واکنش در برابر آتش (M) از محاسبه ضریب i استفاده می‌شود.
+            لطفاً ابتدا در تب ضریب i مقدار M را وارد کنید.
+          </p>
+          <p className="mt-3">
             <span className="font-semibold">یادآوری:</span> هرچه r بزرگ‌تر باشد،
             آتش سریع‌تر توسعه می‌یابد و ASET کوتاه‌تر می‌شود.
           </p>
@@ -111,7 +131,7 @@ export default function EnvironmentFactorTab({
               <b>Qi</b>: بار آتش ثابت (MJ/m²)
             </li>
             <li>
-              <b>M</b>: کلاس گسترش شعله (۰ تا ۵)
+              <b>M</b>: کلاس واکنش در برابر آتش (۰ تا ۵) - از ضریب i
             </li>
           </ul>
         </div>
@@ -129,19 +149,21 @@ export default function EnvironmentFactorTab({
       </div>
 
       <div className="input-group">
-        <label className="input-label">کلاس گسترش شعله (M)</label>
-        <select
-          value={materialClass}
-          onChange={(e) => setMaterialClass(e.target.value)}
-        >
-          <option value="0">A1 - غیرقابل احتراق</option>
-          <option value="0.5">A2 - تقریباً غیرقابل احتراق</option>
-          <option value="1">B - دیرسوز</option>
-          <option value="2">C - سوزش کند</option>
-          <option value="3">D - قابل احتراق</option>
-          <option value="4">E - به راحتی مشتعل</option>
-          <option value="5">F - خیلی سریع شعله‌ور</option>
-        </select>
+        <label className="input-label">کلاس واکنش در برابر آتش (M) - از ضریب i</label>
+        <input
+          type="text"
+          value={
+            assessment?.assessment.materialClass !== null && assessment?.assessment.materialClass !== undefined
+              ? getMaterialClassLabel(assessment.assessment.materialClass)
+              : "لطفاً ابتدا در تب ضریب i وارد کنید"
+          }
+          readOnly
+          style={{ background: "#f0f0f0", cursor: "not-allowed" }}
+          className="dark:bg-gray-700"
+        />
+        <small className="text-sm text-gray-500 mt-1 dark:text-gray-400">
+          این مقدار از محاسبه ضریب i (کلاس واکنش در برابر آتش) استفاده می‌شود
+        </small>
       </div>
 
       <button
