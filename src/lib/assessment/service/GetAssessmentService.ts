@@ -24,9 +24,6 @@ export async function getAssessmentService(floorId: string, userId: string): Pro
                 riskFactors: true,
                 acceptanceFactors: true,
                 protectionFactors: true,
-                potentialRisks: true,
-                acceptableLevels: true,
-                protectionLevels: true,
                 finalRisks: true,
             }
         });

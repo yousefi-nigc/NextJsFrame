@@ -19,6 +19,7 @@ export default function ActivationFactorTab({
   const [mainActivity, setMainActivity] = useState("0");
   const [mainActivityKey, setMainActivityKey] = useState("A1");
   const [energySource, setEnergySource] = useState("0");
+  const [energySourceKey, setEnergySourceKey] = useState("G0");
   const [heatTransferType, setHeatTransferType] = useState("0");
   const [generatorLocation, setGeneratorLocation] = useState("0");
   const [electricalSystem, setElectricalSystem] = useState("0");
@@ -48,7 +49,15 @@ export default function ActivationFactorTab({
         "0.4": "C",
       };
       setMainActivityKey(keyMap[mainActivityValue] || "A1");
-      setEnergySource(response.assessment.energySource?.toString() ?? "0");
+      const energySourceValue = response.assessment.energySource?.toString() ?? "0";
+      setEnergySource(energySourceValue);
+      // Map value back to key for display
+      const energySourceKeyMap: Record<string, string> = {
+        "0": response.assessment.energySourceKey || "G0", // Use saved key if available, default to G0
+        "0.1": "G2",
+        "0.15": "G3",
+      };
+      setEnergySourceKey(energySourceKeyMap[energySourceValue] || response.assessment.energySourceKey || "G0");
       setHeatTransferType(
         response.assessment.heatTransferType?.toString() ?? "0"
       );
@@ -80,7 +89,9 @@ export default function ActivationFactorTab({
           method: "PUT",
           body: JSON.stringify({
             mainActivity: parseFloat(mainActivity) || 0,
+            mainActivityKey: mainActivityKey,
             energySource: parseFloat(energySource) || 0,
+            energySourceKey: energySourceKey,
             heatTransferType: parseFloat(heatTransferType) || 0,
             generatorLocation: parseFloat(generatorLocation) || 0,
             electricalSystem: parseFloat(electricalSystem) || 0,
@@ -150,13 +161,24 @@ export default function ActivationFactorTab({
       <div className="input-group">
         <label className="input-label">منبع انرژی (G)</label>
         <select
-          value={energySource}
-          onChange={(e) => setEnergySource(e.target.value)}
+          value={energySourceKey}
+          onChange={(e) => {
+            const key = e.target.value;
+            setEnergySourceKey(key);
+            // Map key to actual value for calculation
+            const valueMap: Record<string, string> = {
+              G0: "0",
+              G1: "0",
+              G2: "0.1",
+              G3: "0.15",
+            };
+            setEnergySource(valueMap[key] || "0");
+          }}
         >
-          <option value="0">G0 - قابل‌اعمال نیست</option>
-          <option value="0">G1 - برق، زغال‌سنگ، نفت کوره</option>
-          <option value="0.1">G2 - گاز</option>
-          <option value="0.15">G3 - چوب یا ضایعات سوختنی</option>
+          <option value="G0">G0 - قابل‌اعمال نیست</option>
+          <option value="G1">G1 - برق، زغال‌سنگ، نفت کوره</option>
+          <option value="G2">G2 - گاز</option>
+          <option value="G3">G3 - چوب یا ضایعات سوختنی</option>
         </select>
       </div>
 

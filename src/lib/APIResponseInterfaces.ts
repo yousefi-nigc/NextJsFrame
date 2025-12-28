@@ -57,6 +57,7 @@ export interface AssessmentResponse {
   heatTransferType: number | null;
   generatorLocation: number | null;
   energySource: number | null;
+  energySourceKey: string | null;
   electricalSystem: number | null;
   flammableLiquids: number | null;
   combustibleDust: number | null;

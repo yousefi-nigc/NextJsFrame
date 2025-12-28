@@ -52,6 +52,7 @@ export const createAssessmentValidationSchema = z.object({
     heatTransferType: z.number().min(0).optional(),
     generatorLocation: z.number().min(0).optional(),
     energySource: z.number().min(0).optional(),
+    energySourceKey: z.string().optional(), // Key for select display (e.g., "G0", "G1", "G2", "G3") to handle duplicate values
     electricalSystem: z.number().min(0).optional(),
     flammableLiquids: z.number().min(0).optional(),
     combustibleDust: z.number().min(0).optional(),

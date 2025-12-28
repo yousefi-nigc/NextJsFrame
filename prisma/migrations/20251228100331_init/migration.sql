@@ -91,6 +91,15 @@ CREATE TABLE "floor" (
 CREATE TABLE "assessment" (
     "id" TEXT NOT NULL,
     "floorId" TEXT NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "assessment_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "assessment_risk_factors" (
+    "id" TEXT NOT NULL,
+    "assessmentId" TEXT NOT NULL,
     "qi" DOUBLE PRECISION,
     "qm" DOUBLE PRECISION,
     "tempDestruction" DOUBLE PRECISION,
@@ -110,11 +119,32 @@ CREATE TABLE "assessment" (
     "accessSides" INTEGER,
     "heightAbove" DOUBLE PRECISION,
     "depthBelow" DOUBLE PRECISION,
+    "floorLevel" DOUBLE PRECISION,
+    "factor_q" DOUBLE PRECISION,
+    "factor_i" DOUBLE PRECISION,
+    "factor_g" DOUBLE PRECISION,
+    "factor_e" DOUBLE PRECISION,
+    "factor_v" DOUBLE PRECISION,
+    "factor_z" DOUBLE PRECISION,
+    "risk_P" DOUBLE PRECISION,
+    "risk_P1" DOUBLE PRECISION,
+    "risk_P2" DOUBLE PRECISION,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "assessment_risk_factors_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "assessment_acceptance_factors" (
+    "id" TEXT NOT NULL,
+    "assessmentId" TEXT NOT NULL,
     "mainActivity" DOUBLE PRECISION,
     "secondaryActivity" DOUBLE PRECISION,
     "heatTransferType" DOUBLE PRECISION,
     "generatorLocation" DOUBLE PRECISION,
     "energySource" DOUBLE PRECISION,
+    "energySourceKey" TEXT,
     "electricalSystem" DOUBLE PRECISION,
     "flammableLiquids" DOUBLE PRECISION,
     "combustibleDust" DOUBLE PRECISION,
@@ -130,7 +160,24 @@ CREATE TABLE "assessment" (
     "replaceability" DOUBLE PRECISION,
     "dependencyType" TEXT,
     "dependencyManual" DOUBLE PRECISION,
-    "floorLevel" DOUBLE PRECISION,
+    "factor_a" DOUBLE PRECISION,
+    "factor_t" DOUBLE PRECISION,
+    "factor_c" DOUBLE PRECISION,
+    "factor_r" DOUBLE PRECISION,
+    "factor_d" DOUBLE PRECISION,
+    "level_A" DOUBLE PRECISION,
+    "level_A1" DOUBLE PRECISION,
+    "level_A2" DOUBLE PRECISION,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "assessment_acceptance_factors_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "assessment_protection_factors" (
+    "id" TEXT NOT NULL,
+    "assessmentId" TEXT NOT NULL,
     "waterStorageType" TEXT,
     "waterCapacity" DOUBLE PRECISION,
     "distributionNetwork" TEXT,
@@ -142,6 +189,11 @@ CREATE TABLE "assessment" (
     "fireStationType" DOUBLE PRECISION,
     "waterSupplyType" DOUBLE PRECISION,
     "industrialBrigade" DOUBLE PRECISION,
+    "n1" DOUBLE PRECISION,
+    "n2" DOUBLE PRECISION,
+    "n3" DOUBLE PRECISION,
+    "n4" DOUBLE PRECISION,
+    "n5" DOUBLE PRECISION,
     "structureResist" DOUBLE PRECISION,
     "facadeResist" DOUBLE PRECISION,
     "roofResist" DOUBLE PRECISION,
@@ -149,11 +201,6 @@ CREATE TABLE "assessment" (
     "hasManyWindows" BOOLEAN,
     "noInternalSeparation" BOOLEAN,
     "combustibleInsulation" BOOLEAN,
-    "n1" DOUBLE PRECISION,
-    "n2" DOUBLE PRECISION,
-    "n3" DOUBLE PRECISION,
-    "n4" DOUBLE PRECISION,
-    "n5" DOUBLE PRECISION,
     "subcompartment" DOUBLE PRECISION,
     "stairways" DOUBLE PRECISION,
     "horizontalExit" DOUBLE PRECISION,
@@ -168,95 +215,19 @@ CREATE TABLE "assessment" (
     "selfRepairCapability" BOOLEAN,
     "relocationAgreements" BOOLEAN,
     "multipleProduction" BOOLEAN,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "assessment_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "assessment_risk_factors" (
-    "id" TEXT NOT NULL,
-    "assessmentId" TEXT NOT NULL,
-    "factor_q" DOUBLE PRECISION,
-    "factor_i" DOUBLE PRECISION,
-    "factor_g" DOUBLE PRECISION,
-    "factor_e" DOUBLE PRECISION,
-    "factor_v" DOUBLE PRECISION,
-    "factor_z" DOUBLE PRECISION,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "assessment_risk_factors_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "assessment_acceptance_factors" (
-    "id" TEXT NOT NULL,
-    "assessmentId" TEXT NOT NULL,
-    "factor_a" DOUBLE PRECISION,
-    "factor_t" DOUBLE PRECISION,
-    "factor_c" DOUBLE PRECISION,
-    "factor_r" DOUBLE PRECISION,
-    "factor_d" DOUBLE PRECISION,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "assessment_acceptance_factors_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "assessment_protection_factors" (
-    "id" TEXT NOT NULL,
-    "assessmentId" TEXT NOT NULL,
     "factor_W" DOUBLE PRECISION,
     "factor_N" DOUBLE PRECISION,
     "factor_S" DOUBLE PRECISION,
     "factor_F" DOUBLE PRECISION,
     "factor_U" DOUBLE PRECISION,
     "factor_Y" DOUBLE PRECISION,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "assessment_protection_factors_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "assessment_potential_risks" (
-    "id" TEXT NOT NULL,
-    "assessmentId" TEXT NOT NULL,
-    "risk_P" DOUBLE PRECISION,
-    "risk_P1" DOUBLE PRECISION,
-    "risk_P2" DOUBLE PRECISION,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "assessment_potential_risks_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "assessment_acceptable_levels" (
-    "id" TEXT NOT NULL,
-    "assessmentId" TEXT NOT NULL,
-    "level_A" DOUBLE PRECISION,
-    "level_A1" DOUBLE PRECISION,
-    "level_A2" DOUBLE PRECISION,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "assessment_acceptable_levels_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "assessment_protection_levels" (
-    "id" TEXT NOT NULL,
-    "assessmentId" TEXT NOT NULL,
     "level_D" DOUBLE PRECISION,
     "level_D1" DOUBLE PRECISION,
     "level_D2" DOUBLE PRECISION,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "assessment_protection_levels_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "assessment_protection_factors_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -296,15 +267,6 @@ CREATE UNIQUE INDEX "assessment_acceptance_factors_assessmentId_key" ON "assessm
 CREATE UNIQUE INDEX "assessment_protection_factors_assessmentId_key" ON "assessment_protection_factors"("assessmentId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "assessment_potential_risks_assessmentId_key" ON "assessment_potential_risks"("assessmentId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "assessment_acceptable_levels_assessmentId_key" ON "assessment_acceptable_levels"("assessmentId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "assessment_protection_levels_assessmentId_key" ON "assessment_protection_levels"("assessmentId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "assessment_final_risks_assessmentId_key" ON "assessment_final_risks"("assessmentId");
 
 -- AddForeignKey
@@ -330,15 +292,6 @@ ALTER TABLE "assessment_acceptance_factors" ADD CONSTRAINT "assessment_acceptanc
 
 -- AddForeignKey
 ALTER TABLE "assessment_protection_factors" ADD CONSTRAINT "assessment_protection_factors_assessmentId_fkey" FOREIGN KEY ("assessmentId") REFERENCES "assessment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "assessment_potential_risks" ADD CONSTRAINT "assessment_potential_risks_assessmentId_fkey" FOREIGN KEY ("assessmentId") REFERENCES "assessment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "assessment_acceptable_levels" ADD CONSTRAINT "assessment_acceptable_levels_assessmentId_fkey" FOREIGN KEY ("assessmentId") REFERENCES "assessment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "assessment_protection_levels" ADD CONSTRAINT "assessment_protection_levels_assessmentId_fkey" FOREIGN KEY ("assessmentId") REFERENCES "assessment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "assessment_final_risks" ADD CONSTRAINT "assessment_final_risks_assessmentId_fkey" FOREIGN KEY ("assessmentId") REFERENCES "assessment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
