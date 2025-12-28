@@ -1,5 +1,6 @@
 import { AssessmentServiceResponse } from "../model/Assessment";
 import { db } from "@/lib/db";
+import { flattenAssessment } from "../utils/flattenAssessment";
 
 export async function getAssessmentService(floorId: string, userId: string): Promise<AssessmentServiceResponse> {
     try {
@@ -18,14 +19,25 @@ export async function getAssessmentService(floorId: string, userId: string): Pro
         }
 
         const assessment = await db.assessment.findUnique({
-            where: { floorId }
+            where: { floorId },
+            include: {
+                riskFactors: true,
+                acceptanceFactors: true,
+                protectionFactors: true,
+                potentialRisks: true,
+                acceptableLevels: true,
+                protectionLevels: true,
+                finalRisks: true,
+            }
         });
 
         if (!assessment) {
             return { success: false, error: new Error("Assessment not found") };
         }
 
-        return { success: true, assessment };
+        // Flatten the assessment for API response
+        const flattenedAssessment = flattenAssessment(assessment);
+        return { success: true, assessment: flattenedAssessment };
     } catch (error) {
         return { success: false, error: error as Error };
     }

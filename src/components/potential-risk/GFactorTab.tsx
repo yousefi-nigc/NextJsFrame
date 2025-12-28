@@ -25,7 +25,7 @@ export default function GFactorTab({
   const [accessType, setAccessType] = useState<"wide" | "narrow">("wide");
   const [sectionLength, setSectionLength] = useState(30);
   const [sectionWidth, setSectionWidth] = useState(20);
-  const [sectionArea, setSectionArea] = useState<number | "">("");
+  const [sectionArea, setSectionArea] = useState<number | "">(600);
   const [isAreaManuallySet, setIsAreaManuallySet] = useState(false);
 
   // Auto-calculate area when length or width changes

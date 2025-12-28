@@ -1,0 +1,141 @@
+import { AssessmentResponse } from "@/lib/APIResponseInterfaces";
+
+/**
+ * Type for assessment with all relations included
+ * Using 'any' type since Prisma client may not be regenerated yet after schema changes
+ */
+type AssessmentWithRelations = any;
+
+/**
+ * Flattens an assessment with relations into the flat AssessmentResponse structure
+ * This maintains backward compatibility with the API
+ */
+export function flattenAssessment(assessment: AssessmentWithRelations | null): AssessmentResponse | null {
+    if (!assessment) {
+        return null;
+    }
+
+    return {
+        id: assessment.id,
+        floorId: assessment.floorId,
+        
+        // Input fields
+        qi: assessment.qi,
+        qm: assessment.qm,
+        tempDestruction: assessment.tempDestruction,
+        tempDestructionMulti: assessment.tempDestructionMulti,
+        avgDimension: assessment.avgDimension,
+        materialClass: assessment.materialClass,
+        materialClassMulti: assessment.materialClassMulti,
+        length: assessment.length,
+        width: assessment.width,
+        area: assessment.area,
+        height: assessment.height,
+        accessType: assessment.accessType as "wide" | "narrow" | null,
+        windowArea: assessment.windowArea,
+        staticVentArea: assessment.staticVentArea,
+        mechVentFlow: assessment.mechVentFlow,
+        ventingRatio_k: assessment.ventingRatio_k,
+        accessSides: assessment.accessSides,
+        heightAbove: assessment.heightAbove,
+        depthBelow: assessment.depthBelow,
+        mainActivity: assessment.mainActivity,
+        secondaryActivity: assessment.secondaryActivity,
+        heatTransferType: assessment.heatTransferType,
+        generatorLocation: assessment.generatorLocation,
+        energySource: assessment.energySource,
+        electricalSystem: assessment.electricalSystem,
+        flammableLiquids: assessment.flammableLiquids,
+        combustibleDust: assessment.combustibleDust,
+        occupantCount: assessment.occupantCount,
+        occupantFactor: assessment.occupantFactor,
+        occupantFactorKey: assessment.occupantFactorKey,
+        exitWidths: assessment.exitWidths,
+        exitWidthTotal: assessment.exitWidthTotal,
+        mobilityFactor: assessment.mobilityFactor,
+        exitCountToOpenSpace: assessment.exitCountToOpenSpace,
+        valueTotal: assessment.valueTotal,
+        valueYear: assessment.valueYear,
+        replaceability: assessment.replaceability,
+        dependencyType: assessment.dependencyType,
+        dependencyManual: assessment.dependencyManual,
+        waterStorageType: assessment.waterStorageType,
+        waterCapacity: assessment.waterCapacity,
+        distributionNetwork: assessment.distributionNetwork,
+        hydrantCount25: assessment.hydrantCount25,
+        hydrantCount3: assessment.hydrantCount3,
+        hydrantCount4: assessment.hydrantCount4,
+        detectionType: assessment.detectionType,
+        sprinklerType: assessment.sprinklerType,
+        fireStationType: assessment.fireStationType,
+        waterSupplyType: assessment.waterSupplyType,
+        industrialBrigade: assessment.industrialBrigade,
+        structureResist: assessment.structureResist,
+        facadeResist: assessment.facadeResist,
+        roofResist: assessment.roofResist,
+        wallResist: assessment.wallResist,
+        hasManyWindows: assessment.hasManyWindows,
+        noInternalSeparation: assessment.noInternalSeparation,
+        combustibleInsulation: assessment.combustibleInsulation,
+        n1: assessment.n1,
+        n2: assessment.n2,
+        n3: assessment.n3,
+        n4: assessment.n4,
+        n5: assessment.n5,
+        subcompartment: assessment.subcompartment,
+        stairways: assessment.stairways,
+        horizontalExit: assessment.horizontalExit,
+        sprinklers: assessment.sprinklers,
+        subCompartmentEI30: assessment.subCompartmentEI30,
+        subCompartmentEI60: assessment.subCompartmentEI60,
+        partialDetection: assessment.partialDetection,
+        partialSprinkler: assessment.partialSprinkler,
+        otherAutoExtinguish: assessment.otherAutoExtinguish,
+        financialDataBackup: assessment.financialDataBackup,
+        sparePartsAccess: assessment.sparePartsAccess,
+        selfRepairCapability: assessment.selfRepairCapability,
+        relocationAgreements: assessment.relocationAgreements,
+        multipleProduction: assessment.multipleProduction,
+        floorLevel: assessment.floorLevel,
+        
+        // Calculated values from relations
+        factor_q: assessment.riskFactors?.factor_q ?? null,
+        factor_i: assessment.riskFactors?.factor_i ?? null,
+        factor_g: assessment.riskFactors?.factor_g ?? null,
+        factor_e: assessment.riskFactors?.factor_e ?? null,
+        factor_v: assessment.riskFactors?.factor_v ?? null,
+        factor_z: assessment.riskFactors?.factor_z ?? null,
+        factor_a: assessment.acceptanceFactors?.factor_a ?? null,
+        factor_t: assessment.acceptanceFactors?.factor_t ?? null,
+        factor_c: assessment.acceptanceFactors?.factor_c ?? null,
+        factor_r: assessment.acceptanceFactors?.factor_r ?? null,
+        factor_d: assessment.acceptanceFactors?.factor_d ?? null,
+        factor_W: assessment.protectionFactors?.factor_W ?? null,
+        factor_N: assessment.protectionFactors?.factor_N ?? null,
+        factor_S: assessment.protectionFactors?.factor_S ?? null,
+        factor_F: assessment.protectionFactors?.factor_F ?? null,
+        factor_U: assessment.protectionFactors?.factor_U ?? null,
+        factor_Y: assessment.protectionFactors?.factor_Y ?? null,
+        risk_P: assessment.potentialRisks?.risk_P ?? null,
+        risk_P1: assessment.potentialRisks?.risk_P1 ?? null,
+        risk_P2: assessment.potentialRisks?.risk_P2 ?? null,
+        level_A: assessment.acceptableLevels?.level_A ?? null,
+        level_A1: assessment.acceptableLevels?.level_A1 ?? null,
+        level_A2: assessment.acceptableLevels?.level_A2 ?? null,
+        level_D: assessment.protectionLevels?.level_D ?? null,
+        level_D1: assessment.protectionLevels?.level_D1 ?? null,
+        level_D2: assessment.protectionLevels?.level_D2 ?? null,
+        factor_Fo: assessment.finalRisks?.factor_Fo ?? null,
+        risk_Ro: assessment.finalRisks?.risk_Ro ?? null,
+        final_R: assessment.finalRisks?.final_R ?? null,
+        final_R1: assessment.finalRisks?.final_R1 ?? null,
+        final_R2: assessment.finalRisks?.final_R2 ?? null,
+        status_R: assessment.finalRisks?.status_R ?? null,
+        status_R1: assessment.finalRisks?.status_R1 ?? null,
+        status_R2: assessment.finalRisks?.status_R2 ?? null,
+        
+        // Metadata
+        updatedAt: assessment.updatedAt.toISOString(),
+    };
+}
+

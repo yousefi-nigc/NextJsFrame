@@ -12,12 +12,6 @@ RUN npm ci
 
 # Build the Next.js application
 FROM base AS builder
-ARG DATABASE_URL=postgresql://gastop:gastop123@postgres:5432/gastop?schema=public
-ARG BETTER_AUTH_SECRET=nXR5o8GxxnP5nESHyLIa8BjzucgOIE3d
-ARG BETTER_AUTH_URL=http://localhost:3000
-ENV DATABASE_URL=$DATABASE_URL
-ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
-ENV BETTER_AUTH_URL=$BETTER_AUTH_URL
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

@@ -230,7 +230,26 @@ model Assessment {
   relocationAgreements Boolean? // Relocation agreements
   multipleProduction   Boolean? // Multiple production sites
 
-  // --- SECTION 2: CALCULATED FACTORS ---
+  updatedAt DateTime @updatedAt
+
+  // Relations to calculated value tables
+  riskFactors      AssessmentRiskFactors?
+  acceptanceFactors AssessmentAcceptanceFactors?
+  protectionFactors AssessmentProtectionFactors?
+  potentialRisks   AssessmentPotentialRisks?
+  acceptableLevels AssessmentAcceptableLevels?
+  protectionLevels AssessmentProtectionLevels?
+  finalRisks       AssessmentFinalRisks?
+
+  @@map("assessment")
+}
+
+// --- SECTION 2: CALCULATED FACTORS ---
+
+model AssessmentRiskFactors {
+  id          String @id @default(uuid())
+  assessmentId String @unique
+  assessment  Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
   // Risk Factors
   factor_q Float?
@@ -240,12 +259,34 @@ model Assessment {
   factor_v Float?
   factor_z Float?
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("assessment_risk_factors")
+}
+
+model AssessmentAcceptanceFactors {
+  id          String @id @default(uuid())
+  assessmentId String @unique
+  assessment  Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
   // Acceptance Factors
   factor_a Float?
   factor_t Float?
   factor_c Float?
   factor_r Float?
   factor_d Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("assessment_acceptance_factors")
+}
+
+model AssessmentProtectionFactors {
+  id          String @id @default(uuid())
+  assessmentId String @unique
+  assessment  Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
   // Protection Factors
   factor_W Float?
@@ -255,22 +296,66 @@ model Assessment {
   factor_U Float?
   factor_Y Float?
 
-  // --- SECTION 3: FINAL SCORES ---
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("assessment_protection_factors")
+}
+
+// --- SECTION 3: FINAL SCORES ---
+
+model AssessmentPotentialRisks {
+  id          String @id @default(uuid())
+  assessmentId String @unique
+  assessment  Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
   // Potential Risks
   risk_P  Float? // Building
   risk_P1 Float? // People
   risk_P2 Float? // Activities
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("assessment_potential_risks")
+}
+
+model AssessmentAcceptableLevels {
+  id          String @id @default(uuid())
+  assessmentId String @unique
+  assessment  Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
   // Acceptable Levels
   level_A  Float?
   level_A1 Float?
   level_A2 Float?
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("assessment_acceptable_levels")
+}
+
+model AssessmentProtectionLevels {
+  id          String @id @default(uuid())
+  assessmentId String @unique
+  assessment  Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
   // Protection Levels
   level_D  Float?
   level_D1 Float?
   level_D2 Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("assessment_protection_levels")
+}
+
+model AssessmentFinalRisks {
+  id          String @id @default(uuid())
+  assessmentId String @unique
+  assessment  Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
   // Initial Risk (Ro)
   factor_Fo Float?
@@ -286,7 +371,8 @@ model Assessment {
   status_R1 String?
   status_R2 String?
 
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("assessment")
+  @@map("assessment_final_risks")
 }

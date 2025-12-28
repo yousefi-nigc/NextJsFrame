@@ -1,6 +1,7 @@
 import { UpdateAssessmentServiceInput, AssessmentServiceResponse } from "../model/Assessment";
 import { db } from "@/lib/db";
 import { calculateAssessment } from "./AssessmentCalculationService";
+import { flattenAssessment } from "../utils/flattenAssessment";
 
 export async function updateAssessmentService({
     assessmentId,
@@ -126,130 +127,246 @@ export async function updateAssessmentService({
         // Users only send raw input data - all calculated fields are recomputed here
         const calculations = calculateAssessment(mergedInputs);
 
-        // Update assessment with new inputs and recalculated values
-        // Calculated values are always updated and stored in the database
+        // Update assessment with new inputs and recalculated values using transaction
+        // Calculated values are always updated and stored in separate tables
         // Only update input fields that are explicitly provided (not undefined and not null)
         // This ensures optional fields that aren't sent won't overwrite existing values
-        const assessment = await db.assessment.update({
-            where: { id: assessmentId },
-            data: {
-                // Update inputs - only if explicitly provided (not undefined and not null)
-                ...(inputs.qi !== undefined && inputs.qi !== null && { qi: inputs.qi }),
-                ...(inputs.qm !== undefined && inputs.qm !== null && { qm: inputs.qm }),
-                ...(inputs.tempDestruction !== undefined && inputs.tempDestruction !== null && { tempDestruction: inputs.tempDestruction }),
-                ...(inputs.tempDestructionMulti !== undefined && { tempDestructionMulti: inputs.tempDestructionMulti ?? null }),
-                ...(inputs.avgDimension !== undefined && inputs.avgDimension !== null && { avgDimension: inputs.avgDimension }),
-                ...(inputs.materialClass !== undefined && inputs.materialClass !== null && { materialClass: inputs.materialClass }),
-                ...(inputs.materialClassMulti !== undefined && { materialClassMulti: inputs.materialClassMulti ?? null }),
-                ...(inputs.length !== undefined && inputs.length !== null && { length: inputs.length }),
-                ...(inputs.width !== undefined && inputs.width !== null && { width: inputs.width }),
-                ...(inputs.area !== undefined && inputs.area !== null && { area: inputs.area }),
-                ...(inputs.height !== undefined && inputs.height !== null && { height: inputs.height }),
-                ...(inputs.accessType !== undefined && inputs.accessType !== null && { accessType: inputs.accessType }),
-                ...(inputs.windowArea !== undefined && inputs.windowArea !== null && { windowArea: inputs.windowArea }),
-                ...(inputs.staticVentArea !== undefined && inputs.staticVentArea !== null && { staticVentArea: inputs.staticVentArea }),
-                ...(inputs.mechVentFlow !== undefined && inputs.mechVentFlow !== null && { mechVentFlow: inputs.mechVentFlow }),
-                ...(inputs.ventingRatio_k !== undefined && inputs.ventingRatio_k !== null && { ventingRatio_k: inputs.ventingRatio_k }),
-                ...(inputs.accessSides !== undefined && inputs.accessSides !== null && { accessSides: inputs.accessSides }),
-                ...(inputs.heightAbove !== undefined && inputs.heightAbove !== null && { heightAbove: inputs.heightAbove }),
-                ...(inputs.depthBelow !== undefined && inputs.depthBelow !== null && { depthBelow: inputs.depthBelow }),
-                ...(inputs.mainActivity !== undefined && inputs.mainActivity !== null && { mainActivity: inputs.mainActivity }),
-                ...(inputs.secondaryActivity !== undefined && inputs.secondaryActivity !== null && { secondaryActivity: inputs.secondaryActivity }),
-                ...(inputs.heatTransferType !== undefined && inputs.heatTransferType !== null && { heatTransferType: inputs.heatTransferType }),
-                ...(inputs.generatorLocation !== undefined && inputs.generatorLocation !== null && { generatorLocation: inputs.generatorLocation }),
-                ...(inputs.energySource !== undefined && inputs.energySource !== null && { energySource: inputs.energySource }),
-                ...(inputs.electricalSystem !== undefined && inputs.electricalSystem !== null && { electricalSystem: inputs.electricalSystem }),
-                ...(inputs.flammableLiquids !== undefined && inputs.flammableLiquids !== null && { flammableLiquids: inputs.flammableLiquids }),
-                ...(inputs.combustibleDust !== undefined && inputs.combustibleDust !== null && { combustibleDust: inputs.combustibleDust }),
-                ...(inputs.occupantCount !== undefined && inputs.occupantCount !== null && { occupantCount: inputs.occupantCount }),
-                ...(inputs.occupantFactor !== undefined && inputs.occupantFactor !== null && { occupantFactor: inputs.occupantFactor }),
-                ...(inputs.occupantFactorKey !== undefined && inputs.occupantFactorKey !== null && { occupantFactorKey: inputs.occupantFactorKey }),
-                ...(inputs.exitWidths !== undefined && inputs.exitWidths !== null && { exitWidths: inputs.exitWidths }),
-                ...(inputs.exitWidthTotal !== undefined && inputs.exitWidthTotal !== null && { exitWidthTotal: inputs.exitWidthTotal }),
-                ...(inputs.mobilityFactor !== undefined && inputs.mobilityFactor !== null && { mobilityFactor: inputs.mobilityFactor }),
-                ...(inputs.exitCountToOpenSpace !== undefined && inputs.exitCountToOpenSpace !== null && { exitCountToOpenSpace: inputs.exitCountToOpenSpace }),
-                ...(inputs.valueTotal !== undefined && inputs.valueTotal !== null && { valueTotal: inputs.valueTotal }),
-                ...(inputs.valueYear !== undefined && inputs.valueYear !== null && { valueYear: inputs.valueYear }),
-                ...(inputs.replaceability !== undefined && inputs.replaceability !== null && { replaceability: inputs.replaceability }),
-                ...(inputs.dependencyType !== undefined && inputs.dependencyType !== null && { dependencyType: inputs.dependencyType }),
-                ...(inputs.dependencyManual !== undefined && inputs.dependencyManual !== null && { dependencyManual: inputs.dependencyManual }),
-                ...(inputs.waterStorageType !== undefined && inputs.waterStorageType !== null && { waterStorageType: inputs.waterStorageType }),
-                ...(inputs.waterCapacity !== undefined && inputs.waterCapacity !== null && { waterCapacity: inputs.waterCapacity }),
-                ...(inputs.distributionNetwork !== undefined && inputs.distributionNetwork !== null && { distributionNetwork: inputs.distributionNetwork }),
-                ...(inputs.hydrantCount25 !== undefined && inputs.hydrantCount25 !== null && { hydrantCount25: inputs.hydrantCount25 }),
-                ...(inputs.hydrantCount3 !== undefined && inputs.hydrantCount3 !== null && { hydrantCount3: inputs.hydrantCount3 }),
-                ...(inputs.hydrantCount4 !== undefined && inputs.hydrantCount4 !== null && { hydrantCount4: inputs.hydrantCount4 }),
-                ...(inputs.detectionType !== undefined && inputs.detectionType !== null && { detectionType: inputs.detectionType }),
-                ...(inputs.sprinklerType !== undefined && inputs.sprinklerType !== null && { sprinklerType: inputs.sprinklerType }),
-                ...(inputs.fireStationType !== undefined && inputs.fireStationType !== null && { fireStationType: inputs.fireStationType }),
-                ...(inputs.waterSupplyType !== undefined && inputs.waterSupplyType !== null && { waterSupplyType: inputs.waterSupplyType }),
-                ...(inputs.industrialBrigade !== undefined && inputs.industrialBrigade !== null && { industrialBrigade: inputs.industrialBrigade }),
-                ...(inputs.structureResist !== undefined && inputs.structureResist !== null && { structureResist: inputs.structureResist }),
-                ...(inputs.facadeResist !== undefined && inputs.facadeResist !== null && { facadeResist: inputs.facadeResist }),
-                ...(inputs.roofResist !== undefined && inputs.roofResist !== null && { roofResist: inputs.roofResist }),
-                ...(inputs.wallResist !== undefined && inputs.wallResist !== null && { wallResist: inputs.wallResist }),
-                ...(inputs.hasManyWindows !== undefined && inputs.hasManyWindows !== null && { hasManyWindows: inputs.hasManyWindows }),
-                ...(inputs.noInternalSeparation !== undefined && inputs.noInternalSeparation !== null && { noInternalSeparation: inputs.noInternalSeparation }),
-                ...(inputs.combustibleInsulation !== undefined && inputs.combustibleInsulation !== null && { combustibleInsulation: inputs.combustibleInsulation }),
-                ...(inputs.n1 !== undefined && inputs.n1 !== null && { n1: inputs.n1 }),
-                ...(inputs.n2 !== undefined && inputs.n2 !== null && { n2: inputs.n2 }),
-                ...(inputs.n3 !== undefined && inputs.n3 !== null && { n3: inputs.n3 }),
-                ...(inputs.n4 !== undefined && inputs.n4 !== null && { n4: inputs.n4 }),
-                ...(inputs.n5 !== undefined && inputs.n5 !== null && { n5: inputs.n5 }),
-                ...(inputs.subcompartment !== undefined && inputs.subcompartment !== null && { subcompartment: inputs.subcompartment }),
-                ...(inputs.stairways !== undefined && inputs.stairways !== null && { stairways: inputs.stairways }),
-                ...(inputs.horizontalExit !== undefined && inputs.horizontalExit !== null && { horizontalExit: inputs.horizontalExit }),
-                ...(inputs.sprinklers !== undefined && inputs.sprinklers !== null && { sprinklers: inputs.sprinklers }),
-                ...(inputs.subCompartmentEI30 !== undefined && inputs.subCompartmentEI30 !== null && { subCompartmentEI30: inputs.subCompartmentEI30 }),
-                ...(inputs.subCompartmentEI60 !== undefined && inputs.subCompartmentEI60 !== null && { subCompartmentEI60: inputs.subCompartmentEI60 }),
-                ...(inputs.partialDetection !== undefined && inputs.partialDetection !== null && { partialDetection: inputs.partialDetection }),
-                ...(inputs.partialSprinkler !== undefined && inputs.partialSprinkler !== null && { partialSprinkler: inputs.partialSprinkler }),
-                ...(inputs.otherAutoExtinguish !== undefined && inputs.otherAutoExtinguish !== null && { otherAutoExtinguish: inputs.otherAutoExtinguish }),
-                ...(inputs.financialDataBackup !== undefined && inputs.financialDataBackup !== null && { financialDataBackup: inputs.financialDataBackup }),
-                ...(inputs.sparePartsAccess !== undefined && inputs.sparePartsAccess !== null && { sparePartsAccess: inputs.sparePartsAccess }),
-                ...(inputs.selfRepairCapability !== undefined && inputs.selfRepairCapability !== null && { selfRepairCapability: inputs.selfRepairCapability }),
-                ...(inputs.relocationAgreements !== undefined && inputs.relocationAgreements !== null && { relocationAgreements: inputs.relocationAgreements }),
-                ...(inputs.multipleProduction !== undefined && inputs.multipleProduction !== null && { multipleProduction: inputs.multipleProduction }),
-                ...(inputs.floorLevel !== undefined && (inputs.floorLevel === 0 || inputs.floorLevel !== null) && { floorLevel: inputs.floorLevel }),
-                // Always update calculated values
-                factor_q: calculations.factor_q,
-                factor_i: calculations.factor_i,
-                factor_g: calculations.factor_g,
-                factor_e: calculations.factor_e,
-                factor_v: calculations.factor_v,
-                factor_z: calculations.factor_z,
-                factor_a: calculations.factor_a,
-                factor_t: calculations.factor_t,
-                factor_c: calculations.factor_c,
-                factor_r: calculations.factor_r,
-                factor_d: calculations.factor_d,
-                factor_W: calculations.factor_W,
-                factor_N: calculations.factor_N,
-                factor_S: calculations.factor_S,
-                factor_F: calculations.factor_F,
-                factor_U: calculations.factor_U,
-                factor_Y: calculations.factor_Y,
-                risk_P: calculations.risk_P,
-                risk_P1: calculations.risk_P1,
-                risk_P2: calculations.risk_P2,
-                level_A: calculations.level_A,
-                level_A1: calculations.level_A1,
-                level_A2: calculations.level_A2,
-                level_D: calculations.level_D,
-                level_D1: calculations.level_D1,
-                level_D2: calculations.level_D2,
-                factor_Fo: calculations.factor_Fo,
-                risk_Ro: calculations.risk_Ro,
-                final_R: calculations.final_R,
-                final_R1: calculations.final_R1,
-                final_R2: calculations.final_R2,
-                status_R: calculations.status_R,
-                status_R1: calculations.status_R1,
-                status_R2: calculations.status_R2,
-            }
+        const assessment = await db.$transaction(async (tx) => {
+            // Update assessment inputs only
+            await tx.assessment.update({
+                where: { id: assessmentId },
+                data: {
+                    // Update inputs - only if explicitly provided (not undefined and not null)
+                    ...(inputs.qi !== undefined && inputs.qi !== null && { qi: inputs.qi }),
+                    ...(inputs.qm !== undefined && inputs.qm !== null && { qm: inputs.qm }),
+                    ...(inputs.tempDestruction !== undefined && inputs.tempDestruction !== null && { tempDestruction: inputs.tempDestruction }),
+                    ...(inputs.tempDestructionMulti !== undefined && { tempDestructionMulti: inputs.tempDestructionMulti ?? null }),
+                    ...(inputs.avgDimension !== undefined && inputs.avgDimension !== null && { avgDimension: inputs.avgDimension }),
+                    ...(inputs.materialClass !== undefined && inputs.materialClass !== null && { materialClass: inputs.materialClass }),
+                    ...(inputs.materialClassMulti !== undefined && { materialClassMulti: inputs.materialClassMulti ?? null }),
+                    ...(inputs.length !== undefined && inputs.length !== null && { length: inputs.length }),
+                    ...(inputs.width !== undefined && inputs.width !== null && { width: inputs.width }),
+                    ...(inputs.area !== undefined && inputs.area !== null && { area: inputs.area }),
+                    ...(inputs.height !== undefined && inputs.height !== null && { height: inputs.height }),
+                    ...(inputs.accessType !== undefined && inputs.accessType !== null && { accessType: inputs.accessType }),
+                    ...(inputs.windowArea !== undefined && inputs.windowArea !== null && { windowArea: inputs.windowArea }),
+                    ...(inputs.staticVentArea !== undefined && inputs.staticVentArea !== null && { staticVentArea: inputs.staticVentArea }),
+                    ...(inputs.mechVentFlow !== undefined && inputs.mechVentFlow !== null && { mechVentFlow: inputs.mechVentFlow }),
+                    ...(inputs.ventingRatio_k !== undefined && inputs.ventingRatio_k !== null && { ventingRatio_k: inputs.ventingRatio_k }),
+                    ...(inputs.accessSides !== undefined && inputs.accessSides !== null && { accessSides: inputs.accessSides }),
+                    ...(inputs.heightAbove !== undefined && inputs.heightAbove !== null && { heightAbove: inputs.heightAbove }),
+                    ...(inputs.depthBelow !== undefined && inputs.depthBelow !== null && { depthBelow: inputs.depthBelow }),
+                    ...(inputs.mainActivity !== undefined && inputs.mainActivity !== null && { mainActivity: inputs.mainActivity }),
+                    ...(inputs.secondaryActivity !== undefined && inputs.secondaryActivity !== null && { secondaryActivity: inputs.secondaryActivity }),
+                    ...(inputs.heatTransferType !== undefined && inputs.heatTransferType !== null && { heatTransferType: inputs.heatTransferType }),
+                    ...(inputs.generatorLocation !== undefined && inputs.generatorLocation !== null && { generatorLocation: inputs.generatorLocation }),
+                    ...(inputs.energySource !== undefined && inputs.energySource !== null && { energySource: inputs.energySource }),
+                    ...(inputs.electricalSystem !== undefined && inputs.electricalSystem !== null && { electricalSystem: inputs.electricalSystem }),
+                    ...(inputs.flammableLiquids !== undefined && inputs.flammableLiquids !== null && { flammableLiquids: inputs.flammableLiquids }),
+                    ...(inputs.combustibleDust !== undefined && inputs.combustibleDust !== null && { combustibleDust: inputs.combustibleDust }),
+                    ...(inputs.occupantCount !== undefined && inputs.occupantCount !== null && { occupantCount: inputs.occupantCount }),
+                    ...(inputs.occupantFactor !== undefined && inputs.occupantFactor !== null && { occupantFactor: inputs.occupantFactor }),
+                    ...(inputs.occupantFactorKey !== undefined && inputs.occupantFactorKey !== null && { occupantFactorKey: inputs.occupantFactorKey }),
+                    ...(inputs.exitWidths !== undefined && inputs.exitWidths !== null && { exitWidths: inputs.exitWidths }),
+                    ...(inputs.exitWidthTotal !== undefined && inputs.exitWidthTotal !== null && { exitWidthTotal: inputs.exitWidthTotal }),
+                    ...(inputs.mobilityFactor !== undefined && inputs.mobilityFactor !== null && { mobilityFactor: inputs.mobilityFactor }),
+                    ...(inputs.exitCountToOpenSpace !== undefined && inputs.exitCountToOpenSpace !== null && { exitCountToOpenSpace: inputs.exitCountToOpenSpace }),
+                    ...(inputs.valueTotal !== undefined && inputs.valueTotal !== null && { valueTotal: inputs.valueTotal }),
+                    ...(inputs.valueYear !== undefined && inputs.valueYear !== null && { valueYear: inputs.valueYear }),
+                    ...(inputs.replaceability !== undefined && inputs.replaceability !== null && { replaceability: inputs.replaceability }),
+                    ...(inputs.dependencyType !== undefined && inputs.dependencyType !== null && { dependencyType: inputs.dependencyType }),
+                    ...(inputs.dependencyManual !== undefined && inputs.dependencyManual !== null && { dependencyManual: inputs.dependencyManual }),
+                    ...(inputs.waterStorageType !== undefined && inputs.waterStorageType !== null && { waterStorageType: inputs.waterStorageType }),
+                    ...(inputs.waterCapacity !== undefined && inputs.waterCapacity !== null && { waterCapacity: inputs.waterCapacity }),
+                    ...(inputs.distributionNetwork !== undefined && inputs.distributionNetwork !== null && { distributionNetwork: inputs.distributionNetwork }),
+                    ...(inputs.hydrantCount25 !== undefined && inputs.hydrantCount25 !== null && { hydrantCount25: inputs.hydrantCount25 }),
+                    ...(inputs.hydrantCount3 !== undefined && inputs.hydrantCount3 !== null && { hydrantCount3: inputs.hydrantCount3 }),
+                    ...(inputs.hydrantCount4 !== undefined && inputs.hydrantCount4 !== null && { hydrantCount4: inputs.hydrantCount4 }),
+                    ...(inputs.detectionType !== undefined && inputs.detectionType !== null && { detectionType: inputs.detectionType }),
+                    ...(inputs.sprinklerType !== undefined && inputs.sprinklerType !== null && { sprinklerType: inputs.sprinklerType }),
+                    ...(inputs.fireStationType !== undefined && inputs.fireStationType !== null && { fireStationType: inputs.fireStationType }),
+                    ...(inputs.waterSupplyType !== undefined && inputs.waterSupplyType !== null && { waterSupplyType: inputs.waterSupplyType }),
+                    ...(inputs.industrialBrigade !== undefined && inputs.industrialBrigade !== null && { industrialBrigade: inputs.industrialBrigade }),
+                    ...(inputs.structureResist !== undefined && inputs.structureResist !== null && { structureResist: inputs.structureResist }),
+                    ...(inputs.facadeResist !== undefined && inputs.facadeResist !== null && { facadeResist: inputs.facadeResist }),
+                    ...(inputs.roofResist !== undefined && inputs.roofResist !== null && { roofResist: inputs.roofResist }),
+                    ...(inputs.wallResist !== undefined && inputs.wallResist !== null && { wallResist: inputs.wallResist }),
+                    ...(inputs.hasManyWindows !== undefined && inputs.hasManyWindows !== null && { hasManyWindows: inputs.hasManyWindows }),
+                    ...(inputs.noInternalSeparation !== undefined && inputs.noInternalSeparation !== null && { noInternalSeparation: inputs.noInternalSeparation }),
+                    ...(inputs.combustibleInsulation !== undefined && inputs.combustibleInsulation !== null && { combustibleInsulation: inputs.combustibleInsulation }),
+                    ...(inputs.n1 !== undefined && inputs.n1 !== null && { n1: inputs.n1 }),
+                    ...(inputs.n2 !== undefined && inputs.n2 !== null && { n2: inputs.n2 }),
+                    ...(inputs.n3 !== undefined && inputs.n3 !== null && { n3: inputs.n3 }),
+                    ...(inputs.n4 !== undefined && inputs.n4 !== null && { n4: inputs.n4 }),
+                    ...(inputs.n5 !== undefined && inputs.n5 !== null && { n5: inputs.n5 }),
+                    ...(inputs.subcompartment !== undefined && inputs.subcompartment !== null && { subcompartment: inputs.subcompartment }),
+                    ...(inputs.stairways !== undefined && inputs.stairways !== null && { stairways: inputs.stairways }),
+                    ...(inputs.horizontalExit !== undefined && inputs.horizontalExit !== null && { horizontalExit: inputs.horizontalExit }),
+                    ...(inputs.sprinklers !== undefined && inputs.sprinklers !== null && { sprinklers: inputs.sprinklers }),
+                    ...(inputs.subCompartmentEI30 !== undefined && inputs.subCompartmentEI30 !== null && { subCompartmentEI30: inputs.subCompartmentEI30 }),
+                    ...(inputs.subCompartmentEI60 !== undefined && inputs.subCompartmentEI60 !== null && { subCompartmentEI60: inputs.subCompartmentEI60 }),
+                    ...(inputs.partialDetection !== undefined && inputs.partialDetection !== null && { partialDetection: inputs.partialDetection }),
+                    ...(inputs.partialSprinkler !== undefined && inputs.partialSprinkler !== null && { partialSprinkler: inputs.partialSprinkler }),
+                    ...(inputs.otherAutoExtinguish !== undefined && inputs.otherAutoExtinguish !== null && { otherAutoExtinguish: inputs.otherAutoExtinguish }),
+                    ...(inputs.financialDataBackup !== undefined && inputs.financialDataBackup !== null && { financialDataBackup: inputs.financialDataBackup }),
+                    ...(inputs.sparePartsAccess !== undefined && inputs.sparePartsAccess !== null && { sparePartsAccess: inputs.sparePartsAccess }),
+                    ...(inputs.selfRepairCapability !== undefined && inputs.selfRepairCapability !== null && { selfRepairCapability: inputs.selfRepairCapability }),
+                    ...(inputs.relocationAgreements !== undefined && inputs.relocationAgreements !== null && { relocationAgreements: inputs.relocationAgreements }),
+                    ...(inputs.multipleProduction !== undefined && inputs.multipleProduction !== null && { multipleProduction: inputs.multipleProduction }),
+                    ...(inputs.floorLevel !== undefined && (inputs.floorLevel === 0 || inputs.floorLevel !== null) && { floorLevel: inputs.floorLevel }),
+                }
+            });
+
+            // Update or create calculated value tables (upsert)
+            await tx.assessmentRiskFactors.upsert({
+                where: { assessmentId },
+                create: {
+                    assessmentId,
+                    factor_q: calculations.factor_q,
+                    factor_i: calculations.factor_i,
+                    factor_g: calculations.factor_g,
+                    factor_e: calculations.factor_e,
+                    factor_v: calculations.factor_v,
+                    factor_z: calculations.factor_z,
+                },
+                update: {
+                    factor_q: calculations.factor_q,
+                    factor_i: calculations.factor_i,
+                    factor_g: calculations.factor_g,
+                    factor_e: calculations.factor_e,
+                    factor_v: calculations.factor_v,
+                    factor_z: calculations.factor_z,
+                }
+            });
+
+            await tx.assessmentAcceptanceFactors.upsert({
+                where: { assessmentId },
+                create: {
+                    assessmentId,
+                    factor_a: calculations.factor_a,
+                    factor_t: calculations.factor_t,
+                    factor_c: calculations.factor_c,
+                    factor_r: calculations.factor_r,
+                    factor_d: calculations.factor_d,
+                },
+                update: {
+                    factor_a: calculations.factor_a,
+                    factor_t: calculations.factor_t,
+                    factor_c: calculations.factor_c,
+                    factor_r: calculations.factor_r,
+                    factor_d: calculations.factor_d,
+                }
+            });
+
+            await tx.assessmentProtectionFactors.upsert({
+                where: { assessmentId },
+                create: {
+                    assessmentId,
+                    factor_W: calculations.factor_W,
+                    factor_N: calculations.factor_N,
+                    factor_S: calculations.factor_S,
+                    factor_F: calculations.factor_F,
+                    factor_U: calculations.factor_U,
+                    factor_Y: calculations.factor_Y,
+                },
+                update: {
+                    factor_W: calculations.factor_W,
+                    factor_N: calculations.factor_N,
+                    factor_S: calculations.factor_S,
+                    factor_F: calculations.factor_F,
+                    factor_U: calculations.factor_U,
+                    factor_Y: calculations.factor_Y,
+                }
+            });
+
+            await tx.assessmentPotentialRisks.upsert({
+                where: { assessmentId },
+                create: {
+                    assessmentId,
+                    risk_P: calculations.risk_P,
+                    risk_P1: calculations.risk_P1,
+                    risk_P2: calculations.risk_P2,
+                },
+                update: {
+                    risk_P: calculations.risk_P,
+                    risk_P1: calculations.risk_P1,
+                    risk_P2: calculations.risk_P2,
+                }
+            });
+
+            await tx.assessmentAcceptableLevels.upsert({
+                where: { assessmentId },
+                create: {
+                    assessmentId,
+                    level_A: calculations.level_A,
+                    level_A1: calculations.level_A1,
+                    level_A2: calculations.level_A2,
+                },
+                update: {
+                    level_A: calculations.level_A,
+                    level_A1: calculations.level_A1,
+                    level_A2: calculations.level_A2,
+                }
+            });
+
+            await tx.assessmentProtectionLevels.upsert({
+                where: { assessmentId },
+                create: {
+                    assessmentId,
+                    level_D: calculations.level_D,
+                    level_D1: calculations.level_D1,
+                    level_D2: calculations.level_D2,
+                },
+                update: {
+                    level_D: calculations.level_D,
+                    level_D1: calculations.level_D1,
+                    level_D2: calculations.level_D2,
+                }
+            });
+
+            await tx.assessmentFinalRisks.upsert({
+                where: { assessmentId },
+                create: {
+                    assessmentId,
+                    factor_Fo: calculations.factor_Fo,
+                    risk_Ro: calculations.risk_Ro,
+                    final_R: calculations.final_R,
+                    final_R1: calculations.final_R1,
+                    final_R2: calculations.final_R2,
+                    status_R: calculations.status_R,
+                    status_R1: calculations.status_R1,
+                    status_R2: calculations.status_R2,
+                },
+                update: {
+                    factor_Fo: calculations.factor_Fo,
+                    risk_Ro: calculations.risk_Ro,
+                    final_R: calculations.final_R,
+                    final_R1: calculations.final_R1,
+                    final_R2: calculations.final_R2,
+                    status_R: calculations.status_R,
+                    status_R1: calculations.status_R1,
+                    status_R2: calculations.status_R2,
+                }
+            });
+
+            // Return assessment with all relations
+            return await tx.assessment.findUnique({
+                where: { id: assessmentId },
+                include: {
+                    riskFactors: true,
+                    acceptanceFactors: true,
+                    protectionFactors: true,
+                    potentialRisks: true,
+                    acceptableLevels: true,
+                    protectionLevels: true,
+                    finalRisks: true,
+                }
+            });
         });
 
-        return { success: true, assessment };
+        // Flatten the assessment for API response
+        const flattenedAssessment = flattenAssessment(assessment);
+        return { success: true, assessment: flattenedAssessment };
     } catch (error) {
         return { success: false, error: error as Error };
     }
