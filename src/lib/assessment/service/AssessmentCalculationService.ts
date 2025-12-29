@@ -786,20 +786,182 @@ function calculateD(
 }
 
 /**
+ * Calculate required water capacity: (Qi + Qm) / 4
+ */
+function calculateRequiredWaterCapacity(
+  qi: number | undefined,
+  qm: number | undefined
+): number | null {
+  if (qi === undefined || qi === null || qm === undefined || qm === null) return null;
+  if (!isFinite(qi) || !isFinite(qm)) return null;
+  const result = (qi + qm) / 4;
+  return isFinite(result) ? result : null;
+}
+
+/**
+ * Calculate W2 penalty based on water capacity ratio
+ */
+function calculateW2Penalty(
+  waterCapacity: number | undefined,
+  requiredWaterCapacity: number | undefined
+): number {
+  if (waterCapacity === undefined || waterCapacity === null || waterCapacity === 0) {
+    return 4; // Default penalty if data is missing
+  }
+  if (requiredWaterCapacity === undefined || requiredWaterCapacity === null || requiredWaterCapacity === 0 || !isFinite(requiredWaterCapacity)) {
+    return 4; // Default penalty if data is missing
+  }
+  
+  const ratio = (waterCapacity / requiredWaterCapacity) * 100;
+  if (!isFinite(ratio)) return 4;
+  
+  if (ratio >= 100) return 0;
+  if (ratio >= 90) return 1;
+  if (ratio >= 80) return 2;
+  if (ratio >= 70) return 3;
+  return 4;
+}
+
+/**
+ * Calculate water flow capacity from pipe diameter and ring network
+ */
+function calculateWaterFlowCapacity(
+  pipeDiameter: string | undefined,
+  isRingNetwork: boolean | undefined
+): number | null {
+  if (!pipeDiameter || pipeDiameter === "none" || pipeDiameter === "") return 0;
+  
+  const diameterValues: Record<string, number> = {
+    "DIA80": 34.3,
+    "DIA100": 59.2,
+    "DIA150": 134.3,
+    "DIA200": 232.3,
+    "DIA250": 366.8,
+    "DIA300": 526.1,
+    "DIA350": 676.9,
+  };
+  
+  const baseValue = diameterValues[pipeDiameter] || 0;
+  const multiplier = isRingNetwork ? 2 : 1;
+  
+  return baseValue * multiplier;
+}
+
+/**
+ * Determine distribution network adequacy based on water flow capacity
+ * Note: This logic needs to be confirmed - using a simple threshold for now
+ */
+function determineDistributionNetworkAdequacy(
+  waterFlowCapacity: number | null
+): "adequate" | "limited" | "none" {
+  if (waterFlowCapacity === null || waterFlowCapacity === 0) return "none";
+  // Thresholds need to be confirmed - using placeholder values
+  if (waterFlowCapacity >= 200) return "adequate";
+  if (waterFlowCapacity >= 50) return "limited";
+  return "none";
+}
+
+/**
+ * Calculate equivalent 2.5" hydrant connections
+ */
+function calculateEquivalentHydrant25(
+  hydrantCount25: number | undefined,
+  hydrantCount3: number | undefined,
+  hydrantCount4: number | undefined
+): number {
+  const h25 = hydrantCount25 || 0;
+  const h3 = hydrantCount3 || 0;
+  const h4 = hydrantCount4 || 0;
+  
+  return h25 * 1 + h3 * 2 + h4 * 3;
+}
+
+/**
+ * Calculate average distance between hydrant connections
+ */
+function calculateAverageHydrantDistance(
+  perimeter: number | undefined,
+  equivalentHydrant25: number | undefined
+): number | null {
+  if (perimeter === undefined || perimeter === null || perimeter === 0) {
+    return null;
+  }
+  if (equivalentHydrant25 === undefined || equivalentHydrant25 === null || equivalentHydrant25 === 0) {
+    return null;
+  }
+  if (!isFinite(perimeter) || !isFinite(equivalentHydrant25)) {
+    return null;
+  }
+  const distance = perimeter / equivalentHydrant25;
+  return isFinite(distance) ? distance : null;
+}
+
+/**
+ * Calculate static pressure required: (height + 35) / 10
+ * Note: height = H+ (or H-) + ceiling height
+ * Uses heightAbove if available, otherwise depthBelow, otherwise 0
+ */
+function calculateStaticPressureRequired(
+  heightAbove: number | undefined,
+  depthBelow: number | undefined,
+  height: number | undefined
+): number | null {
+  // Use heightAbove if available, otherwise use depthBelow, otherwise 0
+  const hValue = heightAbove !== undefined && heightAbove !== null 
+    ? heightAbove 
+    : (depthBelow !== undefined && depthBelow !== null ? depthBelow : 0);
+  const ceilingHeight = height !== undefined && height !== null ? height : 0;
+  const totalHeight = hValue + ceilingHeight;
+  
+  // Only calculate if we have at least height data
+  if (height === undefined && heightAbove === undefined && depthBelow === undefined) return null;
+  return (totalHeight + 35) / 10;
+}
+
+/**
+ * Calculate W4 score based on average hydrant distance
+ */
+function calculateW4Score(averageDistance: number | undefined | null): number {
+  if (averageDistance === undefined || averageDistance === null || !isFinite(averageDistance) || averageDistance <= 0) {
+    return 3; // Default penalty if data is missing or invalid
+  }
+  
+  if (averageDistance <= 50) return 0;
+  if (averageDistance <= 100) return 1;
+  return 3;
+}
+
+/**
+ * Calculate W5 score based on static pressure
+ */
+function calculateW5Score(
+  staticPressureRequired: number | undefined,
+  staticPressureAvailable: number | undefined
+): number {
+  if (staticPressureRequired === undefined || staticPressureRequired === null || !isFinite(staticPressureRequired)) {
+    return 3; // Default penalty if data is missing
+  }
+  if (staticPressureAvailable === undefined || staticPressureAvailable === null || !isFinite(staticPressureAvailable)) {
+    return 3; // Default penalty if data is missing
+  }
+  
+  if (staticPressureRequired > staticPressureAvailable) return 3;
+  return 0;
+}
+
+/**
  * Calculate factor W (Water Resources Factor)
- * Formula: W = 0.95^w, where w = w1 + w2 + w3 + w4
+ * Formula: W = 0.95^w, where w = w1 + w2 + w3 + w4 + w5
  */
 function calculateW(
   qi: number | undefined,
   qm: number | undefined,
   waterStorageType: string | undefined,
   waterCapacity: number | undefined,
-  distributionNetwork: string | undefined,
-  hydrantCount25: number | undefined,
-  hydrantCount3: number | undefined,
-  hydrantCount4: number | undefined,
-  length: number | undefined,
-  width: number | undefined
+  distributionNetworkAdequacy: string | undefined,
+  w4Score: number | undefined,
+  w5Score: number | undefined,
+  requiredWaterCapacity: number | undefined
 ): number | null {
   let w = 0;
 
@@ -812,51 +974,54 @@ function calculateW(
     w += 10;
   }
 
-  // w2 - Capacity
-  if (qi !== undefined && qm !== undefined && waterCapacity !== undefined) {
-    const requiredWater = (qi + qm) / 4; // m³
-    const ratio = waterCapacity / requiredWater;
-
-    if (ratio >= 1) w += 0;
-    else if (ratio >= 0.9) w += 1;
-    else if (ratio >= 0.8) w += 2;
-    else if (ratio >= 0.7) w += 3;
-    else w += 4;
+  // w2 - Capacity (use calculated w2Penalty if available, otherwise calculate)
+  if (waterCapacity !== undefined && requiredWaterCapacity !== undefined) {
+    w += calculateW2Penalty(waterCapacity, requiredWaterCapacity);
   }
 
-  // w3 - Distribution network
-  if (distributionNetwork === "adequate") {
+  // w3 - Distribution network adequacy
+  if (distributionNetworkAdequacy === "adequate") {
     w += 0;
-  } else if (distributionNetwork === "limited") {
+  } else if (distributionNetworkAdequacy === "limited") {
     w += 2;
-  } else if (distributionNetwork === "none") {
+  } else if (distributionNetworkAdequacy === "none") {
     w += 6;
   }
   // If not specified, default to 0 (adequate)
 
-  // w4 - Hydrants (only calculate if length and width are available)
-  if (length !== undefined && width !== undefined && length > 0 && width > 0) {
-    const perimeter = 2 * (length + width);
-    const hydr25 = hydrantCount25 || 0;
-    const hydr3 = hydrantCount3 || 0;
-    const hydr4 = hydrantCount4 || 0;
-
-    const totalHydr25Eq = hydr25 + hydr3 * 2 + hydr4 * 3;
-    const requiredHydrants = Math.ceil(perimeter / 50);
-
-    if (requiredHydrants > 0) {
-      if (totalHydr25Eq >= requiredHydrants) w += 0;
-      else if (totalHydr25Eq >= requiredHydrants * 0.75) w += 1;
-      else if (totalHydr25Eq >= requiredHydrants * 0.5) w += 2;
-      else w += 3;
-    } else {
-      // Small perimeter → no hydrants needed
-      w += 0;
-    }
+  // w4 - Hydrants (always calculated, returns default penalty of 3 if data is missing)
+  if (w4Score !== undefined) {
+    w += w4Score;
   }
-  // If length/width are not available, w4 is skipped (w += 0 implicitly)
+
+  // w5 - Static pressure (always calculated, returns default penalty of 3 if data is missing)
+  if (w5Score !== undefined) {
+    w += w5Score;
+  }
 
   return Math.pow(0.95, w);
+}
+
+/**
+ * Calculate n1 from checkboxes
+ * Formula: n1 = 2 × (number of unchecked checkboxes)
+ * If all 4 checkboxes are checked: n1 = 0
+ * Each unchecked checkbox adds 2 to n1
+ */
+export function calculateN1(
+  continuousPresence: boolean | undefined,
+  manualWarning: boolean | undefined,
+  fireDeptNotification: boolean | undefined,
+  residentAlarm: boolean | undefined
+): number {
+  let uncheckedCount = 0;
+  
+  if (!continuousPresence) uncheckedCount++;
+  if (!manualWarning) uncheckedCount++;
+  if (!fireDeptNotification) uncheckedCount++;
+  if (!residentAlarm) uncheckedCount++;
+  
+  return uncheckedCount * 2;
 }
 
 /**
@@ -880,26 +1045,49 @@ function calculateN(
 
 /**
  * Calculate factor S (Special Protection Factor)
- * Formula: S = 1.05^s, where s = s1 + s2 + s3 + s4 + s5
+ * Formula: S = 1.05^s, where s = s1 + s1_checkboxes + s2 + s3 + s4 + s5 + s6 + s7 + s8 + s9
+ * s1_checkboxes: each checked adds 2
+ * s6: dropdown value (0 or 11)
+ * s7: checkbox (3 if checked, 0 if not)
+ * s8: checkbox (2 if checked, 0 if not)
+ * s9: checkbox (2 if checked, 0 if not)
  */
 function calculateS(
   detectionType: number | undefined,
   waterSupplyType: number | undefined,
   sprinklerType: number | undefined,
   fireStationType: number | undefined,
-  industrialBrigade: number | undefined
+  industrialBrigade: number | undefined,
+  s1ElectronicSystem: boolean | undefined,
+  s1ZoneIdentification: boolean | undefined,
+  s6OtherSuppression: number | undefined,
+  s7UnlimitedWater: boolean | undefined,
+  s8DedicatedWater: boolean | undefined,
+  s9WaterControl: boolean | undefined
 ): number | null {
-  if (detectionType === undefined && waterSupplyType === undefined && sprinklerType === undefined && fireStationType === undefined && industrialBrigade === undefined) {
+  if (detectionType === undefined && waterSupplyType === undefined && sprinklerType === undefined && fireStationType === undefined && industrialBrigade === undefined &&
+      s1ElectronicSystem === undefined && s1ZoneIdentification === undefined && s6OtherSuppression === undefined &&
+      s7UnlimitedWater === undefined && s8DedicatedWater === undefined && s9WaterControl === undefined) {
     return null;
   }
 
-  const s1 = detectionType ?? 0;
+  const s1_base = detectionType ?? 0;
+  // Add s1 checkboxes: each checked adds 2
+  let s1_checkboxes = 0;
+  if (s1ElectronicSystem === true) s1_checkboxes += 2;
+  if (s1ZoneIdentification === true) s1_checkboxes += 2;
+  const s1 = s1_base + s1_checkboxes;
+  
   const s2 = waterSupplyType ?? 0;
   const s3 = sprinklerType ?? 0;
   const s4 = fireStationType ?? 0;
   const s5 = industrialBrigade ?? 0;
+  const s6 = s6OtherSuppression ?? 0;
+  const s7 = s7UnlimitedWater === true ? 3 : 0;
+  const s8 = s8DedicatedWater === true ? 2 : 0;
+  const s9 = s9WaterControl === true ? 2 : 0;
 
-  const s = s1 + s2 + s3 + s4 + s5;
+  const s = s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8 + s9;
   return Math.pow(1.05, s);
 }
 
@@ -969,29 +1157,81 @@ function calculateF(
 
 /**
  * Calculate factor U (Escape and Rescue Factor)
- * Formula: U = 1.05^u, where u = subcompartment + stairways + horizontalExit + sprinklers
- * Matching old script.js exactly (lines 1902-1925)
+ * Formula: U = 1.05^u, where u = subcompartment + stairways + horizontalExit + sprinklers + s1_total + s6 + s4 + s5 + u1 + u2 + u3 + u4 + u5
+ * s1_total = detectionType + (s1ElectronicSystem ? 2 : 0) + (s1ZoneIdentification ? 2 : 0)
+ * u1: 2 if checked, 0 if not (disabled when s1 = 0)
+ * u2: 2 if checked, 0 if not
+ * u3: 6 if checked, 0 if not
+ * u4: 4 if checked, 0 if not
+ * u5: 3 if checked, 0 if not (disabled when s1 = 0)
  */
 function calculateU(
   subcompartment: number | undefined,
   stairways: number | undefined,
   horizontalExit: number | undefined,
-  sprinklers: number | undefined
+  sprinklers: number | undefined,
+  // S factor values
+  detectionType: number | undefined,
+  s1ElectronicSystem: boolean | undefined,
+  s1ZoneIdentification: boolean | undefined,
+  s6OtherSuppression: number | undefined,
+  fireStationType: number | undefined,
+  industrialBrigade: number | undefined,
+  // U factor checkboxes
+  u1PartialDetection: boolean | undefined,
+  u2Max300Occupants: boolean | undefined,
+  u3VoiceEvacuation: boolean | undefined,
+  u4MarkedExits: boolean | undefined,
+  u5SmokeEvacuation: boolean | undefined
 ): number | null {
-  // Matching old script.js: if all undefined, return null (no calculation)
-  if (subcompartment === undefined && stairways === undefined && horizontalExit === undefined && sprinklers === undefined) {
+  // Check if any U factor inputs are provided
+  if (subcompartment === undefined && stairways === undefined && horizontalExit === undefined && sprinklers === undefined &&
+      u1PartialDetection === undefined && u2Max300Occupants === undefined && u3VoiceEvacuation === undefined &&
+      u4MarkedExits === undefined && u5SmokeEvacuation === undefined) {
     return null;
   }
 
-  // جمع امتیازها بر اساس انتخاب کاربر (matching old script.js)
-  // parseFloat(...) || 0 for each value
+  // جمع امتیازها بر اساس انتخاب کاربر
   let u = 0;
   u += subcompartment ?? 0;
   u += stairways ?? 0;
   u += horizontalExit ?? 0;
   u += sprinklers ?? 0;
 
-  // فرمول نهایی U (matching old script.js)
+  // Add S factor values
+  const s1_base = detectionType ?? 0;
+  let s1_checkboxes = 0;
+  if (s1ElectronicSystem === true) s1_checkboxes += 2;
+  if (s1ZoneIdentification === true) s1_checkboxes += 2;
+  const s1_total = s1_base + s1_checkboxes;
+  u += s1_total;
+  u += s6OtherSuppression ?? 0;
+  u += fireStationType ?? 0; // s4
+  u += industrialBrigade ?? 0; // s5
+
+  // Add U factor checkboxes
+  // u1: only active when s1 != 0, value 2 if checked
+  if (detectionType !== undefined && detectionType !== 0 && u1PartialDetection === true) {
+    u += 2;
+  }
+  // u2: value 2 if checked
+  if (u2Max300Occupants === true) {
+    u += 2;
+  }
+  // u3: value 6 if checked
+  if (u3VoiceEvacuation === true) {
+    u += 6;
+  }
+  // u4: value 4 if checked
+  if (u4MarkedExits === true) {
+    u += 4;
+  }
+  // u5: only active when s1 != 0, value 3 if checked
+  if (detectionType !== undefined && detectionType !== 0 && u5SmokeEvacuation === true) {
+    u += 3;
+  }
+
+  // فرمول نهایی U
   const U = Math.pow(1.05, u);
   
   return U;
@@ -1002,8 +1242,7 @@ function calculateU(
  * Formula: Y = 1.05^y, where y is sum of boolean flags
  */
 function calculateY(
-  subCompartmentEI30: boolean | undefined,
-  subCompartmentEI60: boolean | undefined,
+  subcompartment: number | undefined, // Shared with U section (0, 2, 4)
   partialDetection: boolean | undefined,
   partialSprinkler: boolean | undefined,
   otherAutoExtinguish: boolean | undefined,
@@ -1011,29 +1250,47 @@ function calculateY(
   sparePartsAccess: boolean | undefined,
   selfRepairCapability: boolean | undefined,
   relocationAgreements: boolean | undefined,
-  multipleProduction: boolean | undefined
+  immediateActivityTransfer: boolean | undefined,
+  multipleProduction: boolean | undefined,
+  // S factor values for conditional logic
+  sprinklerType: number | undefined, // s3 - if selected, disable partialSprinkler
+  s6OtherSuppression: number | undefined // s6 - if selected, disable otherAutoExtinguish
 ): number | null {
-  if (subCompartmentEI30 === undefined && subCompartmentEI60 === undefined && partialDetection === undefined &&
+  if (subcompartment === undefined && partialDetection === undefined &&
     partialSprinkler === undefined && otherAutoExtinguish === undefined && financialDataBackup === undefined &&
     sparePartsAccess === undefined && selfRepairCapability === undefined && relocationAgreements === undefined &&
-    multipleProduction === undefined) {
+    immediateActivityTransfer === undefined && multipleProduction === undefined) {
     return null;
   }
 
   let y = 0;
 
-  // Physical protection
-  if (subCompartmentEI30) y += 2;
-  if (subCompartmentEI60) y += 4;
-  if (partialDetection) y += 3;
-  if (partialSprinkler) y += 5;
-  if (otherAutoExtinguish) y += 4;
+  // Physical protection - subcompartment (shared with U section)
+  // 0 = no compartmentation, 2 = EI30, 4 = EI60
+  if (subcompartment !== undefined) {
+    y += subcompartment;
+  }
+
+  // Local protection systems (only if no overall protection of same type)
+  // partialDetection: value changed from 3 to 2
+  if (partialDetection) y += 2;
+  
+  // partialSprinkler: only if s3 (sprinklerType) is not selected
+  if (partialSprinkler && (sprinklerType === undefined || sprinklerType === 0)) {
+    y += 5;
+  }
+  
+  // otherAutoExtinguish: only if s6 (s6OtherSuppression) is not selected
+  if (otherAutoExtinguish && (s6OtherSuppression === undefined || s6OtherSuppression === 0)) {
+    y += 4;
+  }
 
   // Crisis planning
   if (financialDataBackup) y += 2;
   if (sparePartsAccess) y += 4;
   if (selfRepairCapability) y += 2;
   if (relocationAgreements) y += 3;
+  if (immediateActivityTransfer) y += 4; // New checkbox
   if (multipleProduction) y += 4;
 
   return Math.pow(1.05, y);
@@ -1198,21 +1455,101 @@ export function calculateAssessment(inputs: CreateAssessmentValidationSchema): A
   }
 
   // Calculate Protection Factors
-  // W can be calculated with just w1, w2, w3 (w4 requires length/width which may not be available yet)
+  // Calculate W-related values first
+  const requiredWaterCapacity = calculateRequiredWaterCapacity(inputs.qi, inputs.qm);
+  const w2Penalty = calculateW2Penalty(inputs.waterCapacity, requiredWaterCapacity ?? undefined);
+  const waterFlowCapacity = calculateWaterFlowCapacity(inputs.pipeDiameter, inputs.isRingNetwork);
+  const distributionNetworkAdequacy = inputs.distributionNetwork || 
+    (waterFlowCapacity !== null ? determineDistributionNetworkAdequacy(waterFlowCapacity) : "adequate");
+  
+  // Calculate hydrant-related values
+  const buildingPerimeter = inputs.length && inputs.width ? 2 * (inputs.length + inputs.width) : undefined;
+  const equivalentHydrant25 = calculateEquivalentHydrant25(inputs.hydrantCount25, inputs.hydrantCount3, inputs.hydrantCount4);
+  const averageHydrantDistance = calculateAverageHydrantDistance(buildingPerimeter, equivalentHydrant25);
+  // Always calculate w4Score - function handles null/undefined and returns default penalty of 3
+  const w4Score = calculateW4Score(averageHydrantDistance ?? undefined);
+  
+  // Calculate static pressure values
+  const staticPressureRequired = calculateStaticPressureRequired(inputs.heightAbove, inputs.depthBelow, inputs.height);
+  // Always calculate w5Score - function handles null/undefined and returns default penalty of 3
+  const w5Score = calculateW5Score(
+    staticPressureRequired ?? undefined,
+    inputs.staticPressureAvailable
+  );
+  
+  // Calculate W factor
   if (inputs.waterStorageType) {
-    factor_W = calculateW(inputs.qi, inputs.qm, inputs.waterStorageType, inputs.waterCapacity, inputs.distributionNetwork, inputs.hydrantCount25, inputs.hydrantCount3, inputs.hydrantCount4, inputs.length, inputs.width);
+    factor_W = calculateW(
+      inputs.qi,
+      inputs.qm,
+      inputs.waterStorageType,
+      inputs.waterCapacity,
+      distributionNetworkAdequacy,
+      w4Score,
+      w5Score,
+      requiredWaterCapacity ?? undefined
+    );
   }
-  if (inputs.detectionType !== undefined || inputs.waterSupplyType !== undefined || inputs.sprinklerType !== undefined || inputs.fireStationType !== undefined || inputs.industrialBrigade !== undefined) {
-    factor_S = calculateS(inputs.detectionType, inputs.waterSupplyType, inputs.sprinklerType, inputs.fireStationType, inputs.industrialBrigade);
+  if (inputs.detectionType !== undefined || inputs.waterSupplyType !== undefined || inputs.sprinklerType !== undefined || inputs.fireStationType !== undefined || inputs.industrialBrigade !== undefined ||
+      inputs.s1ElectronicSystem !== undefined || inputs.s1ZoneIdentification !== undefined || inputs.s6OtherSuppression !== undefined ||
+      inputs.s7UnlimitedWater !== undefined || inputs.s8DedicatedWater !== undefined || inputs.s9WaterControl !== undefined) {
+    factor_S = calculateS(
+      inputs.detectionType,
+      inputs.waterSupplyType,
+      inputs.sprinklerType,
+      inputs.fireStationType,
+      inputs.industrialBrigade,
+      inputs.s1ElectronicSystem,
+      inputs.s1ZoneIdentification,
+      inputs.s6OtherSuppression,
+      inputs.s7UnlimitedWater,
+      inputs.s8DedicatedWater,
+      inputs.s9WaterControl
+    );
   }
   if (inputs.structureResist && factor_S !== null) {
     factor_F = calculateF(inputs.structureResist, inputs.facadeResist, inputs.roofResist, inputs.wallResist, factor_S, inputs.hasManyWindows, inputs.noInternalSeparation, inputs.combustibleInsulation);
   }
-  if (inputs.n1 !== undefined || inputs.n2 !== undefined || inputs.n3 !== undefined || inputs.n4 !== undefined || inputs.n5 !== undefined) {
-    factor_N = calculateN(inputs.n1, inputs.n2, inputs.n3, inputs.n4, inputs.n5);
+  // Calculate n1 from checkboxes if provided, otherwise use manual n1 value
+  const calculatedN1 = (inputs.n1ContinuousPresence !== undefined || 
+                        inputs.n1ManualWarning !== undefined || 
+                        inputs.n1FireDeptNotification !== undefined || 
+                        inputs.n1ResidentAlarm !== undefined)
+    ? calculateN1(
+        inputs.n1ContinuousPresence,
+        inputs.n1ManualWarning,
+        inputs.n1FireDeptNotification,
+        inputs.n1ResidentAlarm
+      )
+    : inputs.n1;
+  
+  if (calculatedN1 !== undefined || inputs.n2 !== undefined || inputs.n3 !== undefined || inputs.n4 !== undefined || inputs.n5 !== undefined) {
+    factor_N = calculateN(calculatedN1, inputs.n2, inputs.n3, inputs.n4, inputs.n5);
   }
-  if (inputs.subcompartment !== undefined || inputs.stairways !== undefined || inputs.horizontalExit !== undefined || inputs.sprinklers !== undefined) {
-    factor_U = calculateU(inputs.subcompartment, inputs.stairways, inputs.horizontalExit, inputs.sprinklers);
+  if (inputs.subcompartment !== undefined || inputs.stairways !== undefined || inputs.horizontalExit !== undefined || inputs.sprinklers !== undefined ||
+      inputs.u1PartialDetection !== undefined || inputs.u2Max300Occupants !== undefined || inputs.u3VoiceEvacuation !== undefined ||
+      inputs.u4MarkedExits !== undefined || inputs.u5SmokeEvacuation !== undefined ||
+      inputs.detectionType !== undefined || inputs.s1ElectronicSystem !== undefined || inputs.s1ZoneIdentification !== undefined ||
+      inputs.s6OtherSuppression !== undefined || inputs.fireStationType !== undefined || inputs.industrialBrigade !== undefined) {
+    factor_U = calculateU(
+      inputs.subcompartment,
+      inputs.stairways,
+      inputs.horizontalExit,
+      inputs.sprinklers,
+      // S factor values
+      inputs.detectionType,
+      inputs.s1ElectronicSystem,
+      inputs.s1ZoneIdentification,
+      inputs.s6OtherSuppression,
+      inputs.fireStationType,
+      inputs.industrialBrigade,
+      // U factor checkboxes
+      inputs.u1PartialDetection,
+      inputs.u2Max300Occupants,
+      inputs.u3VoiceEvacuation,
+      inputs.u4MarkedExits,
+      inputs.u5SmokeEvacuation
+    );
   }
   if (inputs.subCompartmentEI30 !== undefined || inputs.subCompartmentEI60 !== undefined || inputs.partialDetection !== undefined || inputs.partialSprinkler !== undefined || inputs.otherAutoExtinguish !== undefined || inputs.financialDataBackup !== undefined || inputs.sparePartsAccess !== undefined || inputs.selfRepairCapability !== undefined || inputs.relocationAgreements !== undefined || inputs.multipleProduction !== undefined) {
     factor_Y = calculateY(inputs.subCompartmentEI30, inputs.subCompartmentEI60, inputs.partialDetection, inputs.partialSprinkler, inputs.otherAutoExtinguish, inputs.financialDataBackup, inputs.sparePartsAccess, inputs.selfRepairCapability, inputs.relocationAgreements, inputs.multipleProduction);

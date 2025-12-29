@@ -214,18 +214,58 @@ export default function ReportSection() {
   };
 
   // Handle Excel export
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!selectedFloorId) {
       toast.error("لطفاً یک طبقه انتخاب کنید");
       return;
     }
 
-    exportToExcel({
+    // Fetch all floors with assessments
+    const allFloorsWithAssessments: Array<{
+      id: string;
+      name: string;
+      level: number;
+      assessment: any;
+    }> = [];
+
+    try {
+      const floorsRes = await fetch(`/api/user/projects/${projectId}/floors`);
+      if (floorsRes.ok) {
+        const floorsData = await floorsRes.json();
+        const floors = floorsData.floors || [];
+
+        // Fetch assessment for each floor
+        for (const floor of floors) {
+          try {
+            const assessmentRes = await fetch(
+              `/api/user/projects/${projectId}/floors/${floor.id}/assessment`
+            );
+            if (assessmentRes.ok) {
+              const assessmentData = await assessmentRes.json();
+              allFloorsWithAssessments.push({
+                id: floor.id,
+                name: floor.name,
+                level: floor.level,
+                assessment: assessmentData,
+              });
+            }
+          } catch (error) {
+            // Skip floors without assessments
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching floors:", error);
+    }
+
+    await exportToExcel({
       assessment: assessment || null,
       projectName,
       projectAddress,
       expertName,
       floorName,
+      projectId: projectId?.toString(),
+      allFloorsWithAssessments,
     });
   };
 

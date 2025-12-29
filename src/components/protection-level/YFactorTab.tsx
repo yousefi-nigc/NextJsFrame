@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -17,8 +17,8 @@ export default function YFactorTab({
   floorId: string;
 }) {
   const queryClient = useQueryClient();
-  const [subCompartmentEI30, setSubCompartmentEI30] = useState(false);
-  const [subCompartmentEI60, setSubCompartmentEI60] = useState(false);
+  // Use subcompartment from U section (shared field)
+  const [subcompartment, setSubcompartment] = useState(0);
   const [partialDetection, setPartialDetection] = useState(false);
   const [partialSprinkler, setPartialSprinkler] = useState(false);
   const [otherAutoExtinguish, setOtherAutoExtinguish] = useState(false);
@@ -26,6 +26,7 @@ export default function YFactorTab({
   const [sparePartsAccess, setSparePartsAccess] = useState(false);
   const [selfRepairCapability, setSelfRepairCapability] = useState(false);
   const [relocationAgreements, setRelocationAgreements] = useState(false);
+  const [immediateActivityTransfer, setImmediateActivityTransfer] = useState(false);
   const [multipleProduction, setMultipleProduction] = useState(false);
 
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
@@ -41,8 +42,8 @@ export default function YFactorTab({
 
       const response = data as AssessmentGetApiResponse;
 
-      setSubCompartmentEI30(response.assessment.subCompartmentEI30 ?? false);
-      setSubCompartmentEI60(response.assessment.subCompartmentEI60 ?? false);
+      // Get subcompartment from U section (shared field)
+      setSubcompartment(response.assessment.subcompartment ?? 0);
       setPartialDetection(response.assessment.partialDetection ?? false);
       setPartialSprinkler(response.assessment.partialSprinkler ?? false);
       setOtherAutoExtinguish(response.assessment.otherAutoExtinguish ?? false);
@@ -54,11 +55,40 @@ export default function YFactorTab({
       setRelocationAgreements(
         response.assessment.relocationAgreements ?? false
       );
+      setImmediateActivityTransfer(
+        response.assessment.immediateActivityTransfer ?? false
+      );
       setMultipleProduction(response.assessment.multipleProduction ?? false);
 
       return response;
     },
   });
+
+  // Get S factor values for conditional disabling
+  const s3 = assessment?.assessment.sprinklerType ?? 0; // s3 - sprinkler type
+  const s6 = assessment?.assessment.s6OtherSuppression ?? 0; // s6 - other suppression systems
+
+  // Conditional disabling logic
+  const partialSprinklerDisabled = useMemo(() => {
+    return s3 !== undefined && s3 !== 0; // Disable if s3 is selected (not 0)
+  }, [s3]);
+
+  const otherAutoExtinguishDisabled = useMemo(() => {
+    return s6 !== undefined && s6 !== 0; // Disable if s6 is selected (not 0)
+  }, [s6]);
+
+  // Auto-uncheck when disabled
+  useEffect(() => {
+    if (partialSprinklerDisabled) {
+      setPartialSprinkler(false);
+    }
+  }, [partialSprinklerDisabled]);
+
+  useEffect(() => {
+    if (otherAutoExtinguishDisabled) {
+      setOtherAutoExtinguish(false);
+    }
+  }, [otherAutoExtinguishDisabled]);
 
   const handleCalculateY = useMutation({
     mutationFn: async () => {
@@ -67,15 +97,15 @@ export default function YFactorTab({
         {
           method: "PUT",
           body: JSON.stringify({
-            subCompartmentEI30,
-            subCompartmentEI60,
+            subcompartment, // Shared with U section
             partialDetection,
-            partialSprinkler,
-            otherAutoExtinguish,
+            partialSprinkler: partialSprinklerDisabled ? false : partialSprinkler,
+            otherAutoExtinguish: otherAutoExtinguishDisabled ? false : otherAutoExtinguish,
             financialDataBackup,
             sparePartsAccess,
             selfRepairCapability,
             relocationAgreements,
+            immediateActivityTransfer,
             multipleProduction,
           }),
         }
@@ -127,24 +157,17 @@ export default function YFactorTab({
 
       <div className="input-group">
         <label className="input-label">تقسیم‌بندی مناطق حساس</label>
-        <div className="checkbox-group flex flex-col gap-2">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={subCompartmentEI30}
-              onChange={(e) => setSubCompartmentEI30(e.target.checked)}
-            />
-            تقسیم به زون‌های حداکثر 1000m² با جداسازی EI30
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={subCompartmentEI60}
-              onChange={(e) => setSubCompartmentEI60(e.target.checked)}
-            />
-            تقسیم به زون‌های حداکثر 1000m² با جداسازی EI60
-          </label>
+        <select
+          className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+          value={subcompartment}
+          onChange={(e) => setSubcompartment(parseFloat(e.target.value))}
+        >
+          <option value={0}>بدون بخش‌بندی</option>
+          <option value={2}>EI30 – حداکثر 1000 m²</option>
+          <option value={4}>EI60 – حداکثر 1000 m²</option>
+        </select>
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          این فیلد با بخش U مشترک است
         </div>
       </div>
 
@@ -157,25 +180,46 @@ export default function YFactorTab({
               checked={partialDetection}
               onChange={(e) => setPartialDetection(e.target.checked)}
             />
-            سیستم اعلام حریق اتوماتیک موضعی
+            <span>سیستم اعلام حریق اتوماتیک موضعی</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">(امتیاز: 2)</span>
           </label>
 
-          <label className="flex items-center gap-2">
+          <label className={`flex items-center gap-2 ${partialSprinklerDisabled ? "opacity-50" : ""}`}>
             <input
               type="checkbox"
               checked={partialSprinkler}
               onChange={(e) => setPartialSprinkler(e.target.checked)}
+              disabled={partialSprinklerDisabled}
+              className={partialSprinklerDisabled ? "cursor-not-allowed" : ""}
             />
-            اسپرینکلر موضعی در مناطق حیاتی
+            <span className={partialSprinklerDisabled ? "text-gray-400" : ""}>
+              اسپرینکلر موضعی در مناطق حیاتی
+            </span>
+            {partialSprinklerDisabled && (
+              <span className="text-xs text-red-500">(غیرفعال: s₃ انتخاب شده است)</span>
+            )}
+            {!partialSprinklerDisabled && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">(امتیاز: 5)</span>
+            )}
           </label>
 
-          <label className="flex items-center gap-2">
+          <label className={`flex items-center gap-2 ${otherAutoExtinguishDisabled ? "opacity-50" : ""}`}>
             <input
               type="checkbox"
               checked={otherAutoExtinguish}
               onChange={(e) => setOtherAutoExtinguish(e.target.checked)}
+              disabled={otherAutoExtinguishDisabled}
+              className={otherAutoExtinguishDisabled ? "cursor-not-allowed" : ""}
             />
-            سایر سیستم‌های اطفای اتوماتیک (گاز، فوم، پودر)
+            <span className={otherAutoExtinguishDisabled ? "text-gray-400" : ""}>
+              سایر سیستم‌های اطفای اتوماتیک (گاز، فوم، پودر)
+            </span>
+            {otherAutoExtinguishDisabled && (
+              <span className="text-xs text-red-500">(غیرفعال: s₆ انتخاب شده است)</span>
+            )}
+            {!otherAutoExtinguishDisabled && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">(امتیاز: 4)</span>
+            )}
           </label>
         </div>
       </div>
@@ -191,7 +235,8 @@ export default function YFactorTab({
               checked={financialDataBackup}
               onChange={(e) => setFinancialDataBackup(e.target.checked)}
             />
-            پشتیبان‌گیری از داده‌های مالی و اقتصادی در مکان امن
+            <span>پشتیبان‌گیری از داده‌های مالی و اقتصادی در مکان امن</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">(امتیاز: 2)</span>
           </label>
 
           <label className="flex items-center gap-2">
@@ -200,7 +245,8 @@ export default function YFactorTab({
               checked={sparePartsAccess}
               onChange={(e) => setSparePartsAccess(e.target.checked)}
             />
-            دسترسی آسان به قطعات یدکی و تجهیزات جایگزین
+            <span>دسترسی آسان به قطعات یدکی و تجهیزات جایگزین</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">(امتیاز: 4)</span>
           </label>
 
           <label className="flex items-center gap-2">
@@ -209,7 +255,8 @@ export default function YFactorTab({
               checked={selfRepairCapability}
               onChange={(e) => setSelfRepairCapability(e.target.checked)}
             />
-            توانایی تعمیر با حداقل کمک خارجی
+            <span>توانایی تعمیر با حداقل کمک خارجی</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">(امتیاز: 2)</span>
           </label>
 
           <label className="flex items-center gap-2">
@@ -218,7 +265,18 @@ export default function YFactorTab({
               checked={relocationAgreements}
               onChange={(e) => setRelocationAgreements(e.target.checked)}
             />
-            قرارداد جابجایی موقت فعالیت‌ها
+            <span>قرارداد جابجایی موقت فعالیت‌ها</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">(امتیاز: 3)</span>
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={immediateActivityTransfer}
+              onChange={(e) => setImmediateActivityTransfer(e.target.checked)}
+            />
+            <span>امکان انتقال فوری فعالیت‌ها</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">(امتیاز: 4)</span>
           </label>
 
           <label className="flex items-center gap-2">
@@ -227,7 +285,8 @@ export default function YFactorTab({
               checked={multipleProduction}
               onChange={(e) => setMultipleProduction(e.target.checked)}
             />
-            ظرفیت تولید در بیش از یک مکان
+            <span>ظرفیت تولید در بیش از یک مکان</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">(امتیاز: 4)</span>
           </label>
         </div>
       </div>
@@ -281,20 +340,20 @@ export default function YFactorTab({
 
               <tr>
                 <td className="p-3">اعلام حریق موضعی</td>
-                <td className="p-3">3</td>
+                <td className="p-3">2</td>
                 <td className="p-3">در مناطق حیاتی</td>
               </tr>
 
               <tr>
                 <td className="p-3">اسپرینکلر موضعی</td>
                 <td className="p-3">5</td>
-                <td className="p-3">در مناطق حیاتی</td>
+                <td className="p-3">در مناطق حیاتی (فقط اگر s₃ انتخاب نشده باشد)</td>
               </tr>
 
               <tr>
                 <td className="p-3">سایر سیستم‌های اطفا</td>
                 <td className="p-3">4</td>
-                <td className="p-3">گاز، فوم یا پودر</td>
+                <td className="p-3">گاز، فوم یا پودر (فقط اگر s₆ انتخاب نشده باشد)</td>
               </tr>
 
               <tr className="bg-gray-50 dark:dark:bg-[#ffffff11] font-bold">
@@ -325,6 +384,12 @@ export default function YFactorTab({
                 <td className="p-3">توافقات جابجایی</td>
                 <td className="p-3">3</td>
                 <td className="p-3">مکان جایگزین</td>
+              </tr>
+
+              <tr>
+                <td className="p-3">انتقال فوری فعالیت‌ها</td>
+                <td className="p-3">4</td>
+                <td className="p-3">امکان انتقال فوری</td>
               </tr>
 
               <tr>

@@ -268,18 +268,41 @@ model AssessmentProtectionFactors {
   // Water supply (W)
   waterStorageType    String? // w1 logic ("auto", "manual", "none")
   waterCapacity       Float? // w2 logic (m³)
+  requiredWaterCapacity Float? // Calculated: (Qi + Qm) / 4
+  w2Penalty           Float? // Calculated penalty for w2
   distributionNetwork String? // w3 logic ("adequate", "limited", "none")
+  pipeDiameter        String? // Pipe diameter selection ("DIA80", "DIA100", etc.)
+  isRingNetwork       Boolean? // Ring network checkbox
+  waterFlowCapacity    Float? // Calculated water flow capacity
+  distributionNetworkAdequacy String? // Auto-calculated: "adequate", "limited", "none"
   hydrantCount25      Int?
   hydrantCount3       Int?
   hydrantCount4       Int?
+  equivalentHydrant25 Float? // Calculated equivalent 2.5" connections
+  averageHydrantDistance Float? // Calculated average distance between connections
+  w4Score             Float? // Calculated W4 score
+  staticPressureRequired Float? // Calculated static pressure required (bar)
+  staticPressureAvailable Float? // User input static pressure available (bar)
+  w5Score             Float? // Calculated W5 score
 
   // Detection/Sprinkler (N/S)
   detectionType     Float? // s1
+  s1ElectronicSystem Boolean? // s1 checkbox: سیستم الکترونیکی تحت نظارت – پایش و نظارت بر خطاها
+  s1ZoneIdentification Boolean? // s1 checkbox: شناسایی مجزای زون‌های کوچک حریق (دیتکتور، اتاق)
   sprinklerType     Float? // s3
   fireStationType   Float? // s4
   waterSupplyType   Float? // s2
   industrialBrigade Float? // s5
-  n1 Float? // Detection and alarm
+  industrialBrigadeLabel String? // s5 label/name
+  s6OtherSuppression Float? // s6: سایر سیستم‌های اطفای اتوماتیک (گاز، فوم، پودر)
+  s7UnlimitedWater Boolean? // s7: منابع آب پایان‌ناپذیر (با ظرفیت حداقل ۴ برابر مقدار موردنیاز)
+  s8DedicatedWater Boolean? // s8: منبع آب اختصاص‌یافته فقط برای اطفای حریق
+  s9WaterControl Boolean? // s9: کنترل منبع آب - تحت کنترل بهره‌بردار/استفاده‌کننده ساختمان (مستقل)
+  n1 Float? // Detection and alarm (calculated from checkboxes)
+  n1ContinuousPresence Boolean? // حضور مداوم نیروی انسانی / خدمات نگهبانی
+  n1ManualWarning Boolean? // همچنین یک سیستم هشداردهی دستی وجود دارد
+  n1FireDeptNotification Boolean? // ارسال/اطلاع‌رسانی تضمین‌شده به سازمان آتش‌نشانی
+  n1ResidentAlarm Boolean? // همچنین آلارم هشدار برای ساکنان / افراد حاضر وجود دارد
   n2 Float? // Manual extinguishers
   n3 Float? // Fire hydrant boxes
   n4 Float? // Fire station arrival time
@@ -297,12 +320,17 @@ model AssessmentProtectionFactors {
   // Evacuation (U)
   subcompartment Float? // Subcompartment type (0, 2, 4)
   stairways      Float? // Stairway type (0-8)
+  stairwaysIndex Int? // Stairway option index (0-7) to distinguish between options with same value
   horizontalExit Float? // Horizontal exit (0, 2, 8)
   sprinklers     Float? // Sprinkler protection (0, 5, 10)
+  u1PartialDetection Boolean? // سامانه تشخیص حریق جزئی (موضعی)، فقط در نواحی بحرانی مرتبط با ایمنی افراد
+  u2Max300Occupants Boolean? // حداکثر ۳۰۰ نفر می‌توانند به‌طور هم‌زمان هشدار دریافت کنند
+  u3VoiceEvacuation Boolean? // هشدار تخلیه با پیام‌های گفتاری از طریق سامانه ارتباط صوتی
+  u4MarkedExits Boolean? // مسیرهای خروج به‌طور کامل علامت‌گذاری شده و دارای روشنایی هستند
+  u5SmokeEvacuation Boolean? // تخلیه دود که توسط سامانه تشخیص خودکار فعال می‌شود
 
   // Business continuity (Y)
-  subCompartmentEI30   Boolean? // EI30 subcompartment
-  subCompartmentEI60   Boolean? // EI60 subcompartment
+  // Note: subcompartment is shared with U section (0, 2, 4)
   partialDetection     Boolean? // Partial detection system
   partialSprinkler     Boolean? // Partial sprinkler system
   otherAutoExtinguish  Boolean? // Other auto extinguishing systems
@@ -310,6 +338,7 @@ model AssessmentProtectionFactors {
   sparePartsAccess     Boolean? // Spare parts access
   selfRepairCapability Boolean? // Self repair capability
   relocationAgreements Boolean? // Relocation agreements
+  immediateActivityTransfer Boolean? // امکان انتقال فوری فعالیت‌ها
   multipleProduction   Boolean? // Multiple production sites
 
   // Calculated Protection Factors

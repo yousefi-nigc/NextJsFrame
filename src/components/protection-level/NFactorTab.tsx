@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -50,11 +50,24 @@ export default function NFactorTab({
   floorId: string;
 }) {
   const queryClient = useQueryClient();
-  const [n1, setN1] = useState(0);
+  const [n1ContinuousPresence, setN1ContinuousPresence] = useState(false);
+  const [n1ManualWarning, setN1ManualWarning] = useState(false);
+  const [n1FireDeptNotification, setN1FireDeptNotification] = useState(false);
+  const [n1ResidentAlarm, setN1ResidentAlarm] = useState(false);
   const [n2, setN2] = useState(0);
   const [n3, setN3] = useState(0);
   const [n4, setN4] = useState(0);
   const [n5, setN5] = useState(0);
+
+  // Calculate n1 from checkboxes
+  const n1 = useMemo(() => {
+    let uncheckedCount = 0;
+    if (!n1ContinuousPresence) uncheckedCount++;
+    if (!n1ManualWarning) uncheckedCount++;
+    if (!n1FireDeptNotification) uncheckedCount++;
+    if (!n1ResidentAlarm) uncheckedCount++;
+    return uncheckedCount * 2;
+  }, [n1ContinuousPresence, n1ManualWarning, n1FireDeptNotification, n1ResidentAlarm]);
 
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
     queryKey: ["assessment", floorId],
@@ -69,7 +82,20 @@ export default function NFactorTab({
 
       const response = data as AssessmentGetApiResponse;
 
-      setN1(response.assessment.n1 ?? 0);
+      // Load n1 checkboxes if available, otherwise infer from n1 value
+      if (response.assessment.n1ContinuousPresence !== null || 
+          response.assessment.n1ManualWarning !== null || 
+          response.assessment.n1FireDeptNotification !== null || 
+          response.assessment.n1ResidentAlarm !== null) {
+        setN1ContinuousPresence(response.assessment.n1ContinuousPresence ?? false);
+        setN1ManualWarning(response.assessment.n1ManualWarning ?? false);
+        setN1FireDeptNotification(response.assessment.n1FireDeptNotification ?? false);
+        setN1ResidentAlarm(response.assessment.n1ResidentAlarm ?? false);
+      } else {
+        // Legacy: if n1 is provided but checkboxes are not, we can't infer the checkboxes
+        // So we'll just leave them as false (default)
+      }
+      
       setN2(response.assessment.n2 ?? 0);
       setN3(response.assessment.n3 ?? 0);
       setN4(response.assessment.n4 ?? 0);
@@ -84,14 +110,17 @@ export default function NFactorTab({
       const res = await fetch(
         `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
         {
-          method: "PUT",
-          body: JSON.stringify({
-            n1,
-            n2,
-            n3,
-            n4,
-            n5,
-          }),
+        method: "PUT",
+        body: JSON.stringify({
+          n1ContinuousPresence,
+          n1ManualWarning,
+          n1FireDeptNotification,
+          n1ResidentAlarm,
+          n2,
+          n3,
+          n4,
+          n5,
+        }),
         }
       );
       return res.json();
@@ -122,14 +151,128 @@ export default function NFactorTab({
       </div>
 
       <Section title="n₁ - کشف و هشدار">
-        <Select value={n1} onChange={setN1}>
-          <option value={0}>
-            زنجیره کامل کشف و هشدار به آتش‌نشانی و ساکنان
-          </option>
-          <option value={2}>کشف یا هشدار ناقص</option>
-          <option value={4}>هشدار محلی بدون اطلاع‌رسانی</option>
-          <option value={6}>فاقد کشف و هشدار</option>
-        </Select>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            <div className="flex items-start space-x-reverse p-4 rounded-lg border-2 transition-all duration-200 hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10"
+                 style={{
+                   borderColor: n1ContinuousPresence ? 'rgb(59 130 246)' : 'rgb(229 231 235)',
+                   backgroundColor: n1ContinuousPresence ? 'rgba(59, 130, 246, 0.05)' : 'transparent'
+                 }}>
+              <div className="flex-shrink-0 mt-0.5 ml-4">
+                <input
+                  type="checkbox"
+                  id="n1-continuous-presence"
+                  checked={n1ContinuousPresence}
+                  onChange={(e) => setN1ContinuousPresence(e.target.checked)}
+                  className="w-6 h-6 text-primary bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer transition-all duration-200 checked:bg-primary checked:border-primary"
+                />
+              </div>
+              <label 
+                htmlFor="n1-continuous-presence" 
+                className="flex-1 text-base cursor-pointer select-none leading-relaxed text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
+              >
+                حضور مداوم نیروی انسانی / خدمات نگهبانی
+              </label>
+            </div>
+            
+            <div className="flex items-start space-x-reverse p-4 rounded-lg border-2 transition-all duration-200 hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10"
+                 style={{
+                   borderColor: n1ManualWarning ? 'rgb(59 130 246)' : 'rgb(229 231 235)',
+                   backgroundColor: n1ManualWarning ? 'rgba(59, 130, 246, 0.05)' : 'transparent'
+                 }}>
+              <div className="flex-shrink-0 mt-0.5 ml-4">
+                <input
+                  type="checkbox"
+                  id="n1-manual-warning"
+                  checked={n1ManualWarning}
+                  onChange={(e) => setN1ManualWarning(e.target.checked)}
+                  className="w-6 h-6 text-primary bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer transition-all duration-200 checked:bg-primary checked:border-primary"
+                />
+              </div>
+              <label 
+                htmlFor="n1-manual-warning" 
+                className="flex-1 text-base cursor-pointer select-none leading-relaxed text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
+              >
+                همچنین یک سیستم هشداردهی دستی وجود دارد
+              </label>
+            </div>
+            
+            <div className="flex items-start space-x-reverse p-4 rounded-lg border-2 transition-all duration-200 hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10"
+                 style={{
+                   borderColor: n1FireDeptNotification ? 'rgb(59 130 246)' : 'rgb(229 231 235)',
+                   backgroundColor: n1FireDeptNotification ? 'rgba(59, 130, 246, 0.05)' : 'transparent'
+                 }}>
+              <div className="flex-shrink-0 mt-0.5 ml-4">
+                <input
+                  type="checkbox"
+                  id="n1-fire-dept-notification"
+                  checked={n1FireDeptNotification}
+                  onChange={(e) => setN1FireDeptNotification(e.target.checked)}
+                  className="w-6 h-6 text-primary bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer transition-all duration-200 checked:bg-primary checked:border-primary"
+                />
+              </div>
+              <label 
+                htmlFor="n1-fire-dept-notification" 
+                className="flex-1 text-base cursor-pointer select-none leading-relaxed text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
+              >
+                ارسال/اطلاع‌رسانی تضمین‌شده به سازمان آتش‌نشانی
+              </label>
+            </div>
+            
+            <div className="flex items-start space-x-reverse p-4 rounded-lg border-2 transition-all duration-200 hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10"
+                 style={{
+                   borderColor: n1ResidentAlarm ? 'rgb(59 130 246)' : 'rgb(229 231 235)',
+                   backgroundColor: n1ResidentAlarm ? 'rgba(59, 130, 246, 0.05)' : 'transparent'
+                 }}>
+              <div className="flex-shrink-0 mt-0.5 ml-4">
+                <input
+                  type="checkbox"
+                  id="n1-resident-alarm"
+                  checked={n1ResidentAlarm}
+                  onChange={(e) => setN1ResidentAlarm(e.target.checked)}
+                  className="w-6 h-6 text-primary bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer transition-all duration-200 checked:bg-primary checked:border-primary"
+                />
+              </div>
+              <label 
+                htmlFor="n1-resident-alarm" 
+                className="flex-1 text-base cursor-pointer select-none leading-relaxed text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
+              >
+                همچنین آلارم هشدار برای ساکنان / افراد حاضر وجود دارد
+              </label>
+            </div>
+          </div>
+          
+          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-800 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  مقدار محاسبه شده n₁:
+                </div>
+                <div className="text-2xl font-bold text-primary">
+                  {n1}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  {n1 === 0 ? (
+                    <span className="text-green-600 dark:text-green-400 font-semibold">✓ همه موارد انتخاب شده (بهینه)</span>
+                  ) : (
+                    <span>{4 - (n1 / 2)} از 4 مورد انتخاب شده</span>
+                  )}
+                </div>
+              </div>
+              <div className="ml-4">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold ${
+                  n1 === 0 
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' 
+                    : n1 <= 2 
+                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
+                    : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                }`}>
+                  {n1}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </Section>
 
       <Section title="n₂ - خاموش‌کن دستی">

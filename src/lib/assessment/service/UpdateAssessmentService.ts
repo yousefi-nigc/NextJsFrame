@@ -91,10 +91,17 @@ export async function updateAssessmentService({
             hydrantCount3: existing.protectionFactors?.hydrantCount3 ?? undefined,
             hydrantCount4: existing.protectionFactors?.hydrantCount4 ?? undefined,
             detectionType: existing.protectionFactors?.detectionType ?? undefined,
+            s1ElectronicSystem: (existing.protectionFactors as any)?.s1ElectronicSystem ?? undefined,
+            s1ZoneIdentification: (existing.protectionFactors as any)?.s1ZoneIdentification ?? undefined,
             sprinklerType: existing.protectionFactors?.sprinklerType ?? undefined,
             fireStationType: existing.protectionFactors?.fireStationType ?? undefined,
             waterSupplyType: existing.protectionFactors?.waterSupplyType ?? undefined,
             industrialBrigade: existing.protectionFactors?.industrialBrigade ?? undefined,
+            industrialBrigadeLabel: (existing.protectionFactors as any)?.industrialBrigadeLabel ?? undefined,
+            s6OtherSuppression: (existing.protectionFactors as any)?.s6OtherSuppression ?? undefined,
+            s7UnlimitedWater: (existing.protectionFactors as any)?.s7UnlimitedWater ?? undefined,
+            s8DedicatedWater: (existing.protectionFactors as any)?.s8DedicatedWater ?? undefined,
+            s9WaterControl: (existing.protectionFactors as any)?.s9WaterControl ?? undefined,
             structureResist: existing.protectionFactors?.structureResist ?? undefined,
             facadeResist: existing.protectionFactors?.facadeResist ?? undefined,
             roofResist: existing.protectionFactors?.roofResist ?? undefined,
@@ -103,16 +110,24 @@ export async function updateAssessmentService({
             noInternalSeparation: existing.protectionFactors?.noInternalSeparation ?? undefined,
             combustibleInsulation: existing.protectionFactors?.combustibleInsulation ?? undefined,
             n1: existing.protectionFactors?.n1 ?? undefined,
+            n1ContinuousPresence: (existing.protectionFactors as any)?.n1ContinuousPresence ?? undefined,
+            n1ManualWarning: (existing.protectionFactors as any)?.n1ManualWarning ?? undefined,
+            n1FireDeptNotification: (existing.protectionFactors as any)?.n1FireDeptNotification ?? undefined,
+            n1ResidentAlarm: (existing.protectionFactors as any)?.n1ResidentAlarm ?? undefined,
             n2: existing.protectionFactors?.n2 ?? undefined,
             n3: existing.protectionFactors?.n3 ?? undefined,
             n4: existing.protectionFactors?.n4 ?? undefined,
             n5: existing.protectionFactors?.n5 ?? undefined,
             subcompartment: existing.protectionFactors?.subcompartment ?? undefined,
             stairways: existing.protectionFactors?.stairways ?? undefined,
+            stairwaysIndex: (existing.protectionFactors as any)?.stairwaysIndex ?? undefined,
             horizontalExit: existing.protectionFactors?.horizontalExit ?? undefined,
             sprinklers: existing.protectionFactors?.sprinklers ?? undefined,
-            subCompartmentEI30: existing.protectionFactors?.subCompartmentEI30 ?? undefined,
-            subCompartmentEI60: existing.protectionFactors?.subCompartmentEI60 ?? undefined,
+            u1PartialDetection: (existing.protectionFactors as any)?.u1PartialDetection ?? undefined,
+            u2Max300Occupants: (existing.protectionFactors as any)?.u2Max300Occupants ?? undefined,
+            u3VoiceEvacuation: (existing.protectionFactors as any)?.u3VoiceEvacuation ?? undefined,
+            u4MarkedExits: (existing.protectionFactors as any)?.u4MarkedExits ?? undefined,
+            u5SmokeEvacuation: (existing.protectionFactors as any)?.u5SmokeEvacuation ?? undefined,
             partialDetection: existing.protectionFactors?.partialDetection ?? undefined,
             partialSprinkler: existing.protectionFactors?.partialSprinkler ?? undefined,
             otherAutoExtinguish: existing.protectionFactors?.otherAutoExtinguish ?? undefined,
@@ -120,6 +135,7 @@ export async function updateAssessmentService({
             sparePartsAccess: existing.protectionFactors?.sparePartsAccess ?? undefined,
             selfRepairCapability: existing.protectionFactors?.selfRepairCapability ?? undefined,
             relocationAgreements: existing.protectionFactors?.relocationAgreements ?? undefined,
+            immediateActivityTransfer: (existing.protectionFactors as any)?.immediateActivityTransfer ?? undefined,
             multipleProduction: existing.protectionFactors?.multipleProduction ?? undefined,
         };
 
@@ -141,9 +157,107 @@ export async function updateAssessmentService({
             mergedInputs.dependencyManual = null;
         }
 
+        // Calculate n1 from checkboxes if provided
+        // If any n1 checkbox is provided, calculate n1 from them, otherwise use manual n1 value
+        if (mergedInputs.n1ContinuousPresence !== undefined || 
+            mergedInputs.n1ManualWarning !== undefined || 
+            mergedInputs.n1FireDeptNotification !== undefined || 
+            mergedInputs.n1ResidentAlarm !== undefined) {
+            const { calculateN1 } = await import("./AssessmentCalculationService");
+            const calculatedN1 = calculateN1(
+                mergedInputs.n1ContinuousPresence,
+                mergedInputs.n1ManualWarning,
+                mergedInputs.n1FireDeptNotification,
+                mergedInputs.n1ResidentAlarm
+            );
+            mergedInputs.n1 = calculatedN1;
+        }
+        
         // Recalculate all factors automatically based on merged inputs
         // Users only send raw input data - all calculated fields are recomputed here
         const calculations = calculateAssessment(mergedInputs);
+        
+        // Calculate W-related intermediate values
+        const requiredWaterCapacity = mergedInputs.qi !== undefined && mergedInputs.qm !== undefined
+            ? (mergedInputs.qi + mergedInputs.qm) / 4
+            : null;
+        
+        const w2Penalty = requiredWaterCapacity !== null && 
+            mergedInputs.waterCapacity !== undefined && 
+            mergedInputs.waterCapacity !== null &&
+            requiredWaterCapacity > 0 &&
+            isFinite(requiredWaterCapacity) &&
+            isFinite(mergedInputs.waterCapacity)
+            ? (() => {
+                const ratio = (mergedInputs.waterCapacity! / requiredWaterCapacity) * 100;
+                if (!isFinite(ratio)) return 4;
+                if (ratio >= 100) return 0;
+                if (ratio >= 90) return 1;
+                if (ratio >= 80) return 2;
+                if (ratio >= 70) return 3;
+                return 4;
+            })()
+            : null;
+        
+        // Calculate water flow capacity
+        const pipeDiameterValues: Record<string, number> = {
+            "DIA80": 34.3,
+            "DIA100": 59.2,
+            "DIA150": 134.3,
+            "DIA200": 232.3,
+            "DIA250": 366.8,
+            "DIA300": 526.1,
+            "DIA350": 676.9,
+        };
+        const baseFlow = mergedInputs.pipeDiameter && mergedInputs.pipeDiameter !== "none"
+            ? (pipeDiameterValues[mergedInputs.pipeDiameter] || 0)
+            : 0;
+        const waterFlowCapacity = baseFlow * (mergedInputs.isRingNetwork ? 2 : 1);
+        
+        // Determine distribution network adequacy
+        const distributionNetworkAdequacy = mergedInputs.distributionNetwork || 
+            (waterFlowCapacity >= 200 ? "adequate" : waterFlowCapacity >= 50 ? "limited" : "none");
+        
+        // Calculate hydrant-related values
+        const buildingPerimeter = mergedInputs.length && mergedInputs.width
+            ? 2 * (mergedInputs.length + mergedInputs.width)
+            : null;
+        const equivalentHydrant25 = (mergedInputs.hydrantCount25 || 0) * 1 +
+            (mergedInputs.hydrantCount3 || 0) * 2 +
+            (mergedInputs.hydrantCount4 || 0) * 3;
+        const averageHydrantDistance = buildingPerimeter !== null && 
+            equivalentHydrant25 > 0 &&
+            isFinite(buildingPerimeter) &&
+            isFinite(equivalentHydrant25)
+            ? (() => {
+                const distance = buildingPerimeter / equivalentHydrant25;
+                return isFinite(distance) ? distance : null;
+            })()
+            : null;
+        const w4Score = averageHydrantDistance !== null && isFinite(averageHydrantDistance)
+            ? (averageHydrantDistance <= 50 ? 0 : averageHydrantDistance <= 100 ? 1 : 3)
+            : null;
+        
+        // Calculate static pressure values
+        // Use heightAbove if available, otherwise use depthBelow, otherwise 0
+        const hValue = mergedInputs.heightAbove !== undefined && mergedInputs.heightAbove !== null
+            ? mergedInputs.heightAbove
+            : (mergedInputs.depthBelow !== undefined && mergedInputs.depthBelow !== null ? mergedInputs.depthBelow : 0);
+        const ceilingHeight = mergedInputs.height !== undefined && mergedInputs.height !== null ? mergedInputs.height : 0;
+        const totalHeight = hValue + ceilingHeight;
+        const staticPressureRequired = (mergedInputs.height !== undefined || mergedInputs.heightAbove !== undefined || mergedInputs.depthBelow !== undefined)
+            ? (() => {
+                const pressure = (totalHeight + 35) / 10;
+                return isFinite(pressure) ? pressure : null;
+            })()
+            : null;
+        const w5Score = staticPressureRequired !== null && 
+            isFinite(staticPressureRequired) &&
+            mergedInputs.staticPressureAvailable !== undefined && 
+            mergedInputs.staticPressureAvailable !== null &&
+            isFinite(mergedInputs.staticPressureAvailable)
+            ? (staticPressureRequired > mergedInputs.staticPressureAvailable ? 3 : 0)
+            : null;
 
         // Update domain tables with new inputs and recalculated values using transaction
         // Calculated values are always updated and stored in domain tables
@@ -327,19 +441,33 @@ export async function updateAssessmentService({
             await tx.assessmentProtectionFactors.upsert({
                 where: { assessmentId },
                 create: {
+                    // Type assertion needed until Prisma types are regenerated after migration
                     assessmentId,
                     // Input fields
                     waterStorageType: mergedInputs.waterStorageType ?? null,
                     waterCapacity: mergedInputs.waterCapacity ?? null,
+                    requiredWaterCapacity,
+                    w2Penalty,
                     distributionNetwork: mergedInputs.distributionNetwork ?? null,
+                    pipeDiameter: mergedInputs.pipeDiameter ?? null,
+                    isRingNetwork: mergedInputs.isRingNetwork ?? null,
+                    waterFlowCapacity: waterFlowCapacity || null,
+                    distributionNetworkAdequacy,
                     hydrantCount25: mergedInputs.hydrantCount25 ?? null,
                     hydrantCount3: mergedInputs.hydrantCount3 ?? null,
                     hydrantCount4: mergedInputs.hydrantCount4 ?? null,
+                    equivalentHydrant25: equivalentHydrant25 || null,
+                    averageHydrantDistance,
+                    w4Score,
+                    staticPressureRequired,
+                    staticPressureAvailable: mergedInputs.staticPressureAvailable ?? null,
+                    w5Score,
                     detectionType: mergedInputs.detectionType ?? null,
                     sprinklerType: mergedInputs.sprinklerType ?? null,
                     fireStationType: mergedInputs.fireStationType ?? null,
                     waterSupplyType: mergedInputs.waterSupplyType ?? null,
                     industrialBrigade: mergedInputs.industrialBrigade ?? null,
+                    industrialBrigadeLabel: mergedInputs.industrialBrigadeLabel ?? null,
                     structureResist: mergedInputs.structureResist ?? null,
                     facadeResist: mergedInputs.facadeResist ?? null,
                     roofResist: mergedInputs.roofResist ?? null,
@@ -354,10 +482,9 @@ export async function updateAssessmentService({
                     n5: mergedInputs.n5 ?? null,
                     subcompartment: mergedInputs.subcompartment ?? null,
                     stairways: mergedInputs.stairways ?? null,
+                    stairwaysIndex: mergedInputs.stairwaysIndex ?? null,
                     horizontalExit: mergedInputs.horizontalExit ?? null,
                     sprinklers: mergedInputs.sprinklers ?? null,
-                    subCompartmentEI30: mergedInputs.subCompartmentEI30 ?? null,
-                    subCompartmentEI60: mergedInputs.subCompartmentEI60 ?? null,
                     partialDetection: mergedInputs.partialDetection ?? null,
                     partialSprinkler: mergedInputs.partialSprinkler ?? null,
                     otherAutoExtinguish: mergedInputs.otherAutoExtinguish ?? null,
@@ -365,6 +492,7 @@ export async function updateAssessmentService({
                     sparePartsAccess: mergedInputs.sparePartsAccess ?? null,
                     selfRepairCapability: mergedInputs.selfRepairCapability ?? null,
                     relocationAgreements: mergedInputs.relocationAgreements ?? null,
+                    immediateActivityTransfer: mergedInputs.immediateActivityTransfer ?? null,
                     multipleProduction: mergedInputs.multipleProduction ?? null,
                     // Calculated factors
                     factor_W: calculations.factor_W,
@@ -377,20 +505,30 @@ export async function updateAssessmentService({
                     level_D: calculations.level_D,
                     level_D1: calculations.level_D1,
                     level_D2: calculations.level_D2,
-                },
+                } as any, // Type assertion needed until Prisma types are regenerated
                 update: {
                     // Update inputs only if provided
                     ...buildUpdateData("waterStorageType", inputs.waterStorageType),
                     ...buildUpdateData("waterCapacity", inputs.waterCapacity),
                     ...buildUpdateData("distributionNetwork", inputs.distributionNetwork),
+                    ...buildUpdateData("pipeDiameter", inputs.pipeDiameter),
+                    ...buildUpdateData("isRingNetwork", inputs.isRingNetwork),
+                    ...buildUpdateData("staticPressureAvailable", inputs.staticPressureAvailable),
                     ...buildUpdateData("hydrantCount25", inputs.hydrantCount25),
                     ...buildUpdateData("hydrantCount3", inputs.hydrantCount3),
                     ...buildUpdateData("hydrantCount4", inputs.hydrantCount4),
                     ...buildUpdateData("detectionType", inputs.detectionType),
+                    ...buildUpdateData("s1ElectronicSystem", inputs.s1ElectronicSystem),
+                    ...buildUpdateData("s1ZoneIdentification", inputs.s1ZoneIdentification),
                     ...buildUpdateData("sprinklerType", inputs.sprinklerType),
                     ...buildUpdateData("fireStationType", inputs.fireStationType),
                     ...buildUpdateData("waterSupplyType", inputs.waterSupplyType),
                     ...buildUpdateData("industrialBrigade", inputs.industrialBrigade),
+                    ...buildUpdateData("industrialBrigadeLabel", inputs.industrialBrigadeLabel),
+                    ...buildUpdateData("s6OtherSuppression", inputs.s6OtherSuppression),
+                    ...buildUpdateData("s7UnlimitedWater", inputs.s7UnlimitedWater),
+                    ...buildUpdateData("s8DedicatedWater", inputs.s8DedicatedWater),
+                    ...buildUpdateData("s9WaterControl", inputs.s9WaterControl),
                     ...buildUpdateData("structureResist", inputs.structureResist),
                     ...buildUpdateData("facadeResist", inputs.facadeResist),
                     ...buildUpdateData("roofResist", inputs.roofResist),
@@ -399,16 +537,24 @@ export async function updateAssessmentService({
                     ...buildUpdateData("noInternalSeparation", inputs.noInternalSeparation),
                     ...buildUpdateData("combustibleInsulation", inputs.combustibleInsulation),
                     ...buildUpdateData("n1", inputs.n1),
+                    ...buildUpdateData("n1ContinuousPresence", inputs.n1ContinuousPresence),
+                    ...buildUpdateData("n1ManualWarning", inputs.n1ManualWarning),
+                    ...buildUpdateData("n1FireDeptNotification", inputs.n1FireDeptNotification),
+                    ...buildUpdateData("n1ResidentAlarm", inputs.n1ResidentAlarm),
                     ...buildUpdateData("n2", inputs.n2),
                     ...buildUpdateData("n3", inputs.n3),
                     ...buildUpdateData("n4", inputs.n4),
                     ...buildUpdateData("n5", inputs.n5),
                     ...buildUpdateData("subcompartment", inputs.subcompartment),
                     ...buildUpdateData("stairways", inputs.stairways),
+                    ...buildUpdateData("stairwaysIndex", inputs.stairwaysIndex),
                     ...buildUpdateData("horizontalExit", inputs.horizontalExit),
                     ...buildUpdateData("sprinklers", inputs.sprinklers),
-                    ...buildUpdateData("subCompartmentEI30", inputs.subCompartmentEI30),
-                    ...buildUpdateData("subCompartmentEI60", inputs.subCompartmentEI60),
+                    ...buildUpdateData("u1PartialDetection", inputs.u1PartialDetection),
+                    ...buildUpdateData("u2Max300Occupants", inputs.u2Max300Occupants),
+                    ...buildUpdateData("u3VoiceEvacuation", inputs.u3VoiceEvacuation),
+                    ...buildUpdateData("u4MarkedExits", inputs.u4MarkedExits),
+                    ...buildUpdateData("u5SmokeEvacuation", inputs.u5SmokeEvacuation),
                     ...buildUpdateData("partialDetection", inputs.partialDetection),
                     ...buildUpdateData("partialSprinkler", inputs.partialSprinkler),
                     ...buildUpdateData("otherAutoExtinguish", inputs.otherAutoExtinguish),
@@ -416,7 +562,18 @@ export async function updateAssessmentService({
                     ...buildUpdateData("sparePartsAccess", inputs.sparePartsAccess),
                     ...buildUpdateData("selfRepairCapability", inputs.selfRepairCapability),
                     ...buildUpdateData("relocationAgreements", inputs.relocationAgreements),
+                    ...buildUpdateData("immediateActivityTransfer", inputs.immediateActivityTransfer),
                     ...buildUpdateData("multipleProduction", inputs.multipleProduction),
+                    // Always update calculated intermediate values
+                    requiredWaterCapacity,
+                    w2Penalty,
+                    waterFlowCapacity: waterFlowCapacity || null,
+                    distributionNetworkAdequacy,
+                    equivalentHydrant25: equivalentHydrant25 || null,
+                    averageHydrantDistance,
+                    w4Score,
+                    staticPressureRequired,
+                    w5Score,
                     // Always update calculated values
                     factor_W: calculations.factor_W,
                     factor_N: calculations.factor_N,

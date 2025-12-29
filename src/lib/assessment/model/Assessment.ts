@@ -84,15 +84,25 @@ export const createAssessmentValidationSchema = z.object({
     waterStorageType: z.string().optional(),
     waterCapacity: z.number().min(0).optional(),
     distributionNetwork: z.enum(["adequate", "limited", "none"]).optional(),
+    pipeDiameter: z.string().optional(),
+    isRingNetwork: z.boolean().optional(),
+    staticPressureAvailable: z.number().min(0).optional(),
     hydrantCount25: z.number().int().min(0).optional(),
     hydrantCount3: z.number().int().min(0).optional(),
     hydrantCount4: z.number().int().min(0).optional(),
     
     detectionType: z.number().optional(),
+    s1ElectronicSystem: z.boolean().optional(),
+    s1ZoneIdentification: z.boolean().optional(),
     sprinklerType: z.number().optional(),
     fireStationType: z.number().optional(),
     waterSupplyType: z.number().optional(),
     industrialBrigade: z.number().optional(),
+    industrialBrigadeLabel: z.string().optional(),
+    s6OtherSuppression: z.number().optional(),
+    s7UnlimitedWater: z.boolean().optional(),
+    s8DedicatedWater: z.boolean().optional(),
+    s9WaterControl: z.boolean().optional(),
     
     structureResist: z.number().min(0).max(120).optional(),
     facadeResist: z.number().min(0).max(120).optional(),
@@ -103,7 +113,11 @@ export const createAssessmentValidationSchema = z.object({
     combustibleInsulation: z.boolean().optional(),
     
     // N factor inputs
-    n1: z.number().min(0).optional(),
+    n1: z.number().min(0).optional(), // Calculated from checkboxes
+    n1ContinuousPresence: z.boolean().optional(), // حضور مداوم نیروی انسانی / خدمات نگهبانی
+    n1ManualWarning: z.boolean().optional(), // همچنین یک سیستم هشداردهی دستی وجود دارد
+    n1FireDeptNotification: z.boolean().optional(), // ارسال/اطلاع‌رسانی تضمین‌شده به سازمان آتش‌نشانی
+    n1ResidentAlarm: z.boolean().optional(), // همچنین آلارم هشدار برای ساکنان / افراد حاضر وجود دارد
     n2: z.number().min(0).optional(),
     n3: z.number().min(0).optional(),
     n4: z.number().min(0).optional(),
@@ -112,12 +126,16 @@ export const createAssessmentValidationSchema = z.object({
     // U factor inputs
     subcompartment: z.number().min(0).optional(),
     stairways: z.number().min(0).optional(),
+    stairwaysIndex: z.number().int().min(0).max(7).optional(),
     horizontalExit: z.number().min(0).optional(),
     sprinklers: z.number().min(0).optional(),
+    u1PartialDetection: z.boolean().optional(),
+    u2Max300Occupants: z.boolean().optional(),
+    u3VoiceEvacuation: z.boolean().optional(),
+    u4MarkedExits: z.boolean().optional(),
+    u5SmokeEvacuation: z.boolean().optional(),
     
     // Y factor inputs
-    subCompartmentEI30: z.boolean().optional(),
-    subCompartmentEI60: z.boolean().optional(),
     partialDetection: z.boolean().optional(),
     partialSprinkler: z.boolean().optional(),
     otherAutoExtinguish: z.boolean().optional(),
@@ -125,6 +143,7 @@ export const createAssessmentValidationSchema = z.object({
     sparePartsAccess: z.boolean().optional(),
     selfRepairCapability: z.boolean().optional(),
     relocationAgreements: z.boolean().optional(),
+    immediateActivityTransfer: z.boolean().optional(),
     multipleProduction: z.boolean().optional(),
     
     // Floor level for e calculation
