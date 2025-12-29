@@ -1,6 +1,6 @@
 // Load dotenv first, before any Prisma imports
-import { config } from "dotenv";
-config({ path: ".env" });
+// import { config } from "dotenv";
+// config({ path: ".env" });
 
 import { PrismaClient } from "./generated";
 import { randomBytes, scrypt } from "crypto";
