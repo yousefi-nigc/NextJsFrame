@@ -1551,8 +1551,22 @@ export function calculateAssessment(inputs: CreateAssessmentValidationSchema): A
       inputs.u5SmokeEvacuation
     );
   }
-  if (inputs.subCompartmentEI30 !== undefined || inputs.subCompartmentEI60 !== undefined || inputs.partialDetection !== undefined || inputs.partialSprinkler !== undefined || inputs.otherAutoExtinguish !== undefined || inputs.financialDataBackup !== undefined || inputs.sparePartsAccess !== undefined || inputs.selfRepairCapability !== undefined || inputs.relocationAgreements !== undefined || inputs.multipleProduction !== undefined) {
-    factor_Y = calculateY(inputs.subCompartmentEI30, inputs.subCompartmentEI60, inputs.partialDetection, inputs.partialSprinkler, inputs.otherAutoExtinguish, inputs.financialDataBackup, inputs.sparePartsAccess, inputs.selfRepairCapability, inputs.relocationAgreements, inputs.multipleProduction);
+  if (inputs.subcompartment !== undefined || inputs.partialDetection !== undefined || inputs.partialSprinkler !== undefined || inputs.otherAutoExtinguish !== undefined || inputs.financialDataBackup !== undefined || inputs.sparePartsAccess !== undefined || inputs.selfRepairCapability !== undefined || inputs.relocationAgreements !== undefined || inputs.immediateActivityTransfer !== undefined || inputs.multipleProduction !== undefined) {
+    factor_Y = calculateY(
+      inputs.subcompartment, // Shared with U section
+      inputs.partialDetection,
+      inputs.partialSprinkler,
+      inputs.otherAutoExtinguish,
+      inputs.financialDataBackup,
+      inputs.sparePartsAccess,
+      inputs.selfRepairCapability,
+      inputs.relocationAgreements,
+      inputs.immediateActivityTransfer,
+      inputs.multipleProduction,
+      // S factor values for conditional logic
+      inputs.sprinklerType, // s3
+      inputs.s6OtherSuppression // s6
+    );
   }
 
   // Calculate Potential Risks (P, P1, P2)

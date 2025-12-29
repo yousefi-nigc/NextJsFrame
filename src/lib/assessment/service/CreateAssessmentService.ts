@@ -157,8 +157,6 @@ export async function createAssessmentService({
                     stairways: inputs.stairways,
                     horizontalExit: inputs.horizontalExit,
                     sprinklers: inputs.sprinklers,
-                    subCompartmentEI30: inputs.subCompartmentEI30,
-                    subCompartmentEI60: inputs.subCompartmentEI60,
                     partialDetection: inputs.partialDetection,
                     partialSprinkler: inputs.partialSprinkler,
                     otherAutoExtinguish: inputs.otherAutoExtinguish,
@@ -166,6 +164,7 @@ export async function createAssessmentService({
                     sparePartsAccess: inputs.sparePartsAccess,
                     selfRepairCapability: inputs.selfRepairCapability,
                     relocationAgreements: inputs.relocationAgreements,
+                    immediateActivityTransfer: inputs.immediateActivityTransfer,
                     multipleProduction: inputs.multipleProduction,
                     // Calculated factors
                     factor_W: calculations.factor_W,
