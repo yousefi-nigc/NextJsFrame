@@ -97,8 +97,8 @@ export default function WFactorTab({
 
   // Determine distribution network adequacy
   const distributionNetworkAdequacy = useMemo(() => {
-    if (waterFlowCapacity >= 200) return "adequate";
-    if (waterFlowCapacity >= 50) return "limited";
+    if (waterFlowCapacity >= 110) return "adequate";
+    if (waterFlowCapacity >= 20) return "limited";
     return "none";
   }, [waterFlowCapacity]);
 
