@@ -85,7 +85,8 @@ export default function UFactorTab({
 
   // Conditional disabling for u1 and u5
   const u1Disabled = useMemo(() => {
-    return s1 === 0; // Disabled when s1 is "ندارد" (0)
+    // فعال فقط وقتی s1 = ندارد (0). در سایر حالت‌ها غیرفعال و صفر.
+    return s1 !== 0;
   }, [s1]);
 
   const u5Disabled = useMemo(() => {
@@ -109,7 +110,9 @@ export default function UFactorTab({
   const getS1Label = (value: number) => {
     const labels: Record<number, string> = {
       0: "ندارد",
-      1: "توسط سیستم تشخیص خودکار حریق",
+      4: "تشخیص خودکار توسط اسپرینکلر + سوئیچ فشار/جریان",
+      5: "توسط حسگر حرارتی",
+      8: "توسط حسگر دود یا شعله",
       2: "توسط آلارم دود مستقل",
     };
     return labels[value] || "نامشخص";
@@ -123,11 +126,10 @@ export default function UFactorTab({
 
   const getS4Label = (value: number) => {
     const labels: Record<number, string> = {
-      0: "بدون ایستگاه آتش‌نشانی",
-      2: "ایستگاه آتش‌نشانی در فاصله بیش از 5 کیلومتر",
-      4: "ایستگاه آتش‌نشانی در فاصله 2-5 کیلومتر",
-      6: "ایستگاه آتش‌نشانی در فاصله کمتر از 2 کیلومتر",
-      8: "ایستگاه آتش‌نشانی در فاصله کمتر از 1 کیلومتر",
+      8: "ایستگاه تمام‌وقت ۲۴ساعته در ۷ روز هفته",
+      6: "ایستگاه نیمه‌وقت (روز تمام‌وقت، شب آنکال)",
+      4: "ایستگاه با پرسنل پاره‌وقت",
+      2: "ایستگاه داوطلب",
     };
     return labels[value] || "نامشخص";
   };
@@ -419,8 +421,9 @@ export default function UFactorTab({
       </div>
 
       <div className="space-y-4 mb-4">
-        {/* u1 */}
+        {/* u1 - سامانه تشخیص حریق جزئی (فعال فقط وقتی s1 = ندارد) */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-300 dark:border-gray-600">
+          <div className="font-medium mb-2">u₁ - سامانه تشخیص حریق جزئی (موضعی)</div>
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -431,11 +434,11 @@ export default function UFactorTab({
             />
             <div className="flex-1">
               <span className={`font-medium ${u1Disabled ? "text-gray-400" : ""}`}>
-                سامانه تشخیص حریق جزئی (موضعی)، فقط در نواحی بحرانی مرتبط با ایمنی افراد
+                «سامانه تشخیص حریق جزئی (موضعی)، فقط در نواحی بحرانی مرتبط با ایمنی افراد»
               </span>
               <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 امتیاز: {u1PartialDetection && !u1Disabled ? "2" : "0"}
-                {u1Disabled && " (غیرفعال: s₁ = ندارد)"}
+                {" • فعال فقط اگر s₁ = \"ندارد\" باشد"}
               </div>
             </div>
           </label>

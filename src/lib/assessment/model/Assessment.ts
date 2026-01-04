@@ -71,6 +71,10 @@ export const createAssessmentValidationSchema = z.object({
     exitUnitsX: z.number().min(1).optional(), // Manual x input (exit units) - takes priority over calculated x
     separatePathsK: z.number().int().min(1).max(4).optional(), // Manual K input (separate paths) - takes priority over calculated K
     mobilityFactor: z.number().min(0).optional(),
+    mobilityFactorMulti: z.string().nullable().optional(), // JSON string of weighted mobility selections
+    perceptionAwareness: z.boolean().optional(),
+    evacuationPlanClear: z.boolean().optional(),
+    noPanicRisk: z.boolean().optional(),
     exitCountToOpenSpace: z.number().int().min(0).optional(), // O - Number of exits leading to open space
     
     // Economic / C-Factor Inputs

@@ -27,6 +27,18 @@ export default function EvacuationTimeTab({
   const [separatePathsK, setSeparatePathsK] = useState<string>("");
   const [exitCountToOpenSpace, setExitCountToOpenSpace] = useState<string>("");
   const [mobilityFactor, setMobilityFactor] = useState<string>("1");
+  const [showMobilityMulti, setShowMobilityMulti] = useState<boolean>(false);
+  const [mobilityWeightedRows, setMobilityWeightedRows] = useState<
+    { value: number; label: string; percent: number; checked: boolean }[]
+  >([
+    { value: 1, label: "A - افراد متحرک مستقل (بزرگسالان، کارگران)", percent: 0, checked: false },
+    { value: 2, label: "B - افراد متحرک نیازمند راهنمایی (دانش‌آموزان، بازدیدکنندگان)", percent: 0, checked: false },
+    { value: 8, label: "C - افراد با تحرک محدود (بیماران، سالمندان)", percent: 0, checked: false },
+    { value: 20, label: "D - افراد نیازمند کمک فردی (بستری، ویلچر)", percent: 0, checked: false },
+  ]);
+  const [perceptionAwareness, setPerceptionAwareness] = useState<boolean>(true);
+  const [evacuationPlanClear, setEvacuationPlanClear] = useState<boolean>(true);
+  const [noPanicRisk, setNoPanicRisk] = useState<boolean>(true);
   const [length, setLength] = useState<string>("");
   const [width, setWidth] = useState<string>("");
   const [heightAbove, setHeightAbove] = useState<string>("");
@@ -162,6 +174,73 @@ export default function EvacuationTimeTab({
     return Math.max(1, Math.min(K, 4)); // Clamp between 1 and 4
   }, [exitCountToOpenSpace, calculatedX, occupantCount, separatePathsK]);
 
+  // Mobility factor calculations (base + penalties)
+  const mobilityPercentSum = useMemo(
+    () =>
+      mobilityWeightedRows.reduce(
+        (sum, row) => sum + (row.checked ? row.percent : 0),
+        0
+      ),
+    [mobilityWeightedRows]
+  );
+
+  const mobilityWeightedValue = useMemo(() => {
+    if (mobilityFactor !== "custom") return null;
+    const totalPercent = mobilityPercentSum;
+    if (!totalPercent || totalPercent <= 0) return null;
+    const weightedSum = mobilityWeightedRows.reduce((sum, row) => {
+      if (!row.checked || row.percent <= 0) return sum;
+      return sum + row.value * row.percent;
+    }, 0);
+    const val = weightedSum / totalPercent;
+    return isFinite(val) ? val : null;
+  }, [mobilityFactor, mobilityPercentSum, mobilityWeightedRows]);
+
+  const mobilityBase = useMemo(() => {
+    if (mobilityFactor === "custom") return mobilityWeightedValue;
+    const parsed = parseFloat(mobilityFactor);
+    return !isNaN(parsed) ? parsed : null;
+  }, [mobilityFactor, mobilityWeightedValue]);
+
+  const mobilityPenalty = useMemo(() => {
+    let penalty = 0;
+    if (perceptionAwareness === false) penalty += 2;
+    if (evacuationPlanClear === false) penalty += 2;
+    if (noPanicRisk === false) penalty += 2;
+    return penalty;
+  }, [perceptionAwareness, evacuationPlanClear, noPanicRisk]);
+
+  const mobilityFinal = useMemo(() => {
+    if (mobilityBase === null) return null;
+    const val = mobilityBase + mobilityPenalty;
+    return isFinite(val) ? val : null;
+  }, [mobilityBase, mobilityPenalty]);
+
+  const mobilitySelectedRows = useMemo(
+    () =>
+      mobilityWeightedRows
+        .filter((row) => row.checked && row.percent > 0)
+        .map(({ value, label, percent }) => ({ value, label, percent })),
+    [mobilityWeightedRows]
+  );
+
+  const mobilityFactorMultiPayload =
+    mobilityFactor === "custom" && mobilitySelectedRows.length > 0
+      ? JSON.stringify(mobilitySelectedRows)
+      : null;
+
+  const handleMobilityRowCheck = (idx: number, checked: boolean) => {
+    setMobilityWeightedRows((rows) =>
+      rows.map((row, i) => (i === idx ? { ...row, checked } : row))
+    );
+  };
+
+  const handleMobilityRowPercent = (idx: number, percent: number) => {
+    setMobilityWeightedRows((rows) =>
+      rows.map((row, i) => (i === idx ? { ...row, percent } : row))
+    );
+  };
+
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
     queryKey: ["assessment", floorId],
     enabled: !!floorId,
@@ -200,16 +279,12 @@ export default function EvacuationTimeTab({
     }
 
     // Load heightAbove (H+) and depthBelow (H-) from risk factors
-    if (response.heightAbove !== null && response.heightAbove !== undefined) {
-      setHeightAbove(response.heightAbove.toString());
-    } else {
-      setHeightAbove("0"); // Default to 0 if not set
-    }
-    if (response.depthBelow !== null && response.depthBelow !== undefined) {
-      setDepthBelow(response.depthBelow.toString());
-    } else {
-      setDepthBelow("0"); // Default to 0 if not set
-    }
+    const rawHPlus = response.heightAbove ?? 0;
+    const rawHMinus = response.depthBelow ?? 0;
+    const adjustedHPlus = rawHPlus ? rawHPlus * 1.25 : 0;
+    const adjustedHMinus = rawHMinus ? rawHMinus * 1.25 : 0;
+    setHeightAbove(adjustedHPlus ? adjustedHPlus.toFixed(2) : "0");
+    setDepthBelow(adjustedHMinus ? adjustedHMinus.toFixed(2) : "0");
 
     // Load evacuation time specific fields
     // Use stored key if available, otherwise fall back to value mapping
@@ -266,11 +341,52 @@ export default function EvacuationTimeTab({
     if (response.separatePathsK !== null && response.separatePathsK !== undefined) {
       setSeparatePathsK(response.separatePathsK.toString());
     }
-    if (response.mobilityFactor !== null && response.mobilityFactor !== undefined) {
-      setMobilityFactor(response.mobilityFactor.toString());
+    if (response.mobilityFactorMulti) {
+      try {
+        const saved = JSON.parse(response.mobilityFactorMulti);
+        if (Array.isArray(saved) && saved.length > 0) {
+          setMobilityFactor("custom");
+          setShowMobilityMulti(true);
+          setMobilityWeightedRows((rows) =>
+            rows.map((row) => {
+              const found = saved.find((s: any) => s.value === row.value || s.p === row.value);
+              if (found) {
+                return {
+                  ...row,
+                  checked: true,
+                  percent: Number(found.percent) || 0,
+                };
+              }
+              return { ...row, checked: false, percent: 0 };
+            })
+          );
+        } else {
+          setMobilityFactor(response.mobilityFactor?.toString() ?? "1");
+          setShowMobilityMulti(false);
+        }
+      } catch (e) {
+        setMobilityFactor(response.mobilityFactor?.toString() ?? "1");
+        setShowMobilityMulti(false);
+      }
     } else {
-      setMobilityFactor("1"); // Default to 1 if not set
+      setMobilityFactor(response.mobilityFactor?.toString() ?? "1"); // Default to 1 if not set
+      setShowMobilityMulti(false);
     }
+    setPerceptionAwareness(
+      response.perceptionAwareness !== null && response.perceptionAwareness !== undefined
+        ? response.perceptionAwareness
+        : true
+    );
+    setEvacuationPlanClear(
+      response.evacuationPlanClear !== null && response.evacuationPlanClear !== undefined
+        ? response.evacuationPlanClear
+        : true
+    );
+    setNoPanicRisk(
+      response.noPanicRisk !== null && response.noPanicRisk !== undefined
+        ? response.noPanicRisk
+        : true
+    );
     if (response.exitCountToOpenSpace !== null && response.exitCountToOpenSpace !== undefined) {
       setExitCountToOpenSpace(response.exitCountToOpenSpace.toString());
     }
@@ -295,6 +411,14 @@ export default function EvacuationTimeTab({
         const parsed = parseInt(val);
         return isNaN(parsed) ? undefined : parsed;
       };
+
+      // Send base mobility (not final with penalties) so penalties aren't compounded on reload
+      const mobilityBaseForPayload =
+        mobilityFactor === "custom"
+          ? mobilityWeightedValue !== null && mobilityWeightedValue !== undefined
+            ? mobilityWeightedValue
+            : undefined
+          : parseNumber(mobilityFactor);
 
       // Pre-validation: Check if denominator would be negative before sending request
       const lVal = parseNumber(length) || 0;
@@ -353,9 +477,11 @@ export default function EvacuationTimeTab({
             exitWidthTotal: parseNumber(exitWidthTotal),
             exitUnitsX: parseNumber(exitUnitsX), // Manual x input (takes priority)
             separatePathsK: parseInteger(separatePathsK), // Manual K input (takes priority)
-            mobilityFactor: parseNumber(mobilityFactor),
-            heightAbove: parseNumber(heightAbove),
-            depthBelow: parseNumber(depthBelow),
+            mobilityFactor: mobilityBaseForPayload,
+            mobilityFactorMulti: mobilityFactorMultiPayload ?? null,
+            perceptionAwareness,
+            evacuationPlanClear,
+            noPanicRisk,
             occupantFactorKey: occupantFactorKey || undefined,
             exitCountToOpenSpace: parseInteger(exitCountToOpenSpace),
           }),
@@ -705,14 +831,127 @@ t = \\frac{
           <label>نوع افراد:</label>
           <select
             value={mobilityFactor}
-            onChange={(e) => setMobilityFactor(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setMobilityFactor(value);
+              setShowMobilityMulti(value === "custom");
+            }}
           >
             <option value="1">A - افراد متحرک مستقل (بزرگسالان، کارگران) - p = 1</option>
             <option value="2">B - افراد متحرک نیازمند راهنمایی (دانش‌آموزان، بازدیدکنندگان) - p = 2</option>
             <option value="8">C - افراد با تحرک محدود (بیماران، سالمندان) - p = 8</option>
             <option value="20">D - افراد نیازمند کمک فردی (بستری، ویلچر) - p = 20</option>
-            <option value="custom">E - محاسبه برای گروه مختلط</option>
+            <option value="custom">E - محاسبه برای گروه مختلط (انتخاب چندگانه)</option>
           </select>
+        </div>
+
+        {showMobilityMulti && (
+          <div className="mt-4 overflow-x-auto rounded-lg border border-gray-300 dark:border-slate-700">
+            <table className="w-full text-sm text-right">
+              <thead className="bg-gray-100 dark:bg-gray-800 font-semibold">
+                <tr>
+                  <th className="p-2 border-b border-gray-200">انتخاب</th>
+                  <th className="p-2 border-b border-gray-200">p</th>
+                  <th className="p-2 border-b border-gray-200">توضیحات</th>
+                  <th className="p-2 border-b border-gray-200">درصد (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mobilityWeightedRows.map((row, idx) => (
+                  <tr
+                    key={idx}
+                    className="odd:bg-white even:bg-gray-50 dark:even:bg-slate-800 dark:odd:bg-slate-900"
+                  >
+                    <td className="p-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={row.checked}
+                        onChange={(e) => handleMobilityRowCheck(idx, e.target.checked)}
+                      />
+                    </td>
+                    <td className="p-2 text-center">{row.value}</td>
+                    <td className="p-2">{row.label}</td>
+                    <td className="p-2 text-center">
+                      <input
+                        type="number"
+                        value={row.percent}
+                        min={0}
+                        max={100}
+                        disabled={!row.checked}
+                        onChange={(e) =>
+                          handleMobilityRowPercent(idx, parseFloat(e.target.value) || 0)
+                        }
+                        className="w-20 p-1 border rounded dark:bg-slate-700 dark:text-white"
+                      />{" "}
+                      %
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="font-bold bg-gray-100 dark:bg-gray-800">
+                  <td colSpan={3} className="p-2 text-left">
+                    جمع درصدها:
+                  </td>
+                  <td className="p-2 text-center">{mobilityPercentSum} %</td>
+                </tr>
+                <tr className="font-bold bg-green-50 dark:bg-green-900/20">
+                  <td colSpan={3} className="p-2 text-left">
+                    p میانگین (بدون جریمه):
+                  </td>
+                  <td className="p-2 text-center">
+                    {mobilityWeightedValue !== null ? mobilityWeightedValue.toFixed(2) : "-"}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="input-group">
+            <label>آیا افراد سطح درک مناسب از خطر دارند؟</label>
+            <select
+              value={perceptionAwareness ? "yes" : "no"}
+              onChange={(e) => setPerceptionAwareness(e.target.value === "yes")}
+            >
+              <option value="yes">بله (0)</option>
+              <option value="no">خیر (+2)</option>
+            </select>
+          </div>
+          <div className="input-group">
+            <label>آیا برنامه تخلیه شفاف تدوین شده است؟</label>
+            <select
+              value={evacuationPlanClear ? "yes" : "no"}
+              onChange={(e) => setEvacuationPlanClear(e.target.value === "yes")}
+            >
+              <option value="yes">بله (0)</option>
+              <option value="no">خیر (+2)</option>
+            </select>
+          </div>
+          <div className="input-group">
+            <label>خطر بروز وحشت (پانیک) وجود ندارد؟</label>
+            <select
+              value={noPanicRisk ? "yes" : "no"}
+              onChange={(e) => setNoPanicRisk(e.target.value === "yes")}
+            >
+              <option value="yes">بله (0)</option>
+              <option value="no">خیر (+2)</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="mt-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 text-sm space-y-1">
+          <div>p پایه: {mobilityBase !== null ? mobilityBase.toFixed(2) : "-"}</div>
+          <div>مجموع جریمه‌ها: {mobilityPenalty.toFixed(2)}</div>
+          <div className="font-semibold">
+            p نهایی (ارسال به محاسبه t): {mobilityFinal !== null ? mobilityFinal.toFixed(2) : "-"}
+          </div>
+          {mobilityFactor === "custom" && mobilityPercentSum !== 100 && (
+            <div className="text-yellow-700 dark:text-yellow-300">
+              ⚠️ برای دقت بیشتر جمع درصدها را روی 100 تنظیم کنید (فعلی: {mobilityPercentSum}%)
+            </div>
+          )}
         </div>
       </div>
 
@@ -727,13 +966,14 @@ t = \\frac{
           <input
             type="number"
             value={heightAbove}
-            onChange={(e) => setHeightAbove(e.target.value)}
             step="0.1"
             min="0"
-            placeholder="مثال: 12"
+            readOnly
+            disabled
+            placeholder="خوانده شده از ضریب دسترسی × 1.25"
           />
           <small className="text-sm text-gray-500 mt-1 dark:text-gray-400">
-            ⬆️ برای طبقات بالای همکف
+            ⬆️ برای طبقات بالای همکف (مقدار خوانده‌شده از ضریب دسترسی + 25%)
           </small>
         </div>
 
@@ -742,13 +982,14 @@ t = \\frac{
           <input
             type="number"
             value={depthBelow}
-            onChange={(e) => setDepthBelow(e.target.value)}
             step="0.1"
             min="0"
-            placeholder="مثال: 4"
+            readOnly
+            disabled
+            placeholder="خوانده شده از ضریب دسترسی × 1.25"
           />
           <small className="text-sm text-gray-500 mt-1 dark:text-gray-400">
-            ⬇️ برای زیرزمین
+            ⬇️ برای زیرزمین (مقدار خوانده‌شده از ضریب دسترسی + 25%)
           </small>
         </div>
       </div>

@@ -513,6 +513,59 @@ function calculateSeparatePathsK(
 }
 
 /**
+ * Calculate mobility factor (p) with optional weighted selections and penalties
+ * mobilityFactorMulti is a JSON string of objects: { value|p: number, percent: number }
+ */
+function calculateMobilityWithPenalties(
+  mobilityFactor: number | undefined,
+  mobilityFactorMulti: string | undefined | null,
+  perceptionAwareness: boolean | undefined,
+  evacuationPlanClear: boolean | undefined,
+  noPanicRisk: boolean | undefined
+): number | null {
+  let base: number | null = null;
+
+  if (mobilityFactorMulti) {
+    try {
+      const rows = JSON.parse(mobilityFactorMulti);
+      if (Array.isArray(rows) && rows.length > 0) {
+        const totalPercent = rows.reduce((sum: number, row: any) => {
+          const percent = Number(row?.percent) || 0;
+          return sum + percent;
+        }, 0);
+        const weighted = rows.reduce((sum: number, row: any) => {
+          const value = Number(row?.value ?? row?.p ?? 0);
+          const percent = Number(row?.percent) || 0;
+          return sum + value * percent;
+        }, 0);
+        if (totalPercent > 0) {
+          const avg = weighted / totalPercent;
+          if (isFinite(avg)) {
+            base = avg;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to parse mobilityFactorMulti", e);
+    }
+  }
+
+  if (base === null && mobilityFactor !== undefined && mobilityFactor !== null) {
+    base = mobilityFactor;
+  }
+
+  if (base === null) return null;
+
+  let penalty = 0;
+  if (perceptionAwareness === false) penalty += 2;
+  if (evacuationPlanClear === false) penalty += 2;
+  if (noPanicRisk === false) penalty += 2;
+
+  const finalP = base + penalty;
+  return isFinite(finalP) ? Math.max(0, finalP) : null;
+}
+
+/**
  * Calculate factor t (Evacuation Time)
  * Updated formula matching script.js line 1252-1261:
  * numerator = p * ((b + l) + (X / x) + 1.25 * Hplus + 2 * Hminus)
@@ -1414,6 +1467,16 @@ export function calculateAssessment(inputs: CreateAssessmentValidationSchema): A
     inputs.additionalCarpentryPlastic ?? null, // P
     inputs.specialRisk ?? null // S
   );
+
+  // Determine mobility factor with optional penalties
+  const mobilityWithPenalties = calculateMobilityWithPenalties(
+    inputs.mobilityFactor,
+    inputs.mobilityFactorMulti,
+    inputs.perceptionAwareness,
+    inputs.evacuationPlanClear,
+    inputs.noPanicRisk
+  );
+
   // Calculate T - updated to match script.js
   // Manual x/K inputs take priority over calculated values
   // x is calculated from exit widths in cm: floor((width_cm - 20) / 60)
@@ -1433,7 +1496,7 @@ export function calculateAssessment(inputs: CreateAssessmentValidationSchema): A
     inputs.exitWidthTotal, // Legacy field, not used in new calculation
     inputs.exitUnitsX, // Manual x input (takes priority)
     inputs.separatePathsK, // Manual K input (takes priority)
-    inputs.mobilityFactor,
+    mobilityWithPenalties ?? inputs.mobilityFactor,
     inputs.heightAbove,
     inputs.depthBelow,
     inputs.exitCountToOpenSpace // O - external exits count
@@ -1507,8 +1570,18 @@ export function calculateAssessment(inputs: CreateAssessmentValidationSchema): A
       inputs.s9WaterControl
     );
   }
-  if (inputs.structureResist && factor_S !== null) {
-    factor_F = calculateF(inputs.structureResist, inputs.facadeResist, inputs.roofResist, inputs.wallResist, factor_S, inputs.hasManyWindows, inputs.noInternalSeparation, inputs.combustibleInsulation);
+  if (inputs.structureResist !== undefined) {
+    const sForF = factor_S ?? 1; // اگر S محاسبه نشده باشد، مقدار 1 در نظر بگیر
+    factor_F = calculateF(
+      inputs.structureResist,
+      inputs.facadeResist,
+      inputs.roofResist,
+      inputs.wallResist,
+      sForF,
+      inputs.hasManyWindows,
+      inputs.noInternalSeparation,
+      inputs.combustibleInsulation
+    );
   }
   // Calculate n1 from checkboxes if provided, otherwise use manual n1 value
   const calculatedN1 = (inputs.n1ContinuousPresence !== undefined || 

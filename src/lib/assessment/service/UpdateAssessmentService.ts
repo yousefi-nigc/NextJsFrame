@@ -76,6 +76,10 @@ export async function updateAssessmentService({
             exitWidths: existing.acceptanceFactors?.exitWidths ?? undefined,
             exitWidthTotal: existing.acceptanceFactors?.exitWidthTotal ?? undefined,
             mobilityFactor: existing.acceptanceFactors?.mobilityFactor ?? undefined,
+            mobilityFactorMulti: (existing.acceptanceFactors as any)?.mobilityFactorMulti ?? undefined,
+            perceptionAwareness: (existing.acceptanceFactors as any)?.perceptionAwareness ?? undefined,
+            evacuationPlanClear: (existing.acceptanceFactors as any)?.evacuationPlanClear ?? undefined,
+            noPanicRisk: (existing.acceptanceFactors as any)?.noPanicRisk ?? undefined,
             exitCountToOpenSpace: existing.acceptanceFactors?.exitCountToOpenSpace ?? undefined,
             valueTotal: existing.acceptanceFactors?.valueTotal ?? undefined,
             valueYear: existing.acceptanceFactors?.valueYear ?? undefined,
@@ -146,7 +150,7 @@ export async function updateAssessmentService({
             const value = inputs[key as keyof typeof inputs];
             // For most fields, ignore undefined/null to avoid accidental overwrite
             // For tempDestructionMulti/materialClassMulti we allow null to clear previous values
-            const allowNullClear = key === "tempDestructionMulti" || key === "materialClassMulti";
+            const allowNullClear = key === "tempDestructionMulti" || key === "materialClassMulti" || key === "mobilityFactorMulti";
             if (value !== undefined && (allowNullClear || value !== null)) {
                 mergedInputs[key] = value;
             }
@@ -156,6 +160,71 @@ export async function updateAssessmentService({
         if (inputs.dependencyType !== undefined && inputs.dependencyType !== "manual") {
             mergedInputs.dependencyManual = null;
         }
+
+        // Calculate mobility factor with penalties (weighted multi + 3 yes/no questions)
+        const computeMobilityFactor = (
+            mobilityFactor: number | undefined,
+            mobilityFactorMulti: string | undefined | null,
+            perceptionAwareness: boolean | undefined,
+            evacuationPlanClear: boolean | undefined,
+            noPanicRisk: boolean | undefined
+        ): number | null => {
+            let base: number | null = null;
+
+            if (mobilityFactorMulti) {
+                try {
+                    const rows = JSON.parse(mobilityFactorMulti);
+                    if (Array.isArray(rows) && rows.length > 0) {
+                        const totalPercent = rows.reduce((sum: number, row: any) => sum + (Number(row?.percent) || 0), 0);
+                        const weighted = rows.reduce((sum: number, row: any) => {
+                            const value = Number(row?.value ?? row?.p ?? 0);
+                            const percent = Number(row?.percent) || 0;
+                            return sum + value * percent;
+                        }, 0);
+                        if (totalPercent > 0) {
+                            const avg = weighted / totalPercent;
+                            if (isFinite(avg)) {
+                                base = avg;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Failed to parse mobilityFactorMulti", e);
+                }
+            }
+
+            if (base === null && mobilityFactor !== undefined && mobilityFactor !== null) {
+                base = mobilityFactor;
+            }
+
+            if (base === null) return null;
+
+            let penalty = 0;
+            if (perceptionAwareness === false) penalty += 2;
+            if (evacuationPlanClear === false) penalty += 2;
+            if (noPanicRisk === false) penalty += 2;
+
+            const finalP = base + penalty;
+            return isFinite(finalP) ? Math.max(0, finalP) : null;
+        };
+
+        const mobilityCalculated = computeMobilityFactor(
+            mergedInputs.mobilityFactor,
+            mergedInputs.mobilityFactorMulti,
+            mergedInputs.perceptionAwareness,
+            mergedInputs.evacuationPlanClear,
+            mergedInputs.noPanicRisk
+        );
+
+        // Apply 25% increase to H+/H- for t calculation only (do not persist)
+        const adjustedHeightAbove =
+            mergedInputs.heightAbove !== undefined && mergedInputs.heightAbove !== null
+                ? mergedInputs.heightAbove * 1.25
+                : mergedInputs.heightAbove;
+        const adjustedDepthBelow =
+            mergedInputs.depthBelow !== undefined && mergedInputs.depthBelow !== null
+                ? mergedInputs.depthBelow * 1.25
+                : mergedInputs.depthBelow;
 
         // Calculate n1 from checkboxes if provided
         // If any n1 checkbox is provided, calculate n1 from them, otherwise use manual n1 value
@@ -172,32 +241,35 @@ export async function updateAssessmentService({
             );
             mergedInputs.n1 = calculatedN1;
         }
-        
+
         // Recalculate all factors automatically based on merged inputs
         // Users only send raw input data - all calculated fields are recomputed here
-        const calculations = calculateAssessment(mergedInputs);
+        const calculations = calculateAssessment({
+            ...mergedInputs,
+            mobilityFactor: mobilityCalculated ?? mergedInputs.mobilityFactor,
+            heightAbove: adjustedHeightAbove,
+            depthBelow: adjustedDepthBelow,
+        });
         
         // Calculate W-related intermediate values
         const requiredWaterCapacity = mergedInputs.qi !== undefined && mergedInputs.qm !== undefined
             ? (mergedInputs.qi + mergedInputs.qm) / 4
             : null;
         
-        const w2Penalty = requiredWaterCapacity !== null && 
-            mergedInputs.waterCapacity !== undefined && 
-            mergedInputs.waterCapacity !== null &&
-            requiredWaterCapacity > 0 &&
-            isFinite(requiredWaterCapacity) &&
-            isFinite(mergedInputs.waterCapacity)
-            ? (() => {
-                const ratio = (mergedInputs.waterCapacity! / requiredWaterCapacity) * 100;
-                if (!isFinite(ratio)) return 4;
-                if (ratio >= 100) return 0;
-                if (ratio >= 90) return 1;
-                if (ratio >= 80) return 2;
-                if (ratio >= 70) return 3;
-                return 4;
-            })()
-            : null;
+        const w2Penalty = (() => {
+            // اگر ذخیره "none" انتخاب شود، جریمه باید 0 باشد
+            if (mergedInputs.waterStorageType === "none") return 0;
+            if (requiredWaterCapacity === null || requiredWaterCapacity === 0 || !isFinite(requiredWaterCapacity)) return 4;
+            if (mergedInputs.waterCapacity === undefined || mergedInputs.waterCapacity === null || mergedInputs.waterCapacity === 0) return 4;
+            if (!isFinite(mergedInputs.waterCapacity)) return 4;
+            const ratio = (mergedInputs.waterCapacity! / requiredWaterCapacity) * 100;
+            if (!isFinite(ratio)) return 4;
+            if (ratio >= 100) return 0;
+            if (ratio >= 90) return 1;
+            if (ratio >= 80) return 2;
+            if (ratio >= 70) return 3;
+            return 4;
+        })();
         
         // Calculate water flow capacity
         const pipeDiameterValues: Record<string, number> = {
@@ -374,6 +446,10 @@ export async function updateAssessmentService({
                     exitUnitsX: mergedInputs.exitUnitsX ?? null,
                     separatePathsK: mergedInputs.separatePathsK ?? null,
                     mobilityFactor: mergedInputs.mobilityFactor ?? null,
+                    mobilityFactorMulti: mergedInputs.mobilityFactorMulti ?? null,
+                    perceptionAwareness: mergedInputs.perceptionAwareness ?? null,
+                    evacuationPlanClear: mergedInputs.evacuationPlanClear ?? null,
+                    noPanicRisk: mergedInputs.noPanicRisk ?? null,
                     exitCountToOpenSpace: mergedInputs.exitCountToOpenSpace ?? null,
                     valueTotal: mergedInputs.valueTotal ?? null,
                     valueYear: mergedInputs.valueYear ?? null,
@@ -417,6 +493,10 @@ export async function updateAssessmentService({
                     ...buildUpdateData("exitUnitsX", inputs.exitUnitsX),
                     ...buildUpdateData("separatePathsK", inputs.separatePathsK),
                     ...buildUpdateData("mobilityFactor", inputs.mobilityFactor),
+                    ...buildUpdateData("mobilityFactorMulti", inputs.mobilityFactorMulti, true),
+                    ...buildUpdateData("perceptionAwareness", inputs.perceptionAwareness),
+                    ...buildUpdateData("evacuationPlanClear", inputs.evacuationPlanClear),
+                    ...buildUpdateData("noPanicRisk", inputs.noPanicRisk),
                     ...buildUpdateData("exitCountToOpenSpace", inputs.exitCountToOpenSpace),
                     ...buildUpdateData("valueTotal", inputs.valueTotal),
                     ...buildUpdateData("valueYear", inputs.valueYear),

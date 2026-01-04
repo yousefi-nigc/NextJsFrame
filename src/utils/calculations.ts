@@ -99,27 +99,36 @@ export function calculateE(floorNumber: number): number {
 // Calculate v - Ventilation factor
 export function calculateV(
   qm: number,
-  k: number,
+  kPercent: number | undefined,
   h: number,
   windowArea: number = 0,
   staticVentArea: number = 0,
   mechanicalVent: number = 0,
   sectionArea: number = 1
 ): number {
-  // Calculate k from areas if not provided
-  if (k === 0 && sectionArea > 0) {
-    const totalVentArea = windowArea + staticVentArea;
-    k = totalVentArea / sectionArea;
+  // If k is not provided (or zero), derive it from areas as percentage
+  let kPct =
+    kPercent !== undefined && kPercent !== null ? kPercent : undefined;
+
+  if ((kPct === undefined || kPct === 0) && sectionArea > 0) {
+    const effectiveAw = windowArea * 0.3; // Aw × 30%
+    kPct = ((effectiveAw + staticVentArea) / sectionArea) * 100;
   }
 
-  // Add mechanical ventilation effect
+  // Convert percentage to ratio for formula
+  const kRatioRaw = (kPct ?? 0) / 100;
+  const kRatio = Math.max(0.0001, Math.min(kRatioRaw, 1));
+
+  // Add mechanical ventilation effect (kept from previous logic)
   const mechanicalEffect =
-    mechanicalVent > 0 ? mechanicalVent / (sectionArea * 3600) : 0;
+    mechanicalVent > 0 && sectionArea > 0
+      ? mechanicalVent / (sectionArea * 3600)
+      : 0;
 
   let v =
     0.84 +
     0.1 * Math.log10(Math.max(1, qm)) -
-    Math.sqrt(k * Math.sqrt(Math.max(0.1, h)));
+    Math.sqrt(kRatio * Math.sqrt(Math.max(0.1, h)));
   v = v - mechanicalEffect * 0.1; // Reduce v with mechanical ventilation
   v = Math.max(0.1, Math.min(v, 1.5));
 

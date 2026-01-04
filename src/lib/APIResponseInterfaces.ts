@@ -76,6 +76,10 @@ export interface AssessmentResponse {
   exitUnitsX: number | null;
   separatePathsK: number | null;
   mobilityFactor: number | null;
+  mobilityFactorMulti: string | null;
+  perceptionAwareness: boolean | null;
+  evacuationPlanClear: boolean | null;
+  noPanicRisk: boolean | null;
   exitCountToOpenSpace: number | null;
   
   // Economic / C-Factor Inputs

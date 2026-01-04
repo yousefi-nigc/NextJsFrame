@@ -26,7 +26,7 @@ export default function VFactorTab({
   const [deltaPAdvanced, setDeltaPAdvanced] = useState<number | "">(25);
   const [rhoAdvanced, setRhoAdvanced] = useState<number | "">(1.2);
   const [compartmentArea, setCompartmentArea] = useState<number | "">(100);
-  const [ventingRatio, setVentingRatio] = useState<number | "">(0.01);
+  const [ventingRatio, setVentingRatio] = useState<number | "">(1); // k as percentage
   const [qmVentilation, setQmVentilation] = useState<number | "">(500);
   const [ceilingHeight, setCeilingHeight] = useState<number | "">(3);
 
@@ -46,7 +46,9 @@ export default function VFactorTab({
       setWindowArea(response.assessment.windowArea ?? 0);
       setStaticVentArea(response.assessment.staticVentArea ?? 0);
       setMechanicalVentFlow(response.assessment.mechVentFlow ?? 0);
-      setVentingRatio(response.assessment.ventingRatio_k ?? 0.01);
+      const storedK = response.assessment.ventingRatio_k ?? 1;
+      // Backward compatibility: if old data was in ratio form (0-1), convert to %
+      setVentingRatio(storedK <= 1 ? storedK * 100 : storedK);
       setCompartmentArea(response.assessment.area ?? 100);
       setQmVentilation(response.assessment.qm ?? 500);
       setCeilingHeight(response.assessment.height ?? 3);
@@ -56,27 +58,18 @@ export default function VFactorTab({
   });
 
   const calculateAutoK = () => {
-    let window = typeof windowArea === "number" ? windowArea : 0;
-    const staticVent = typeof staticVentArea === "number" ? staticVentArea : 0;
-    const mechanicalVent = typeof mechanicalVentFlow === "number" ? mechanicalVentFlow : 0;
+    const aw = typeof windowArea === "number" ? windowArea : 0;
+    const as = typeof staticVentArea === "number" ? staticVentArea : 0;
     const area = typeof compartmentArea === "number" ? compartmentArea : 1;
 
-    // ✅ اصلاح مساحت پنجره‌ها (تقسیم بر 3.33)
-    window = window / 3.33;
+    // طبق درخواست: Aw × 30% در محاسبه لحاظ شود
+    const effectiveAw = aw * 0.3;
 
-    // معادل سطح برای تهویه مکانیکی
-    let mechanicalEquivArea = (mechanicalVent > 0) ? (mechanicalVent / 3600) : 0;
+    // نسبت تهویه k بر حسب درصد: ((Aw_eff + As) / A) × 100
+    const kPercent = ((effectiveAw + as) / area) * 100;
 
-    // جمع کل بازشوها
-    const totalOpenings = window + staticVent + mechanicalEquivArea;
-
-    // نسبت تهویه k
-    let k = totalOpenings / area;
-
-    // محدود کردن مقدار k به بازه استاندارد: 0.001 تا 1
-    let kClamped = Math.max(0.001, Math.min(k, 1.0));
-
-    setVentingRatio(parseFloat(kClamped.toFixed(3)));
+    // نمایش با دقت 3 رقم اعشار
+    setVentingRatio(parseFloat(kPercent.toFixed(3)));
   };
 
   const calculateMechanicalFromAdvanced = () => {
@@ -115,7 +108,8 @@ export default function VFactorTab({
       }
 
       const qm = typeof qmVentilation === "number" ? qmVentilation : 500;
-      const k = typeof ventingRatio === "number" ? ventingRatio : 0.01;
+      const kPercent =
+        typeof ventingRatio === "number" ? ventingRatio : 1;
       const h = typeof ceilingHeight === "number" ? ceilingHeight : 3;
 
       if (qm <= 0) {
@@ -132,7 +126,7 @@ export default function VFactorTab({
               typeof staticVentArea === "number" ? staticVentArea : 0,
             mechVentFlow:
               typeof mechanicalVentFlow === "number" ? mechanicalVentFlow : 0,
-            ventingRatio_k: k,
+            ventingRatio_k: kPercent, // k stored as percentage
             height: h,
             qm: qm,
           }),
@@ -404,9 +398,10 @@ export default function VFactorTab({
             value={ventingRatio}
             className="w-full"
           />
+          <span className="input-unit">%</span>
         </div>
         <div className="input-hint" id="k-details">
-          نسبت مساحت بازشوهای مؤثر به مساحت کف (بر اساس داده‌های بالا)
+          نسبت مساحت بازشوهای مؤثر به مساحت کف (درصد)
         </div>
       </div>
 

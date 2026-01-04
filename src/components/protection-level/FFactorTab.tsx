@@ -188,6 +188,10 @@ export default function FFactorTab({
   const [ff, setFf] = useState(0);
   const [fd, setFd] = useState(0);
   const [fw, setFw] = useState(0);
+  const [fsManual, setFsManual] = useState(false);
+  const [ffManual, setFfManual] = useState(false);
+  const [fdManual, setFdManual] = useState(false);
+  const [fwManual, setFwManual] = useState(false);
   const [hasManyWindows, setHasManyWindows] = useState(false);
   const [noInternalSeparation, setNoInternalSeparation] = useState(false);
   const [combustibleInsulation, setCombustibleInsulation] = useState(false);
@@ -209,6 +213,10 @@ export default function FFactorTab({
       setFf(response.assessment.facadeResist ?? 0);
       setFd(response.assessment.roofResist ?? 0);
       setFw(response.assessment.wallResist ?? 0);
+      setFsManual(false);
+      setFfManual(false);
+      setFdManual(false);
+      setFwManual(false);
       setHasManyWindows(response.assessment.hasManyWindows ?? false);
       setNoInternalSeparation(
         response.assessment.noInternalSeparation ?? false
@@ -309,7 +317,18 @@ export default function FFactorTab({
           <label className="input-label">
             fₛ - مقاومت سازه (ستون‌ها، تیرها، دیوارهای باربر)
           </label>
-          <Select value={fs} onChange={setFs}>
+            <Select
+              value={fsManual ? -1 : fs}
+              onChange={(val: number) => {
+                if (val === -1) {
+                  setFsManual(true);
+                  return;
+                }
+                setFsManual(false);
+                setFs(Number(val));
+              }}
+            >
+              <option value={-1}>دستی</option>
             <option value={0}>بدون مقاومت (R0)</option>
             <option value={15}>15 دقیقه (R15) - سازه فولادی بدون پوشش</option>
             <option value={30}>30 دقیقه (R30)</option>
@@ -318,6 +337,24 @@ export default function FFactorTab({
             <option value={120}>120 دقیقه (R120) - بتن مسلح ضخیم</option>
             <option value={180}>بیش از 120 دقیقه (محاسبه با 120)</option>
           </Select>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-sm text-gray-600 dark:text-gray-300">ورود دستی (دقیقه):</span>
+            <input
+              type="number"
+              min={0}
+              max={240}
+              value={fs ?? ""}
+              onChange={(e) => {
+                const n = parseFloat(e.target.value);
+                if (!isNaN(n)) {
+                  setFs(n);
+                  setFsManual(true);
+                }
+              }}
+              className="w-28 rounded border border-gray-300 dark:border-slate-700 px-2 py-1 dark:bg-slate-800"
+              placeholder="مثلاً 75"
+            />
+          </div>
           <div className="input-hint">
             <i className="fas fa-info-circle"></i>
             مقاومت سازه مهم‌ترین عامل است (ضریب 1/2)
@@ -328,7 +365,18 @@ export default function FFactorTab({
           <label className="input-label">
             f<sub>f</sub> - مقاومت دیوارهای خارجی
           </label>
-          <Select value={ff} onChange={setFf}>
+          <Select
+            value={ffManual ? -1 : ff}
+            onChange={(val: number) => {
+              if (val === -1) {
+                setFfManual(true);
+                return;
+              }
+              setFfManual(false);
+              setFf(Number(val));
+            }}
+          >
+            <option value={-1}>دستی</option>
             <option value={0}> شیشه معمولی یا بدون مقاومت</option>
             <option value={15}>15 دقیقه</option>
             <option value={30}>30 دقیقه</option>
@@ -336,6 +384,24 @@ export default function FFactorTab({
             <option value={90}>90 دقیقه</option>
             <option value={120}>120 دقیقه</option>
           </Select>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-sm text-gray-600 dark:text-gray-300">ورود دستی (دقیقه):</span>
+            <input
+              type="number"
+              min={0}
+              max={240}
+              value={ff ?? ""}
+              onChange={(e) => {
+                const n = parseFloat(e.target.value);
+                if (!isNaN(n)) {
+                  setFf(n);
+                  setFfManual(true);
+                }
+              }}
+              className="w-28 rounded border border-gray-300 dark:border-slate-700 px-2 py-1 dark:bg-slate-800"
+              placeholder="مثلاً 45"
+            />
+          </div>
           <div className="input-hint">
             <i className="fas fa-info-circle"></i>
             درصد پنجره‌ها: بیش از 5% = مقاومت صفر
@@ -355,7 +421,18 @@ export default function FFactorTab({
           <label className="input-label">
             f<sub>d</sub> - مقاومت سقف/بام
           </label>
-          <Select value={fd} onChange={setFd}>
+          <Select
+            value={fdManual ? -1 : fd}
+            onChange={(val: number) => {
+              if (val === -1) {
+                setFdManual(true);
+                return;
+              }
+              setFdManual(false);
+              setFd(Number(val));
+            }}
+          >
+            <option value={-1}>دستی</option>
             <option value={0}>بدون مقاومت یا عایق سوختنی</option>
             <option value={15}>15 دقیقه</option>
             <option value={30}>30 دقیقه</option>
@@ -363,6 +440,24 @@ export default function FFactorTab({
             <option value={90}>90 دقیقه</option>
             <option value={120}>120 دقیقه</option>
           </Select>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-sm text-gray-600 dark:text-gray-300">ورود دستی (دقیقه):</span>
+            <input
+              type="number"
+              min={0}
+              max={240}
+              value={fd ?? ""}
+              onChange={(e) => {
+                const n = parseFloat(e.target.value);
+                if (!isNaN(n)) {
+                  setFd(n);
+                  setFdManual(true);
+                }
+              }}
+              className="w-28 rounded border border-gray-300 dark:border-slate-700 px-2 py-1 dark:bg-slate-800"
+              placeholder="مثلاً 50"
+            />
+          </div>
           <div className="input-hint">
             <i className="fas fa-info-circle"></i>
             عایق سوختنی در زیر سقف = مقاومت صفر
@@ -373,13 +468,42 @@ export default function FFactorTab({
           <label className="input-label">
             f<sub>w</sub> - مقاومت دیوارهای داخلی
           </label>
-          <Select value={fw} onChange={setFw}>
+          <Select
+            value={fwManual ? -1 : fw}
+            onChange={(val: number) => {
+              if (val === -1) {
+                setFwManual(true);
+                return;
+              }
+              setFwManual(false);
+              setFw(Number(val));
+            }}
+          >
+            <option value={-1}>دستی</option>
             <option value={0}>بدون دیوار جداکننده یا مساحت &gt; 1000 m²</option>
             <option value={30}>30 دقیقه</option>
             <option value={60}>60 دقیقه</option>
             <option value={90}>90 دقیقه</option>
             <option value={120}>120 دقیقه</option>
           </Select>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-sm text-gray-600 dark:text-gray-300">ورود دستی (دقیقه):</span>
+            <input
+              type="number"
+              min={0}
+              max={240}
+              value={fw ?? ""}
+              onChange={(e) => {
+                const n = parseFloat(e.target.value);
+                if (!isNaN(n)) {
+                  setFw(n);
+                  setFwManual(true);
+                }
+              }}
+              className="w-28 rounded border border-gray-300 dark:border-slate-700 px-2 py-1 dark:bg-slate-800"
+              placeholder="مثلاً 45"
+            />
+          </div>
           <div className="input-hint">
             <i className="fas fa-info-circle"></i>
             فقط برای دیوارهایی که فضا را به بخش‌های کمتر از 1000 m² و حداکثر 25%

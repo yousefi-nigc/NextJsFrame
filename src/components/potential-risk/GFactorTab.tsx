@@ -23,10 +23,78 @@ export default function GFactorTab({
   const [showG4Guide, setShowG4Guide] = useState(false);
   const [showgGuide, setShowgGuide] = useState(false);
   const [accessType, setAccessType] = useState<"wide" | "narrow">("wide");
-  const [sectionLength, setSectionLength] = useState(30);
-  const [sectionWidth, setSectionWidth] = useState(20);
+  const [sectionLength, setSectionLength] = useState<number>(0);
+  const [sectionWidth, setSectionWidth] = useState<number>(0);
   const [sectionArea, setSectionArea] = useState<number | "">(600);
   const [isAreaManuallySet, setIsAreaManuallySet] = useState(false);
+  const [derivedSide, setDerivedSide] = useState<"length" | "width" | null>(null); // which side is auto-updated from area
+
+  function handleAreaChange(raw: string) {
+    const newValue = raw === "" ? "" : parseFloat(raw);
+    const numericArea =
+      newValue === "" || isNaN(newValue as number) ? 0 : (newValue as number);
+    setIsAreaManuallySet(numericArea > 0);
+    setSectionArea(numericArea);
+    if (numericArea > 0) {
+      if (sectionLength > 0 && sectionWidth === 0) {
+        const computedWidth = numericArea / sectionLength;
+        setSectionWidth(parseFloat(computedWidth.toFixed(3)));
+        setDerivedSide("width");
+      } else if (sectionWidth > 0 && sectionLength === 0) {
+        const computedLength = numericArea / sectionWidth;
+        setSectionLength(parseFloat(computedLength.toFixed(3)));
+        setDerivedSide("length");
+      }
+    } else {
+      setDerivedSide(null);
+    }
+  }
+
+  function handleLengthChange(raw: string) {
+    const val = parseFloat(raw);
+    setSectionLength(!isNaN(val) && val > 0 ? val : 0);
+    if (!isNaN(val) && val > 0) {
+      if (sectionWidth === 0) {
+        setDerivedSide("width");
+      } else if (derivedSide === "length") {
+        setDerivedSide(null);
+      }
+    } else if (derivedSide === "length") {
+      setDerivedSide(null);
+    }
+  }
+
+  function handleWidthChange(raw: string) {
+    const val = parseFloat(raw);
+    setSectionWidth(!isNaN(val) && val > 0 ? val : 0);
+    if (!isNaN(val) && val > 0) {
+      if (sectionLength === 0) {
+        setDerivedSide("length");
+      } else if (derivedSide === "width") {
+        setDerivedSide(null);
+      }
+    } else if (derivedSide === "width") {
+      setDerivedSide(null);
+    }
+  }
+
+  function recomputeDerivedDimension() {
+    const hasArea = typeof sectionArea === "number" && sectionArea > 0;
+    if (!isAreaManuallySet || !hasArea || !derivedSide) return;
+
+    const lengthReady = sectionLength > 0;
+    const widthReady = sectionWidth > 0;
+    if (derivedSide === "width" && !lengthReady) return;
+    if (derivedSide === "length" && !widthReady) return;
+
+    if (derivedSide === "width") {
+      const computedWidth = (sectionArea as number) / sectionLength;
+      setSectionWidth(parseFloat(computedWidth.toFixed(3)));
+    } else if (derivedSide === "length") {
+      const computedLength = (sectionArea as number) / sectionWidth;
+      setSectionLength(parseFloat(computedLength.toFixed(3)));
+    }
+  }
 
   // Auto-calculate area when length or width changes
   useEffect(() => {
@@ -35,6 +103,25 @@ export default function GFactorTab({
       setSectionArea(calculatedArea);
     }
   }, [sectionLength, sectionWidth, isAreaManuallySet]);
+
+  // Recalculate derived dimension immediately; keep 5s timer to continue tracking area changes
+  useEffect(() => {
+    const hasArea = typeof sectionArea === "number" && sectionArea > 0;
+    if (!isAreaManuallySet || !hasArea || !derivedSide) return;
+
+    const lengthReady = sectionLength > 0;
+    const widthReady = sectionWidth > 0;
+    if (derivedSide === "width" && !lengthReady) return;
+    if (derivedSide === "length" && !widthReady) return;
+
+    // Run instantly
+    recomputeDerivedDimension();
+
+    // Also schedule a run after 5s to keep in sync during continuous edits
+    const timer = setTimeout(recomputeDerivedDimension, 5000);
+
+    return () => clearTimeout(timer);
+  }, [sectionArea, sectionLength, sectionWidth, isAreaManuallySet, derivedSide]);
 
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
     queryKey: ["assessment", floorId],
@@ -74,14 +161,27 @@ export default function GFactorTab({
 
   const handleCalculateG = useMutation({
     mutationFn: async () => {
+      const lengthVal =
+        typeof sectionLength === "number" && sectionLength > 0
+          ? sectionLength
+          : undefined;
+      const widthVal =
+        typeof sectionWidth === "number" && sectionWidth > 0
+          ? sectionWidth
+          : undefined;
+      const areaVal =
+        typeof sectionArea === "number" && sectionArea > 0
+          ? sectionArea
+          : undefined;
+
       const res = await fetch(
         `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
         {
           method: "PUT",
           body: JSON.stringify({
-            length: sectionLength,
-            width: sectionWidth,
-            area: typeof sectionArea === "number" ? sectionArea : undefined,
+            length: lengthVal,
+            width: widthVal,
+            area: areaVal,
             accessType,
           }),
         }
@@ -218,7 +318,7 @@ export default function GFactorTab({
             min="1"
             step="1"
             value={sectionLength}
-            onChange={(e) => setSectionLength(parseFloat(e.target.value) || 0)}
+            onChange={(e) => handleLengthChange(e.target.value)}
             className="border p-2 rounded w-full"
           />
           <span className="input-unit">متر</span>
@@ -264,7 +364,7 @@ export default function GFactorTab({
             min="1"
             step="1"
             value={sectionWidth}
-            onChange={(e) => setSectionWidth(parseFloat(e.target.value) || 0)}
+            onChange={(e) => handleWidthChange(e.target.value)}
             className="border p-2 rounded w-full"
           />
           <span className="input-unit">متر</span>
@@ -294,7 +394,7 @@ export default function GFactorTab({
 
       <div className="input-group">
         <label className="input-label">
-          یا مساحت (اختیاری)
+          مساحت
           <button
             type="button"
             onClick={() => setShowG4Guide((prev) => !prev)}
@@ -311,16 +411,7 @@ export default function GFactorTab({
             step="1"
             placeholder="اختیاری"
             value={sectionArea}
-            onChange={(e) => {
-              const newValue = e.target.value === "" ? "" : parseFloat(e.target.value);
-              // If user clears the field, allow auto-calculation again
-              if (newValue === "") {
-                setIsAreaManuallySet(false);
-              } else {
-                setIsAreaManuallySet(true);
-              }
-              setSectionArea(newValue);
-            }}
+            onChange={(e) => handleAreaChange(e.target.value)}
             className="border p-2 rounded w-full"
           />
           <span className="input-unit">متر مربع</span>
@@ -329,7 +420,7 @@ export default function GFactorTab({
         {showG4Guide && (
           <div className="relative text-gray-600 dark:text-gray-300 left-0 mt-2 p-4 bg-[#e0f7fa] dark:bg-[#0f3460] text-sm rounded-lg shadow-md border border-[#00bfae30] dark:border-[#2196f380] w-full z-20">
             <p>
-              <b>مساحت (اختیاری)</b>
+              <b>مساحت</b>
             </p>
             <br />
             <span className="text-[#666] dark:text-gray-300">

@@ -230,6 +230,10 @@ model AssessmentAcceptanceFactors {
   exitUnitsX           Float? // Manual x input (exit units) - takes priority over calculated x
   separatePathsK       Float? // Manual K input (separate paths) - takes priority over calculated K
   mobilityFactor       Float? // p
+  mobilityFactorMulti  String? // JSON string of weighted mobility selections
+  perceptionAwareness  Boolean? // آیا افراد درک مناسب از خطر دارند؟
+  evacuationPlanClear  Boolean? // آیا برنامه تخلیه شفاف تدوین شده است؟
+  noPanicRisk          Boolean? // آیا خطر بروز وحشت وجود ندارد؟
   exitCountToOpenSpace Int? // O - Number of exits leading to open space
 
   // Value factor inputs

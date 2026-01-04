@@ -68,6 +68,7 @@ export default function WFactorTab({
 
   // Calculate W2 penalty
   const w2Penalty = useMemo(() => {
+    if (waterStorageType === "none") return 0;
     if (requiredWaterCapacity === 0 || requiredWaterCapacity === null || !isFinite(requiredWaterCapacity)) return 4;
     if (waterCapacity === undefined || waterCapacity === null || waterCapacity === 0) return 4;
     const ratio = (waterCapacity / requiredWaterCapacity) * 100;
@@ -76,7 +77,7 @@ export default function WFactorTab({
     if (ratio >= 80) return 2;
     if (ratio >= 70) return 3;
     return 4;
-  }, [waterCapacity, requiredWaterCapacity]);
+  }, [waterStorageType, waterCapacity, requiredWaterCapacity]);
 
   // Calculate water flow capacity
   const waterFlowCapacity = useMemo(() => {
