@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-server";
 import { createUser, isAdmin } from "@/lib/admin";
+import { db } from "@/lib/db";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function POST(request: NextRequest) {
   try {
@@ -84,6 +87,59 @@ export async function POST(request: NextRequest) {
     console.error("Error creating user:", error);
     return NextResponse.json(
       { error: error.message || "خطای داخلی سرور" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "دسترسی غیرمجاز" }, { status: 401 });
+  }
+
+  const admin = await isAdmin(session.user.id);
+  if (!admin) {
+    return NextResponse.json(
+      { error: "ممنوع: دسترسی ادمین مورد نیاز است" },
+      { status: 403 }
+    );
+  }
+
+  const { searchParams } = new URL(request.url);
+  const searchValue = searchParams.get("search") || undefined;
+  const limit = Math.min(parseInt(searchParams.get("limit") || "20", 10), 100);
+  const offset = Math.max(parseInt(searchParams.get("offset") || "0", 10), 0);
+  const sortBy = searchParams.get("sortBy") || "name";
+  const sortDirection = searchParams.get("sortDirection") === "asc" ? "asc" : "desc";
+  const searchField = searchParams.get("searchField") || "name";
+  const searchOperator = searchParams.get("searchOperator") || "contains";
+
+  try {
+    const headerStore = await headers();
+    const cookieHeader = headerStore.get("cookie");
+
+    const data = await auth.api.listUsers({
+      query: {
+        searchValue,
+        searchField: searchField as "email" | "name",
+        searchOperator: searchOperator as "contains" | "starts_with" | "ends_with",
+        limit,
+        offset,
+        sortBy,
+        sortDirection: sortDirection as "asc" | "desc",
+        filterField: "role",
+        filterValue: "admin",
+        filterOperator: "ne",
+      },
+      headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+    });
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error("listUsers error:", error);
+    return NextResponse.json(
+      { error: error.message || "خطا در دریافت کاربران" },
       { status: 500 }
     );
   }

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-server";
 import { isAdmin } from "@/lib/admin";
 import AddUserForm from "@/components/admin/AddUserForm";
+import UserList from "@/components/admin/UserList";
 
 export default async function AdminPage() {
   const session = await getSession();
@@ -48,6 +49,8 @@ export default async function AdminPage() {
         <div className="rounded-2xl bg-white dark:bg-zinc-900 p-8 shadow-lg">
           <AddUserForm />
         </div>
+
+        <UserList />
       </main>
     </div>
   );
