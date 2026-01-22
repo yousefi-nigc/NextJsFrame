@@ -5,14 +5,17 @@ FROM node:20-alpine AS base
 # Install dependencies only when needed
 FROM base AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+
+# Internal Internet situation apline mirror
+RUN echo -e "https://mirror.arvancloud.ir/alpine/v3.23/main\nhttps://mirror.arvancloud.ir/alpine/v3.23/community" > /etc/apk/repositories
+RUN npm config set registry https://mirror-npm.runflare.com
+
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 # Harden npm network settings for slow/blocked registries
 ENV NPM_CONFIG_FETCH_RETRIES=5 \
-    NPM_CONFIG_FETCH_RETRY_MINTIMEOUT=20000 \
-    NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=120000 \
-    NPM_CONFIG_REGISTRY=https://registry.npmjs.org
+    NPM_CONFIG_REGISTRY=https://mirror-npm.runflare.com
 
 # Install dependencies with npm (expects package-lock.json)
 COPY package.json package-lock.json* .npmrc* ./
@@ -36,12 +39,14 @@ WORKDIR /app
 ENV NODE_ENV=production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 ENV NEXT_TELEMETRY_DISABLED=1
+# Internal Internet Situation alpine mirrors again
+#RUN echo -e "https://mirror.arvancloud.ir/alpine/v3.23/main\nhttps://mirror.arvancloud.ir/alpine/v3.23/community" > /etc/apk/repositories
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Install wget for healthchecks
-RUN apk add --no-cache openssl wget
+#RUN apk add --no-cache openssl wget
 
 COPY --from=builder /app/public ./public
 
