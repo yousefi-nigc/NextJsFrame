@@ -26,10 +26,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Generate Prisma client and build
-RUN npx prisma generate
-ENV NEXT_TELEMETRY_DISABLED=1
+RUN npx prisma migrate deploy
 RUN npm run build
 
 # Production image, copy all the files and run next
@@ -37,31 +34,21 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-# Uncomment the following line in case you want to disable telemetry during runtime.
-ENV NEXT_TELEMETRY_DISABLED=1
-# Internal Internet Situation alpine mirrors again
-#RUN echo -e "https://mirror.arvancloud.ir/alpine/v3.23/main\nhttps://mirror.arvancloud.ir/alpine/v3.23/community" > /etc/apk/repositories
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Install wget for healthchecks
-#RUN apk add --no-cache openssl wget
-
 COPY --from=builder /app/public ./public
 
 # Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Copy Prisma files for migrations
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma/generated ./prisma/generated
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 # Copy prisma CLI from deps so npx prisma works (standalone doesn't include dev dependencies)
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+COPY --from=builder /app/node_modules ./node_modules
 
 USER nextjs
 
