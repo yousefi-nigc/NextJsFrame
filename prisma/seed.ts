@@ -2,14 +2,16 @@
 // import { config } from "dotenv";
 // config({ path: ".env" });
 
-import { PrismaClient } from "./generated";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "./generated/client";
 import { randomBytes, scrypt } from "crypto";
 
 // Create Prisma client for seeding
-const db = new PrismaClient({
-  log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL
 });
 
+export const db = new PrismaClient({ adapter });
 // Hash password function (matching Better Auth's format)
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16);
