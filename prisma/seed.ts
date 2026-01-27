@@ -39,7 +39,7 @@ async function main() {
 
   // Check if admin already exists
   const existingAdmin = await db.user.findUnique({
-    where: { email: "admin@gastop.com" },
+    where: { email: "usefi.nigc@gmail.com" },
     include: { accounts: true },
   });
 
@@ -58,7 +58,7 @@ async function main() {
       if (wrongAccount) {
         // Update the account to use correct providerId and password hash
         console.log("🔧 Fixing account providerId and password hash...");
-        const passwordHash = await hashPassword("admin123");
+        const passwordHash = await hashPassword("MPAHgdwqgfjykwrhyttrjhUzy5rh7et54eTwj1");
         await db.account.update({
           where: { id: wrongAccount.id },
           data: {
