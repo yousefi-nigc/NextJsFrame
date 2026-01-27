@@ -71,7 +71,7 @@ async function main() {
       } else {
         // Create missing credential account
         console.log("🔧 Creating missing credential account...");
-        const passwordHash = await hashPassword("admin123");
+        const passwordHash = await hashPassword("MPAHgdwqgfjykwrhyttrjhUzy5rh7et54eTwj1");
         const accountId = randomBytes(16).toString("hex");
         await db.account.create({
           data: {
@@ -93,7 +93,7 @@ async function main() {
       !credentialAccount.password.startsWith("$scrypt$")
     ) {
       console.log("🔧 Fixing password hash format...");
-      const passwordHash = await hashPassword("admin123");
+      const passwordHash = await hashPassword("MPAHgdwqgfjykwrhyttrjhUzy5rh7et54eTwj1");
       await db.account.update({
         where: { id: credentialAccount.id },
         data: { password: passwordHash },
@@ -112,13 +112,13 @@ async function main() {
     const userId = randomBytes(16).toString("hex");
 
     // Hash the password using scrypt (Better Auth format)
-    const passwordHash = await hashPassword("admin123");
+    const passwordHash = await hashPassword("MPAHgdwqgfjykwrhyttrjhUzy5rh7et54eTwj1");
 
     // Create user in database
     const user = await db.user.create({
       data: {
         id: userId,
-        email: "admin@gastop.com",
+        email: "usefi.nigc@gmail.com",
         name: "Admin User",
         emailVerified: true,
         role: "admin",
@@ -139,8 +139,8 @@ async function main() {
     });
 
     console.log("✅ Admin user created successfully!");
-    console.log("📧 Email: admin@gastop.com");
-    console.log("🔑 Password: admin123");
+    console.log("📧 Email: usefi.nigc@gmail.com");
+    console.log("🔑 Password: MPAHgdwqgfjykwrhyttrjhUzy5rh7et54eTwj1");
     console.log("⚠️  Please change the password after first login!");
   } catch (error) {
     console.error("❌ Error creating admin user:", error);
