@@ -27,6 +27,12 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
+    resources:
+        reservations:
+          memory: 512M
+        limits:
+          memory: 768M
+          cpus: "0.5"
     environment:
       NODE_ENV: production
       DATABASE_URL: ${DATABASE_URL}
