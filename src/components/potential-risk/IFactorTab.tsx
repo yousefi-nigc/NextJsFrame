@@ -138,7 +138,7 @@ export default function IFactorTab({
     enabled: !!floorId,
     queryFn: async () => {
       const res = await fetch(
-        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
       );
       const data = await res.json();
 
@@ -149,7 +149,9 @@ export default function IFactorTab({
       // Restore temperature selection (single or multi)
       if (response.assessment.tempDestructionMulti) {
         try {
-          const savedTemps = JSON.parse(response.assessment.tempDestructionMulti);
+          const savedTemps = JSON.parse(
+            response.assessment.tempDestructionMulti,
+          );
           if (Array.isArray(savedTemps) && savedTemps.length > 0) {
             setTempDestruction("multi");
             setShowTWeightedTable(true);
@@ -163,24 +165,26 @@ export default function IFactorTab({
             setTWeightedRows(restoredRows);
           } else {
             setTempDestruction(
-              response.assessment.tempDestruction?.toString() ?? "250"
+              response.assessment.tempDestruction?.toString() ?? "250",
             );
           }
         } catch (e) {
           setTempDestruction(
-            response.assessment.tempDestruction?.toString() ?? "250"
+            response.assessment.tempDestruction?.toString() ?? "250",
           );
         }
       } else {
         setTempDestruction(
-          response.assessment.tempDestruction?.toString() ?? "250"
+          response.assessment.tempDestruction?.toString() ?? "250",
         );
       }
 
       // Restore material class selection (single or multi)
       if (response.assessment.materialClassMulti) {
         try {
-          const savedClasses = JSON.parse(response.assessment.materialClassMulti);
+          const savedClasses = JSON.parse(
+            response.assessment.materialClassMulti,
+          );
           if (Array.isArray(savedClasses) && savedClasses.length > 0) {
             setFireClass("multi");
             setShowMMultiSelect(true);
@@ -227,7 +231,7 @@ export default function IFactorTab({
         weightedSum,
         totalPercent,
         result,
-        rows: tWeightedRows.filter(r => r.checked && r.percent > 0)
+        rows: tWeightedRows.filter((r) => r.checked && r.percent > 0),
       });
       return result;
     }
@@ -276,7 +280,29 @@ export default function IFactorTab({
 
   const handleTPercentChange = (index: number, percent: number) => {
     const newRows = [...tWeightedRows];
-    newRows[index].percent = Math.max(0, Math.min(100, percent));
+
+    // Round any float input to nearest integer
+    percent = Math.round(percent);
+
+    // Ensure percent is at least 0
+    percent = Math.max(0, percent);
+
+    // Compute sum of percents for other checked rows
+    const otherSum = newRows.reduce((sum, r, i) => {
+      if (i === index) return sum;
+      return sum + (r.checked ? r.percent : 0);
+    }, 0);
+
+    // Remaining allowed percent to keep total <= 100
+    const remaining = Math.max(0, 100 - otherSum);
+
+    if (percent > remaining) {
+      // Don't allow setting a percent that would push the total over 100
+      toast.error("جمع درصدها نباید از 100٪ بیشتر باشد");
+      percent = remaining;
+    }
+
+    newRows[index].percent = Math.min(100, percent);
     setTWeightedRows(newRows);
   };
 
@@ -291,7 +317,29 @@ export default function IFactorTab({
 
   const handleMPercentChange = (index: number, percent: number) => {
     const newRows = [...mWeightedRows];
-    newRows[index].percent = Math.max(0, Math.min(100, percent));
+
+    // Round any float input to nearest integer
+    percent = Math.round(percent);
+
+    // Ensure percent is at least 0
+    percent = Math.max(0, percent);
+
+    // Compute sum of percents for other checked rows
+    const otherSum = newRows.reduce((sum, r, i) => {
+      if (i === index) return sum;
+      return sum + (r.checked ? r.percent : 0);
+    }, 0);
+
+    // Remaining allowed percent to keep total <= 100
+    const remaining = Math.max(0, 100 - otherSum);
+
+    if (percent > remaining) {
+      // Don't allow setting a percent that would push the total over 100
+      toast.error("جمع درصدها نباید از 100٪ بیشتر باشد");
+      percent = remaining;
+    }
+
+    newRows[index].percent = Math.min(100, percent);
     setMWeightedRows(newRows);
   };
 
@@ -302,9 +350,13 @@ export default function IFactorTab({
       if (tempDestruction === "multi") {
         finalT = calculateWeightedT();
         // Validate that we have at least one selected temperature
-        const hasSelectedT = tWeightedRows.some(row => row.checked && row.percent > 0);
+        const hasSelectedT = tWeightedRows.some(
+          (row) => row.checked && row.percent > 0,
+        );
         if (!hasSelectedT) {
-          throw new Error("لطفاً حداقل یک دما را انتخاب کرده و درصد معتبر وارد کنید");
+          throw new Error(
+            "لطفاً حداقل یک دما را انتخاب کرده و درصد معتبر وارد کنید",
+          );
         }
       } else {
         finalT = parseFloat(tempDestruction);
@@ -334,9 +386,13 @@ export default function IFactorTab({
       if (fireClass === "multi") {
         finalMaterialClass = calculateWeightedM();
         // Validate that we have at least one selected material class
-        const hasSelectedM = mWeightedRows.some(row => row.checked && row.percent > 0);
+        const hasSelectedM = mWeightedRows.some(
+          (row) => row.checked && row.percent > 0,
+        );
         if (!hasSelectedM) {
-          throw new Error("لطفاً حداقل یک کلاس را انتخاب کرده و درصد معتبر وارد کنید");
+          throw new Error(
+            "لطفاً حداقل یک کلاس را انتخاب کرده و درصد معتبر وارد کنید",
+          );
         }
       } else {
         finalMaterialClass = parseFloat(fireClass);
@@ -346,17 +402,19 @@ export default function IFactorTab({
       }
 
       // Debug: log the values being sent
-      const selectedTemps = tempDestruction === "multi"
-        ? tWeightedRows
-            .filter((row) => row.checked && row.percent > 0)
-            .map((row) => ({ t: row.t, percent: row.percent }))
-        : [];
+      const selectedTemps =
+        tempDestruction === "multi"
+          ? tWeightedRows
+              .filter((row) => row.checked && row.percent > 0)
+              .map((row) => ({ t: row.t, percent: row.percent }))
+          : [];
 
-      const selectedClasses = fireClass === "multi"
-        ? mWeightedRows
-            .filter((row) => row.checked && row.percent > 0)
-            .map((row) => ({ m: row.m, percent: row.percent }))
-        : [];
+      const selectedClasses =
+        fireClass === "multi"
+          ? mWeightedRows
+              .filter((row) => row.checked && row.percent > 0)
+              .map((row) => ({ m: row.m, percent: row.percent }))
+          : [];
 
       console.log("Calculating I with:", {
         tempDestruction: finalT,
@@ -384,12 +442,15 @@ export default function IFactorTab({
         payload.materialClassMulti = JSON.stringify(selectedClasses);
       }
 
-      const res = await fetch(`/api/user/projects/${projectId}/floors/${floorId}/assessment`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      
+      const res = await fetch(
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || "Failed to calculate");
@@ -408,7 +469,7 @@ export default function IFactorTab({
 
   const tPercentSum = tWeightedRows.reduce(
     (sum, row) => sum + (row.checked ? row.percent : 0),
-    0
+    0,
   );
   const weightedT = calculateWeightedT();
   const weightedM = calculateWeightedM();
@@ -550,7 +611,7 @@ export default function IFactorTab({
                       onChange={(e) =>
                         handleTPercentChange(
                           idx,
-                          parseFloat(e.target.value) || 0
+                          parseFloat(e.target.value) || 0,
                         )
                       }
                       className="w-20 p-1 border rounded dark:bg-slate-700 dark:text-white"
@@ -840,7 +901,7 @@ export default function IFactorTab({
                         onChange={(e) =>
                           handleMPercentChange(
                             idx,
-                            parseFloat(e.target.value) || 0
+                            parseFloat(e.target.value) || 0,
                           )
                         }
                         className="w-20 p-1 border rounded dark:bg-slate-700 dark:text-white"
@@ -885,7 +946,7 @@ export default function IFactorTab({
               <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
                 <span className="text-base text-secondary">HRR: </span>
                 {Math.round(
-                  25 * Math.pow(10, assessment.assessment.factor_i)
+                  25 * Math.pow(10, assessment.assessment.factor_i),
                 ).toLocaleString()}{" "}
                 kW/m²
               </div>

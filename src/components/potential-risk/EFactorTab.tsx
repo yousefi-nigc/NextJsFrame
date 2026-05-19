@@ -31,7 +31,7 @@ export default function EFactorTab({
     enabled: !!floorId,
     queryFn: async () => {
       const res = await fetch(
-        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
       );
       const data = await res.json();
 
@@ -49,7 +49,12 @@ export default function EFactorTab({
 
   const handleCalculateE = useMutation({
     mutationFn: async () => {
-      console.log("Calculating E with floorLevel:", floorNumber, "type:", typeof floorNumber);
+      console.log(
+        "Calculating E with floorLevel:",
+        floorNumber,
+        "type:",
+        typeof floorNumber,
+      );
       const res = await fetch(
         `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
         {
@@ -58,7 +63,7 @@ export default function EFactorTab({
           body: JSON.stringify({
             floorLevel: floorNumber,
           }),
-        }
+        },
       );
       return res.json();
     },
@@ -304,7 +309,6 @@ export default function EFactorTab({
             }
           }}
         >
-          <option value="">انتخاب سریع</option>
           <option value="-2">زیرزمین 2</option>
           <option value="-1">زیرزمین 1</option>
           <option value="0">همکف</option>
@@ -333,12 +337,12 @@ export default function EFactorTab({
                   assessment.assessment.factor_e <= 1.1
                     ? "#43a047"
                     : assessment.assessment.factor_e <= 1.4
-                    ? "#fbc02d"
-                    : assessment.assessment.factor_e <= 1.7
-                    ? "#f57c00"
-                    : assessment.assessment.factor_e <= 2
-                    ? "#d32f2f"
-                    : "#880e4f",
+                      ? "#fbc02d"
+                      : assessment.assessment.factor_e <= 1.7
+                        ? "#f57c00"
+                        : assessment.assessment.factor_e <= 2
+                          ? "#d32f2f"
+                          : "#880e4f",
               }}
             >
               e = {assessment.assessment.factor_e.toFixed(3)}
@@ -350,23 +354,23 @@ export default function EFactorTab({
                   assessment.assessment.factor_e <= 1.1
                     ? "#43a047"
                     : assessment.assessment.factor_e <= 1.4
-                    ? "#fbc02d"
-                    : assessment.assessment.factor_e <= 1.7
-                    ? "#f57c00"
-                    : assessment.assessment.factor_e <= 2
-                    ? "#d32f2f"
-                    : "#880e4f",
+                      ? "#fbc02d"
+                      : assessment.assessment.factor_e <= 1.7
+                        ? "#f57c00"
+                        : assessment.assessment.factor_e <= 2
+                          ? "#d32f2f"
+                          : "#880e4f",
               }}
             >
               {assessment.assessment.factor_e <= 1.1
                 ? "همکف/طبقات نزدیک زمین - ریسک معمولی"
                 : assessment.assessment.factor_e <= 1.4
-                ? "طبقات پایین (تا دوم) - ریسک کمی بیشتر"
-                : assessment.assessment.factor_e <= 1.7
-                ? "طبقات متوسط (۳ تا ۵ یا گالری بزرگ) - ریسک بالا"
-                : assessment.assessment.factor_e <= 2
-                ? "طبقات بسیار بلند/زیرزمین‌های عمیق - ریسک ویژه!"
-                : "عدد خیلی بالا! بررسی مدل لازم است."}
+                  ? "طبقات پایین (تا دوم) - ریسک کمی بیشتر"
+                  : assessment.assessment.factor_e <= 1.7
+                    ? "طبقات متوسط (۳ تا ۵ یا گالری بزرگ) - ریسک بالا"
+                    : assessment.assessment.factor_e <= 2
+                      ? "طبقات بسیار بلند/زیرزمین‌های عمیق - ریسک ویژه!"
+                      : "عدد خیلی بالا! بررسی مدل لازم است."}
             </div>
             <div className="text-gray-600 text-sm dark:text-gray-400">
               مقدار واردشده: E = {floorNumber}{" "}

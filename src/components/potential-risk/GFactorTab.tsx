@@ -27,7 +27,9 @@ export default function GFactorTab({
   const [sectionWidth, setSectionWidth] = useState<number>(0);
   const [sectionArea, setSectionArea] = useState<number | "">(600);
   const [isAreaManuallySet, setIsAreaManuallySet] = useState(false);
-  const [derivedSide, setDerivedSide] = useState<"length" | "width" | null>(null); // which side is auto-updated from area
+  const [derivedSide, setDerivedSide] = useState<"length" | "width" | null>(
+    null,
+  ); // which side is auto-updated from area
 
   function handleAreaChange(raw: string) {
     const newValue = raw === "" ? "" : parseFloat(raw);
@@ -52,8 +54,19 @@ export default function GFactorTab({
 
   function handleLengthChange(raw: string) {
     const val = parseFloat(raw);
-    setSectionLength(!isNaN(val) && val > 0 ? val : 0);
-    if (!isNaN(val) && val > 0) {
+    const newLength = !isNaN(val) && val > 0 ? val : 0;
+    setSectionLength(newLength);
+
+    // If both dimensions are present, lock area and compute it
+    if (newLength > 0 && sectionWidth > 0) {
+      const computedArea = newLength * sectionWidth;
+      setSectionArea(parseFloat(computedArea.toFixed(3)));
+      setIsAreaManuallySet(false);
+      setDerivedSide(null);
+      return;
+    }
+
+    if (newLength > 0) {
       if (sectionWidth === 0) {
         setDerivedSide("width");
       } else if (derivedSide === "length") {
@@ -66,8 +79,19 @@ export default function GFactorTab({
 
   function handleWidthChange(raw: string) {
     const val = parseFloat(raw);
-    setSectionWidth(!isNaN(val) && val > 0 ? val : 0);
-    if (!isNaN(val) && val > 0) {
+    const newWidth = !isNaN(val) && val > 0 ? val : 0;
+    setSectionWidth(newWidth);
+
+    // If both dimensions are present, lock area and compute it
+    if (newWidth > 0 && sectionLength > 0) {
+      const computedArea = sectionLength * newWidth;
+      setSectionArea(parseFloat(computedArea.toFixed(3)));
+      setIsAreaManuallySet(false);
+      setDerivedSide(null);
+      return;
+    }
+
+    if (newWidth > 0) {
       if (sectionLength === 0) {
         setDerivedSide("length");
       } else if (derivedSide === "width") {
@@ -121,14 +145,20 @@ export default function GFactorTab({
     const timer = setTimeout(recomputeDerivedDimension, 5000);
 
     return () => clearTimeout(timer);
-  }, [sectionArea, sectionLength, sectionWidth, isAreaManuallySet, derivedSide]);
+  }, [
+    sectionArea,
+    sectionLength,
+    sectionWidth,
+    isAreaManuallySet,
+    derivedSide,
+  ]);
 
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
     queryKey: ["assessment", floorId],
     enabled: !!floorId,
     queryFn: async () => {
       const res = await fetch(
-        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
       );
       const data = await res.json();
 
@@ -137,15 +167,15 @@ export default function GFactorTab({
       const response = data as AssessmentGetApiResponse;
 
       setAccessType(
-        (response.assessment.accessType as "wide" | "narrow") ?? "wide"
+        (response.assessment.accessType as "wide" | "narrow") ?? "wide",
       );
       const loadedLength = response.assessment.length ?? 30;
       const loadedWidth = response.assessment.width ?? 20;
       const loadedArea = response.assessment.area;
-      
+
       setSectionLength(loadedLength);
       setSectionWidth(loadedWidth);
-      
+
       // If area is provided and doesn't match calculated area, mark as manually set
       if (loadedArea && loadedArea !== loadedLength * loadedWidth) {
         setIsAreaManuallySet(true);
@@ -184,7 +214,7 @@ export default function GFactorTab({
             area: areaVal,
             accessType,
           }),
-        }
+        },
       );
       return res.json();
     },
@@ -412,7 +442,15 @@ export default function GFactorTab({
             placeholder="اختیاری"
             value={sectionArea}
             onChange={(e) => handleAreaChange(e.target.value)}
-            className="border p-2 rounded w-full"
+            disabled={
+              !isAreaManuallySet && sectionLength > 0 && sectionWidth > 0
+            }
+            title={
+              !isAreaManuallySet && sectionLength > 0 && sectionWidth > 0
+                ? "مساحت از طول و عرض محاسبه شده است؛ برای ویرایش، یکی از ابعاد را پاک کنید"
+                : ""
+            }
+            className={`border p-2 rounded w-full ${!isAreaManuallySet && sectionLength > 0 && sectionWidth > 0 ? "opacity-50 cursor-not-allowed" : ""}`}
           />
           <span className="input-unit">متر مربع</span>
         </div>

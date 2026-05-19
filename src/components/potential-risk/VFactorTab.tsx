@@ -35,7 +35,7 @@ export default function VFactorTab({
     enabled: !!floorId,
     queryFn: async () => {
       const res = await fetch(
-        `/api/user/projects/${projectId}/floors/${floorId}/assessment`
+        `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
       );
       const data = await res.json();
 
@@ -92,7 +92,7 @@ export default function VFactorTab({
 
     setMechanicalVentFlow(parseFloat(flowNm3h.toFixed(2)));
     toast.success(
-      `دبی مکانیکی معادل: ${flowNm3h.toFixed(2)} Nm³/h (A_eq=${A_equiv.toFixed(3)} m²)`
+      `دبی مکانیکی معادل: ${flowNm3h.toFixed(2)} Nm³/h (A_eq=${A_equiv.toFixed(3)} m²)`,
     );
 
     // بعد از محاسبه، حالت را روی دستی برگردانید تا autoCalculateK مستقیم بخواند
@@ -104,16 +104,26 @@ export default function VFactorTab({
       // Validate that area is available (should be set from G section)
       const area = typeof compartmentArea === "number" ? compartmentArea : 0;
       if (!area || area <= 0) {
-        throw new Error("لطفاً ابتدا مساحت (A) را در بخش محاسبه ضریب g وارد کنید");
+        throw new Error(
+          "لطفاً ابتدا مساحت (A) را در بخش محاسبه ضریب g وارد کنید",
+        );
       }
 
       const qm = typeof qmVentilation === "number" ? qmVentilation : 500;
-      const kPercent =
-        typeof ventingRatio === "number" ? ventingRatio : 1;
       const h = typeof ceilingHeight === "number" ? ceilingHeight : 3;
 
       if (qm <= 0) {
         throw new Error("Qm باید بزرگتر از صفر باشد");
+      }
+
+      // Front-end validation: do not auto-convert or change k. If the current value is >1
+      // tell the user to fix it and abort the request.
+      const rawK = typeof ventingRatio === "number" ? ventingRatio : 1;
+      if (rawK > 1) {
+        // Inform the user and abort. Do not change the value programmatically.
+        throw new Error(
+          "مقدار محاسبه شده k نمیتواند بیشتر از یک باشد. لطفاً مقدار k را اصلاح کرده و دوباره تلاش کنید",
+        );
       }
 
       const res = await fetch(
@@ -126,13 +136,28 @@ export default function VFactorTab({
               typeof staticVentArea === "number" ? staticVentArea : 0,
             mechVentFlow:
               typeof mechanicalVentFlow === "number" ? mechanicalVentFlow : 0,
-            ventingRatio_k: kPercent, // k stored as percentage
+            // Send ventingRatio as provided (assumed to be a ratio 0..1)
+            ventingRatio_k: rawK,
             height: h,
             qm: qm,
           }),
-        }
+        },
       );
-      return res.json();
+
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        // Propagate server error message (do not override). Extract simple message when possible.
+        const serverMsg =
+          (body && (body.error || body.message)) ||
+          (Array.isArray(body)
+            ? body.map((b: any) => b.message || JSON.stringify(b)).join("; ")
+            : null) ||
+          JSON.stringify(body) ||
+          "خطا در محاسبه v";
+        throw new Error(serverMsg);
+      }
+
+      return body;
     },
     onSuccess: (data) => {
       console.log(data);
@@ -181,7 +206,7 @@ export default function VFactorTab({
             value={windowArea}
             onChange={(e) =>
               setWindowArea(
-                e.target.value === "" ? "" : parseFloat(e.target.value)
+                e.target.value === "" ? "" : parseFloat(e.target.value),
               )
             }
             className="w-full"
@@ -206,7 +231,7 @@ export default function VFactorTab({
             value={staticVentArea}
             onChange={(e) =>
               setStaticVentArea(
-                e.target.value === "" ? "" : parseFloat(e.target.value)
+                e.target.value === "" ? "" : parseFloat(e.target.value),
               )
             }
             className="w-full"
@@ -253,7 +278,7 @@ export default function VFactorTab({
                 value={mechanicalVentFlow}
                 onChange={(e) =>
                   setMechanicalVentFlow(
-                    e.target.value === "" ? "" : parseFloat(e.target.value)
+                    e.target.value === "" ? "" : parseFloat(e.target.value),
                   )
                 }
                 className="w-full"
@@ -290,7 +315,7 @@ export default function VFactorTab({
                 value={qvAdvanced}
                 onChange={(e) =>
                   setQvAdvanced(
-                    e.target.value === "" ? "" : parseFloat(e.target.value)
+                    e.target.value === "" ? "" : parseFloat(e.target.value),
                   )
                 }
                 className="w-full"
@@ -351,7 +376,8 @@ export default function VFactorTab({
         {!assessment?.assessment.area && (
           <div className="mb-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              ⚠️ <strong>توجه:</strong> لطفاً ابتدا مساحت را در بخش <strong>محاسبه ضریب g</strong> وارد کرده و محاسبه کنید.
+              ⚠️ <strong>توجه:</strong> لطفاً ابتدا مساحت را در بخش{" "}
+              <strong>محاسبه ضریب g</strong> وارد کرده و محاسبه کنید.
             </p>
           </div>
         )}
@@ -370,7 +396,8 @@ export default function VFactorTab({
         </div>
         {assessment?.assessment.area ? (
           <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-            ✓ مقدار از بخش g بارگذاری شد: {assessment.assessment.area} m² (فقط خواندنی)
+            ✓ مقدار از بخش g بارگذاری شد: {assessment.assessment.area} m² (فقط
+            خواندنی)
           </p>
         ) : (
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -416,7 +443,7 @@ export default function VFactorTab({
             value={qmVentilation}
             onChange={(e) =>
               setQmVentilation(
-                e.target.value === "" ? "" : parseFloat(e.target.value)
+                e.target.value === "" ? "" : parseFloat(e.target.value),
               )
             }
             className="w-full"
@@ -438,7 +465,7 @@ export default function VFactorTab({
             value={ceilingHeight}
             onChange={(e) =>
               setCeilingHeight(
-                e.target.value === "" ? "" : parseFloat(e.target.value)
+                e.target.value === "" ? "" : parseFloat(e.target.value),
               )
             }
             className="w-full"
