@@ -50,3 +50,7 @@ next-env.d.ts
 *.swp
 *.swo
 *~
+
+
+AGENTS.md
+RTK.md

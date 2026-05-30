@@ -236,9 +236,23 @@ export default function EvacuationTimeTab({
   };
 
   const handleMobilityRowPercent = (idx: number, percent: number) => {
-    setMobilityWeightedRows((rows) =>
-      rows.map((row, i) => (i === idx ? { ...row, percent } : row))
-    );
+    const roundedPercent = Math.max(0, Math.round(percent));
+
+    setMobilityWeightedRows((rows) => {
+      const otherSum = rows.reduce((sum, row, i) => {
+        if (i === idx) return sum;
+        return sum + (row.checked ? row.percent : 0);
+      }, 0);
+
+      const remaining = Math.max(0, 100 - otherSum);
+      const nextPercent = Math.min(roundedPercent, remaining);
+
+      if (nextPercent !== roundedPercent) {
+        toast.error("جمع درصدها نباید از 100٪ بیشتر باشد");
+      }
+
+      return rows.map((row, i) => (i === idx ? { ...row, percent: nextPercent } : row));
+    });
   };
 
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
@@ -358,6 +372,20 @@ export default function EvacuationTimeTab({
                 };
               }
               return { ...row, checked: false, percent: 0 };
+            }).map((row, idx, arr) => {
+              if (!row.checked || row.percent <= 0) return row;
+
+              const previousSum = arr.slice(0, idx).reduce((sum, prev) => {
+                return sum + (prev.checked ? prev.percent : 0);
+              }, 0);
+              const remaining = Math.max(0, 100 - previousSum);
+              const clampedPercent = Math.min(row.percent, remaining);
+
+              if (clampedPercent !== row.percent) {
+                toast.error("جمع درصدهای ذخیره‌شده بیشتر از 100٪ بود و اصلاح شد");
+              }
+
+              return { ...row, percent: clampedPercent };
             })
           );
         } else {

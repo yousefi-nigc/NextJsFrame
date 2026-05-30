@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { BlockMath } from "react-katex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -196,6 +196,30 @@ export default function FFactorTab({
   const [noInternalSeparation, setNoInternalSeparation] = useState(false);
   const [combustibleInsulation, setCombustibleInsulation] = useState(false);
 
+  const validateAgainstFs = (label: string, value: number) => {
+    if (value > fs) {
+      toast.error(`${label} نباید از fₛ بیشتر باشد`);
+      return false;
+    }
+    return true;
+  };
+
+  const handleBoundedResistanceChange =
+    (
+      setter: Dispatch<SetStateAction<number>>,
+      label: string,
+      manualSetter: Dispatch<SetStateAction<boolean>>,
+    ) =>
+    (value: number) => {
+      if (value > fs) {
+        toast.error(`${label} نباید از fₛ بیشتر باشد`);
+        return;
+      }
+
+      setter(value);
+      manualSetter(true);
+    };
+
   const { data: assessment, isLoading } = useQuery<AssessmentGetApiResponse>({
     queryKey: ["assessment", floorId],
     enabled: !!floorId,
@@ -231,6 +255,14 @@ export default function FFactorTab({
 
   const handleCalculateF = useMutation({
     mutationFn: async () => {
+      if (
+        !validateAgainstFs("f_f", ff) ||
+        !validateAgainstFs("f_d", fd) ||
+        !validateAgainstFs("f_w", fw)
+      ) {
+        throw new Error("مقادیر مقاومت‌های دیگر باید کمتر یا مساوی fₛ باشند");
+      }
+
       const res = await fetch(
         `/api/user/projects/${projectId}/floors/${floorId}/assessment`,
         {
@@ -372,8 +404,7 @@ export default function FFactorTab({
                 setFfManual(true);
                 return;
               }
-              setFfManual(false);
-              setFf(Number(val));
+              handleBoundedResistanceChange(setFf, "f_f", setFfManual)(Number(val));
             }}
           >
             <option value={-1}>دستی</option>
@@ -394,8 +425,7 @@ export default function FFactorTab({
               onChange={(e) => {
                 const n = parseFloat(e.target.value);
                 if (!isNaN(n)) {
-                  setFf(n);
-                  setFfManual(true);
+                  handleBoundedResistanceChange(setFf, "f_f", setFfManual)(n);
                 }
               }}
               className="w-28 rounded border border-gray-300 dark:border-slate-700 px-2 py-1 dark:bg-slate-800"
@@ -428,8 +458,7 @@ export default function FFactorTab({
                 setFdManual(true);
                 return;
               }
-              setFdManual(false);
-              setFd(Number(val));
+              handleBoundedResistanceChange(setFd, "f_d", setFdManual)(Number(val));
             }}
           >
             <option value={-1}>دستی</option>
@@ -450,8 +479,7 @@ export default function FFactorTab({
               onChange={(e) => {
                 const n = parseFloat(e.target.value);
                 if (!isNaN(n)) {
-                  setFd(n);
-                  setFdManual(true);
+                  handleBoundedResistanceChange(setFd, "f_d", setFdManual)(n);
                 }
               }}
               className="w-28 rounded border border-gray-300 dark:border-slate-700 px-2 py-1 dark:bg-slate-800"
@@ -475,8 +503,7 @@ export default function FFactorTab({
                 setFwManual(true);
                 return;
               }
-              setFwManual(false);
-              setFw(Number(val));
+              handleBoundedResistanceChange(setFw, "f_w", setFwManual)(Number(val));
             }}
           >
             <option value={-1}>دستی</option>
@@ -496,8 +523,7 @@ export default function FFactorTab({
               onChange={(e) => {
                 const n = parseFloat(e.target.value);
                 if (!isNaN(n)) {
-                  setFw(n);
-                  setFwManual(true);
+                  handleBoundedResistanceChange(setFw, "f_w", setFwManual)(n);
                 }
               }}
               className="w-28 rounded border border-gray-300 dark:border-slate-700 px-2 py-1 dark:bg-slate-800"

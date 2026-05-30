@@ -4,8 +4,8 @@
 FROM node:20-alpine AS base
 
 # Alpine mirrors & npm registry
-RUN echo -e "http://mirror-linux.runflare.com/alpine/v3.23/main\nhttp://mirror-linux.runflare.com/alpine/v3.23/community" > /etc/apk/repositories
-RUN npm config set registry https://mirror-npm.runflare.com
+RUN echo -e "https://mirror.arvancloud.ir/alpine/v3.23/main\nhttps://mirror.arvancloud.ir/alpine/v3.23/community" > /etc/apk/repositories
+RUN npm config set registry https://npm.devneeds.ir/
 
 # Required runtime deps for Prisma on Alpine
 RUN apk add --no-cache libc6-compat openssl
